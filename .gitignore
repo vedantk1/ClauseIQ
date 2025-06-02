@@ -1,0 +1,77 @@
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Build outputs
+.next/
+dist/
+build/
+.turbo/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Document storage (contains sensitive uploaded files)
+backend/documents_storage/
+documents_storage/
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker
+.dockerignore
+
+# Testing
+.nyc_output
+
+# Vercel
+.vercel

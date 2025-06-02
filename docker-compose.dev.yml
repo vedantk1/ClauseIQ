@@ -1,0 +1,79 @@
+version: "3.8"
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: legal_ai_mongodb_dev
+    environment:
+      MONGO_INITDB_DATABASE: legal_ai_dev
+    volumes:
+      - mongodb_dev_data:/data/db
+      - ./database/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - legal_ai_network
+
+  # Backend Service (Development)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: legal_ai_backend_dev
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: legal_ai_dev
+      MONGODB_COLLECTION: documents
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      HOST: 0.0.0.0
+      PORT: 8000
+      CORS_ORIGINS: http://localhost:3000
+      MAX_FILE_SIZE_MB: 10
+      ALLOWED_FILE_TYPES: .pdf
+      STORAGE_DIR: /app/documents_storage
+    volumes:
+      - ./backend:/app
+      - documents_dev_storage:/app/documents_storage
+    ports:
+      - "8000:8000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - legal_ai_network
+
+  # Frontend Service (Development)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: legal_ai_frontend_dev
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_MAX_FILE_SIZE_MB: 10
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - legal_ai_network
+
+volumes:
+  mongodb_dev_data:
+    driver: local
+  documents_dev_storage:
+    driver: local
+
+networks:
+  legal_ai_network:
+    driver: bridge
