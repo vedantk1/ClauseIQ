@@ -1,16 +1,19 @@
 import { render, screen } from "@testing-library/react";
 import NavBar from "@/components/NavBar";
+import { usePathname } from "next/navigation";
 
 // Mock Next.js navigation hook
 jest.mock("next/navigation", () => ({
   usePathname: jest.fn(),
 }));
 
-describe("NavBar Component", () => {
-  const { usePathname } = require("next/navigation");
+const mockedUsePathname = usePathname as jest.MockedFunction<
+  typeof usePathname
+>;
 
+describe("NavBar Component", () => {
   beforeEach(() => {
-    usePathname.mockReturnValue("/");
+    mockedUsePathname.mockReturnValue("/");
   });
 
   afterEach(() => {

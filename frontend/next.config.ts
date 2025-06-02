@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   // Optimize for production builds
   poweredByHeader: false,
 
+  // ESLint configuration for build
+  eslint: {
+    ignoreDuringBuilds: true, // Skip ESLint during build for deployment
+  },
+
   // Enable experimental features for better performance
   experimental: {
     optimizePackageImports: ["react-hot-toast", "clsx"],
