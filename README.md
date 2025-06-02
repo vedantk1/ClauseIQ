@@ -7,7 +7,7 @@ An intelligent legal document analysis tool that uses AI to help non-lawyers und
 ![Next.js](https://img.shields.io/badge/Next.js-15.3.3-black)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.12-009688)
 
-## 🚀 Features
+## Features
 
 - **AI-Powered Summaries**: Uses OpenAI GPT-3.5-turbo to generate clear, concise summaries
 - **PDF Text Extraction**: Robust PDF processing with `pdfplumber`
@@ -17,7 +17,7 @@ An intelligent legal document analysis tool that uses AI to help non-lawyers und
 - **Security**: File validation, secure temporary file handling, and input sanitization
 - **Real-time Processing**: Asynchronous processing with progress feedback
 
-## 🏗️ Architecture
+## Architecture
 
 ### Backend (FastAPI)
 
@@ -33,14 +33,14 @@ An intelligent legal document analysis tool that uses AI to help non-lawyers und
 - **State Management**: Context API for global state
 - **User Experience**: Toast notifications and loading states
 
-## 📋 Prerequisites
+## Prerequisites
 
 - **Python 3.13+**
 - **Node.js 18+** and npm
 - **OpenAI API Key** (for AI summaries)
 - **MongoDB** (Atlas or local instance)
 
-## 🛠️ Installation & Setup
+## Installation & Setup
 
 ### 1. Clone the Repository
 
@@ -116,7 +116,7 @@ npm run dev
 
 Frontend will be available at: http://localhost:3000
 
-## 🔧 API Endpoints
+## API Endpoints
 
 | Endpoint             | Method | Description                                  |
 | -------------------- | ------ | -------------------------------------------- |
@@ -127,7 +127,7 @@ Frontend will be available at: http://localhost:3000
 | `/documents/`        | GET    | List all processed documents                 |
 | `/documents/{id}`    | GET    | Get specific document                        |
 
-## 🧪 Testing
+## Testing
 
 ### Backend Tests
 
@@ -144,7 +144,7 @@ cd frontend
 npm test
 ```
 
-## 🐳 Docker Support
+## Docker Support
 
 ### Development
 
@@ -158,7 +158,7 @@ docker-compose -f docker-compose.dev.yml up
 docker-compose up
 ```
 
-## 🛡️ Security Features
+## Security Features
 
 - **File Validation**: Size limits, type checking, filename sanitization
 - **Secure File Handling**: Temporary files with automatic cleanup
@@ -166,14 +166,14 @@ docker-compose up
 - **Environment Security**: Sensitive credentials in environment variables
 - **CORS Configuration**: Configurable cross-origin resource sharing
 
-## 📱 Usage
+## Usage
 
 1. **Upload Document**: Select a PDF employment contract
 2. **AI Analysis**: Get intelligent summaries and section breakdowns
 3. **Review Results**: View plain-language explanations of legal terms
 4. **Document History**: Access previously analyzed documents
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -181,15 +181,15 @@ docker-compose up
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## ⚠️ Legal Disclaimer
+## Legal Disclaimer
 
 This tool is provided for informational purposes only and does not constitute legal advice. Always consult with a qualified legal professional before making decisions based on contract analysis.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - OpenAI for providing the GPT API
 - FastAPI and Next.js communities
@@ -197,4 +197,4 @@ This tool is provided for informational purposes only and does not constitute le
 
 ---
 
-**Made with ❤️ for better legal document understanding**
+**Made with care for better legal document understanding**
