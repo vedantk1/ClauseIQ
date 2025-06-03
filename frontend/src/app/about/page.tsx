@@ -3,7 +3,7 @@ export default function About() {
     <div className="max-w-3xl mx-auto">
       <h1 className="text-2xl font-semibold mb-6">About Legal-AI</h1>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 space-y-4">
+      <div className="bg-bg-surface rounded-lg shadow-sm p-6 space-y-4">
         <section>
           <h2 className="text-lg font-medium mb-2">What is Legal-AI?</h2>
           <p>
@@ -25,11 +25,9 @@ export default function About() {
           </ol>
         </section>
 
-        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mt-6 dark:bg-amber-900/20 dark:border-amber-700">
-          <h3 className="text-amber-800 dark:text-amber-500 font-medium">
-            Legal Disclaimer
-          </h3>
-          <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+        <div className="bg-bg-elevated border-l-4 border-accent-amber p-4 mt-6">
+          <h3 className="text-accent-amber font-medium">Legal Disclaimer</h3>
+          <p className="text-sm text-text-secondary mt-1">
             This tool is provided for informational purposes only and does not
             constitute legal advice. Always consult with a qualified legal
             professional before making decisions based on contract analysis. Our

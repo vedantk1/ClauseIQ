@@ -10,10 +10,13 @@ describe("NavBar Component", () => {
   test("renders all navigation links", () => {
     render(<NavBar />);
 
-    expect(screen.getByText("Upload")).toBeTruthy();
-    expect(screen.getByText("Results")).toBeTruthy();
-    expect(screen.getByText("History")).toBeTruthy();
-    expect(screen.getByText("About")).toBeTruthy();
+    // Check for links that should be present (using getAllByText to handle duplicates for mobile/desktop)
+    expect(screen.getAllByText("Upload")).toHaveLength(2); // Desktop + Mobile
+    expect(screen.getAllByText("Review")).toHaveLength(2); // Desktop + Mobile
+    expect(screen.getAllByText("History")).toHaveLength(2); // Desktop + Mobile
+    expect(screen.getAllByText("Analytics")).toHaveLength(2); // Desktop + Mobile
+    expect(screen.getAllByText("About")).toHaveLength(2); // Desktop + Mobile
+    expect(screen.getByText("Legal AI")).toBeTruthy(); // Logo
   });
 
   test("renders navigation element", () => {
@@ -27,6 +30,7 @@ describe("NavBar Component", () => {
     render(<NavBar />);
 
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(4);
+    // Logo + 5 nav links * 2 (desktop + mobile) = 11 total links
+    expect(links).toHaveLength(11);
   });
 });
