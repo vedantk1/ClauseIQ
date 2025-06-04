@@ -1,13 +1,13 @@
 export default function About() {
   return (
     <div className="max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-6">About Legal-AI</h1>
+      <h1 className="text-2xl font-semibold mb-6">About ClauseIQ</h1>
 
       <div className="bg-bg-surface rounded-lg shadow-sm p-6 space-y-4">
         <section>
-          <h2 className="text-lg font-medium mb-2">What is Legal-AI?</h2>
+          <h2 className="text-lg font-medium mb-2">What is ClauseIQ?</h2>
           <p>
-            Legal-AI is a tool designed to help non-lawyers understand
+            ClauseIQ is a tool designed to help non-lawyers understand
             employment contracts by extracting important information and
             providing simple explanations. It uses natural language processing
             to analyze legal documents and present key points in plain language.
@@ -38,7 +38,7 @@ export default function About() {
       </div>
 
       <div className="mt-8 text-sm text-gray-500 text-center">
-        &copy; 2025 Legal-AI Project • All Rights Reserved
+        &copy; 2025 ClauseIQ Project • All Rights Reserved
       </div>
     </div>
   );

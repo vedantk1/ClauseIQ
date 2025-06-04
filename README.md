@@ -1,8 +1,8 @@
-# Legal AI - Employment Contract Analyzer
+# ClauseIQ - Employment Contract Analyzer
 
 An intelligent legal document analysis tool that uses AI to help non-lawyers understand employment contracts by providing clear, plain-language summaries of complex legal text.
 
-![Legal AI Demo](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![ClauseIQ Demo](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 ![Python](https://img.shields.io/badge/Python-3.13-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-15.3.3-black)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.12-009688)
@@ -46,7 +46,7 @@ An intelligent legal document analysis tool that uses AI to help non-lawyers und
 
 ```bash
 git clone <your-repo-url>
-cd legal-ai-project
+cd clauseiq-project
 ```
 
 ### 2. Backend Setup

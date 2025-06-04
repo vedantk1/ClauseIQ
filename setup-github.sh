@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# GitHub Repository Setup Script for Legal AI Project
+# GitHub Repository Setup Script for ClauseIQ Project
 # Run this script after creating your GitHub repository
 
-echo "🚀 Setting up GitHub repository for Legal AI Project..."
+echo "🚀 Setting up GitHub repository for ClauseIQ Project..."
 
 # Check if we're in a git repository
 if [ ! -d ".git" ]; then
@@ -12,7 +12,7 @@ if [ ! -d ".git" ]; then
 fi
 
 # Get the GitHub repository URL from user
-read -p "Enter your GitHub repository URL (e.g., https://github.com/username/legal-ai.git): " REPO_URL
+read -p "Enter your GitHub repository URL (e.g., https://github.com/username/clauseiq.git): " REPO_URL
 
 if [ -z "$REPO_URL" ]; then
     echo "❌ Error: No repository URL provided."

@@ -1,7 +1,7 @@
 # 🤖 AI Agent Knowledge Base
 
-**Last Updated:** June 2, 2025  
-**Purpose:** Essential knowledge repository for AI coding agents working on the Legal AI project  
+**Last Updated:** June 3, 2025  
+**Purpose:** Essential knowledge repository for AI coding agents working on the ClauseIQ project  
 **Instructions:** READ THIS FILE FIRST when starting any agent session. UPDATE before every major commit.
 
 ---
@@ -28,7 +28,7 @@
 
 ### **What This App Does:**
 
-Legal AI is an employment contract analyzer that helps non-lawyers understand complex legal documents through AI-powered summaries and plain-language explanations.
+ClauseIQ is an employment contract analyzer that helps non-lawyers understand complex legal documents through AI-powered summaries and plain-language explanations.
 
 ### **Core Workflow:**
 
@@ -52,7 +52,7 @@ Legal AI is an employment contract analyzer that helps non-lawyers understand co
 ### **Current Deployment:**
 
 - **Frontend:** https://legalai-by79fe7l0-vedant-khandelwals-projects-4795dd43.vercel.app
-- **Backend:** https://legal-ai-6ppy.onrender.com
+- **Backend:** https://clauseiq-6ppy.onrender.com
 - **Status:** ✅ BOTH SERVICES RUNNING
 
 ### **🔒 CRITICAL DEPLOYMENT DISCOVERY (June 2, 2025):**
@@ -68,7 +68,7 @@ Legal AI is an employment contract analyzer that helps non-lawyers understand co
 ```bash
 curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" \
      -H "Referer: https://legalai-by79fe7l0-vedant-khandelwals-projects-4795dd43.vercel.app/" \
-     https://legal-ai-6ppy.onrender.com/
+     https://clauseiq-6ppy.onrender.com/
 ```
 
 ### **Environment Variables:**
@@ -76,7 +76,7 @@ curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit
 **Vercel (Frontend):**
 
 ```
-NEXT_PUBLIC_API_URL=https://legal-ai-6ppy.onrender.com
+NEXT_PUBLIC_API_URL=https://clauseiq-6ppy.onrender.com
 NEXT_PUBLIC_MAX_FILE_SIZE_MB=10
 ```
 
@@ -118,14 +118,74 @@ CORS_ORIGINS=https://legalai-by79fe7l0-vedant-khandelwals-projects-4795dd43.verc
 
 ## 🔌 API ENDPOINTS
 
-| Endpoint             | Method | Purpose               | Status     |
-| -------------------- | ------ | --------------------- | ---------- |
-| `/`                  | GET    | Health check          | ✅ Working |
-| `/extract-text/`     | POST   | PDF text extraction   | ✅ Working |
-| `/analyze/`          | POST   | Section analysis      | ✅ Working |
-| `/process-document/` | POST   | Full AI processing    | ✅ Working |
-| `/documents/`        | GET    | List all documents    | ✅ Working |
-| `/documents/{id}`    | GET    | Get specific document | ✅ Working |
+| Endpoint             | Method | Purpose               | Status     | Auth Required |
+| -------------------- | ------ | --------------------- | ---------- | ------------- |
+| `/`                  | GET    | Health check          | ✅ Working | No            |
+| `/auth/register`     | POST   | Register new user     | ✅ Working | No            |
+| `/auth/login`        | POST   | User login            | ✅ Working | No            |
+| `/auth/refresh`      | POST   | Refresh JWT token     | ✅ Working | No            |
+| `/auth/me`           | GET    | Get current user info | ✅ Working | Yes           |
+| `/extract-text/`     | POST   | PDF text extraction   | ✅ Working | Yes           |
+| `/analyze/`          | POST   | Section analysis      | ✅ Working | Yes           |
+| `/process-document/` | POST   | Full AI processing    | ✅ Working | Yes           |
+| `/documents/`        | GET    | List all documents    | ✅ Working | Yes           |
+| `/documents/{id}`    | GET    | Get specific document | ✅ Working | Yes           |
+
+### **Authentication Endpoints:**
+
+The backend uses JSON Web Token (JWT) authentication with access and refresh tokens.
+
+#### 1. **Register User - `/auth/register`**
+
+- **Request Body:** `UserCreate` model
+  ```json
+  {
+    "full_name": "User Name",
+    "email": "user@example.com",
+    "password": "securepassword123"
+  }
+  ```
+- **Response:** `Token` model with access and refresh tokens
+  ```json
+  {
+    "access_token": "eyJhbGciOiJIUzI1...",
+    "refresh_token": "eyJhbGciOiJIUzI1...",
+    "token_type": "bearer"
+  }
+  ```
+
+#### 2. **Login User - `/auth/login`**
+
+- **Request Body:** `UserLogin` model
+  ```json
+  {
+    "email": "user@example.com",
+    "password": "securepassword123"
+  }
+  ```
+- **Response:** `Token` model with access and refresh tokens
+
+#### 3. **Refresh Token - `/auth/refresh`**
+
+- **Request Body:** `RefreshTokenRequest` model
+  ```json
+  {
+    "refresh_token": "eyJhbGciOiJIUzI1..."
+  }
+  ```
+- **Response:** `Token` model with new access and refresh tokens
+
+#### 4. **Get User Info - `/auth/me`**
+
+- **Headers:** `Authorization: Bearer <access_token>`
+- **Response:** `UserResponse` model
+  ```json
+  {
+    "id": "user-uuid",
+    "full_name": "User Name",
+    "email": "user@example.com"
+  }
+  ```
 
 ---
 
@@ -152,21 +212,31 @@ cd frontend && npm test
 
 ## 🔧 DEVELOPMENT SETUP
 
+### **🔧 DEVELOPMENT SETUP**
+
+**CRITICAL: Always use `python3` instead of `python` in this project.**
+
 ### **Local Development:**
 
 ```bash
 # Start MongoDB (Docker)
 docker-compose -f docker-compose.dev.yml up -d mongodb
 
-# Backend
+# Backend - IMPORTANT: Use python3, not python
 cd backend
-source venv/bin/activate
-uvicorn main:app --reload
+source legal_ai_env/bin/activate  # Use legal_ai_env (NOT venv)
+python3 -m uvicorn main:app --reload
 
 # Frontend
 cd frontend
 npm run dev
 ```
+
+### **Virtual Environment:**
+
+- **ONLY** use `backend/legal_ai_env/` (other virtual environments have been removed)
+- **Always** activate before running: `source backend/legal_ai_env/bin/activate`
+- **Python version:** 3.13 (confirmed in virtual environment)
 
 ### **Docker Development:**
 
@@ -175,6 +245,42 @@ docker-compose -f docker-compose.dev.yml up
 ```
 
 ---
+
+## 🔒 AUTHENTICATION SYSTEM
+
+### **Auth Architecture:**
+
+- **JWT-based:** Uses access and refresh tokens
+- **Access Token Expiry:** 15 minutes
+- **Refresh Token Expiry:** 7 days
+- **Storage:** User credentials stored in MongoDB with bcrypt password hashing
+
+### **Frontend Auth Integration:**
+
+The frontend uses a React Context (`AuthContext.tsx`) to manage authentication state:
+
+```javascript
+// Main auth hooks
+const { user, isAuthenticated, login, logout, register } = useAuth();
+```
+
+**Token Storage:** Tokens are stored in browser localStorage for persistence across sessions.
+
+**Auto-refresh:** API calls automatically handle token refreshing when access tokens expire.
+
+**Protected Routes:** Routes requiring authentication automatically redirect to login.
+
+```javascript
+// Example of a protected component
+const ProtectedComponent = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) return <LoadingSpinner />;
+  if (!isAuthenticated) return <Navigate to="/login" />;
+
+  return <YourComponent />;
+};
+```
 
 ## ⚠️ KNOWN ISSUES & SOLUTIONS
 
@@ -194,9 +300,37 @@ docker-compose -f docker-compose.dev.yml up
 - **Problem:** Large PDF uploads fail
 - **Solution:** Max 10MB enforced on both frontend and backend
 
+### **Issue 4: JWT Token Refresh**
+
+- **Problem:** Users occasionally logged out due to failed token refresh
+- **Symptom:** User session ends unexpectedly
+- **Solution:** Fixed in June 3, 2025 update by implementing proper `RefreshTokenRequest` model
+
 ---
 
 ## 📝 AGENT UPDATE LOG
+
+### **June 3, 2025 - Major Project Cleanup & Authentication Fixes**
+
+- **REMOVED REDUNDANCIES:**
+
+  - Deleted duplicate virtual environment (`backend/venv/`) - kept `legal_ai_env` only
+  - Removed obsolete JSON storage files (`backend/documents_storage/`) - MongoDB migration complete
+  - Deleted unused `EnhancedTestUpload` component and its test file
+  - Cleaned up unused imports in `main.py` (HTTPBearer, json, STORAGE_DIR)
+  - Removed redundant DocumentStorage wrapper class
+
+- **FIXED AUTHENTICATION ISSUES:**
+
+  - Registration endpoint now returns tokens (Token model) instead of just user data
+  - Added missing `RefreshTokenRequest` model for proper refresh endpoint
+  - Added missing `validate_file` function that was being called but not defined
+  - Fixed incomplete authentication flow between frontend and backend
+
+- **ESTABLISHED PYTHON3 STANDARD:**
+  - Documented requirement to use `python3` instead of `python` throughout project
+  - Updated development setup instructions with correct virtual environment path
+  - All tests and functionality confirmed working with Python 3.13
 
 ### **June 2, 2025 - Initial Creation**
 
@@ -204,11 +338,6 @@ docker-compose -f docker-compose.dev.yml up
 - Documented Render security protection discovery
 - Established update protocol for major commits
 - Verified all deployment URLs and configurations
-
-### **[Next Agent Update Here]**
-
-- Format: Date - Brief description of changes/discoveries
-- Always add new findings and update existing information
 
 ---
 

@@ -1,6 +1,6 @@
 # 🚀 Deployment Guide: Vercel + Render
 
-This guide will help you deploy your Legal AI application using **Vercel** for the frontend and **Render** for the backend.
+This guide will help you deploy your ClauseIQ application using **Vercel** for the frontend and **Render** for the backend.
 
 ## 📋 Prerequisites
 
@@ -43,7 +43,7 @@ After deployment, you'll get a URL like: `https://your-app-name.vercel.app`
 2. Click "New +" → "Web Service"
 3. Connect your GitHub repository
 4. Configure the service:
-   - **Name**: `legal-ai-backend` (or your preferred name)
+   - **Name**: `clauseiq-backend` (or your preferred name)
    - **Root Directory**: `backend`
    - **Environment**: `Python 3`
    - **Build Command**: `pip install -r requirements.txt`
@@ -155,4 +155,4 @@ OpenAI API (AI Processing)
 
 ---
 
-**Your Legal AI application is now live and accessible from anywhere! 🎉**
+**Your ClauseIQ application is now live and accessible from anywhere! 🎉**

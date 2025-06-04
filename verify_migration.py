@@ -139,7 +139,7 @@ def main():
     
     if passed == total:
         print("🎉 MongoDB migration verification completed successfully!")
-        print("\n✨ Your Legal AI project is ready for MongoDB!")
+        print("\n✨ Your ClauseIQ project is ready for MongoDB!")
         print("\n📋 Next steps:")
         print("   1. Start MongoDB: docker-compose up -d mongodb")
         print("   2. Run migration: python database/migrate_to_mongodb.py")

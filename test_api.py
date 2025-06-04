@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test script for the Legal AI API endpoints"""
+"""Test script for the ClauseIQ API endpoints"""
 
 import requests
 import json
@@ -43,7 +43,7 @@ def test_process_document_without_file():
         print(f"Process document test failed: {e}")
 
 if __name__ == "__main__":
-    print("Testing Legal AI API endpoints...")
+    print("Testing ClauseIQ API endpoints...")
     print("=" * 50)
     
     test_health_check()

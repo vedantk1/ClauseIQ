@@ -16,7 +16,7 @@ describe("NavBar Component", () => {
     expect(screen.getAllByText("History")).toHaveLength(2); // Desktop + Mobile
     expect(screen.getAllByText("Analytics")).toHaveLength(2); // Desktop + Mobile
     expect(screen.getAllByText("About")).toHaveLength(2); // Desktop + Mobile
-    expect(screen.getByText("Legal AI")).toBeTruthy(); // Logo
+    expect(screen.getByText("ClauseIQ")).toBeTruthy(); // Logo
   });
 
   test("renders navigation element", () => {

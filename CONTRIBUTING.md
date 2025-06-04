@@ -1,6 +1,6 @@
-# Contributing to Legal AI
+# Contributing to ClauseIQ
 
-We love your input! We want to make contributing to Legal AI as easy and transparent as possible, whether it's:
+We love your input! We want to make contributing to ClauseIQ as easy and transparent as possible, whether it's:
 
 - Reporting a bug
 - Discussing the current state of the code
@@ -27,9 +27,9 @@ Pull requests are the best way to propose changes to the codebase. We actively w
 
 In short, when you submit code changes, your submissions are understood to be under the same [MIT License](LICENSE) that covers the project. Feel free to contact the maintainers if that's a concern.
 
-## Report bugs using GitHub's [issue tracker](https://github.com/your-username/legal-ai/issues)
+## Report bugs using GitHub's [issue tracker](https://github.com/your-username/clauseiq/issues)
 
-We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/your-username/legal-ai/issues/new); it's that easy!
+We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/your-username/clauseiq/issues/new); it's that easy!
 
 ## Write bug reports with detail, background, and sample code
 
@@ -46,6 +46,7 @@ We use GitHub issues to track public bugs. Report a bug by [opening a new issue]
 ## Development Setup
 
 ### Backend Development
+
 ```bash
 cd backend
 python3 -m venv venv
@@ -55,12 +56,14 @@ pip install -r test-requirements.txt
 ```
 
 ### Frontend Development
+
 ```bash
 cd frontend
 npm install
 ```
 
 ### Running Tests
+
 ```bash
 # Backend tests
 cd backend && pytest
@@ -72,12 +75,14 @@ cd frontend && npm test
 ### Code Style
 
 #### Python (Backend)
+
 - Follow PEP 8
 - Use type hints where appropriate
 - Add docstrings for functions and classes
 - Keep functions focused and small
 
 #### TypeScript/React (Frontend)
+
 - Follow TypeScript best practices
 - Use functional components with hooks
 - Maintain consistent indentation (2 spaces)

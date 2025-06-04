@@ -33,8 +33,8 @@ async def async_client():
 @pytest.fixture
 def temp_storage():
     temp_dir = tempfile.mkdtemp()
-    with patch('main.STORAGE_DIR', temp_dir):
-        yield temp_dir
+    # We no longer patch STORAGE_DIR as it was removed from main.py
+    yield temp_dir
     shutil.rmtree(temp_dir)
 
 # Mock OpenAI client

@@ -1,6 +1,6 @@
 {
-  "name": "legal-ai-backend",
-  "description": "Legal AI Backend - FastAPI service for document analysis",
+  "name": "clauseiq-backend",
+  "description": "ClauseIQ Backend - FastAPI service for document analysis",
   "version": "1.0.0",
   "build": { "commands": ["pip install -r requirements.txt"] },
   "deploy":
