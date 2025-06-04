@@ -7,15 +7,53 @@ interface Section {
   summary?: string;
 }
 
+interface Clause {
+  id: string;
+  heading: string;
+  text: string;
+  clause_type:
+    | "compensation"
+    | "termination"
+    | "non_compete"
+    | "confidentiality"
+    | "benefits"
+    | "working_conditions"
+    | "intellectual_property"
+    | "dispute_resolution"
+    | "probation"
+    | "general";
+  risk_level: "low" | "medium" | "high";
+  summary?: string;
+  risk_assessment?: string;
+  recommendations?: string[];
+  key_points?: string[];
+  position_start?: number;
+  position_end?: number;
+}
+
+interface RiskSummary {
+  high: number;
+  medium: number;
+  low: number;
+}
+
 interface AnalysisCtx {
   sections: Section[];
   setSections: (sections: Section[]) => void;
-  summary: string; // Added
-  setSummary: (summary: string) => void; // Added
-  fullText: string; // Added
-  setFullText: (fullText: string) => void; // Added
-  fileName: string; // Added
-  setFileName: (fileName: string) => void; // Added
+  summary: string;
+  setSummary: (summary: string) => void;
+  fullText: string;
+  setFullText: (fullText: string) => void;
+  fileName: string;
+  setFileName: (fileName: string) => void;
+  clauses: Clause[];
+  setClauses: (clauses: Clause[]) => void;
+  riskSummary: RiskSummary;
+  setRiskSummary: (riskSummary: RiskSummary) => void;
+  selectedClause: Clause | null;
+  setSelectedClause: (clause: Clause | null) => void;
+  documentId: string;
+  setDocumentId: (id: string) => void;
 }
 
 const Ctx = createContext<AnalysisCtx | undefined>(undefined);
@@ -28,21 +66,37 @@ export const AnalysisProvider = ({
   children: React.ReactNode;
 }) => {
   const [sections, setSections] = useState<Section[]>([]);
-  const [summary, setSummary] = useState<string>(""); // Added
-  const [fullText, setFullText] = useState<string>(""); // Added
-  const [fileName, setFileName] = useState<string>(""); // Added
+  const [summary, setSummary] = useState<string>("");
+  const [fullText, setFullText] = useState<string>("");
+  const [fileName, setFileName] = useState<string>("");
+  const [clauses, setClauses] = useState<Clause[]>([]);
+  const [riskSummary, setRiskSummary] = useState<RiskSummary>({
+    high: 0,
+    medium: 0,
+    low: 0,
+  });
+  const [selectedClause, setSelectedClause] = useState<Clause | null>(null);
+  const [documentId, setDocumentId] = useState<string>("");
 
   return (
     <Ctx.Provider
       value={{
         sections,
         setSections,
-        summary, // Added
-        setSummary, // Added
-        fullText, // Added
-        setFullText, // Added
-        fileName, // Added
-        setFileName, // Added
+        summary,
+        setSummary,
+        fullText,
+        setFullText,
+        fileName,
+        setFileName,
+        clauses,
+        setClauses,
+        riskSummary,
+        setRiskSummary,
+        selectedClause,
+        setSelectedClause,
+        documentId,
+        setDocumentId,
       }}
     >
       {children}

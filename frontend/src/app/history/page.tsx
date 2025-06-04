@@ -40,7 +40,15 @@ type SortOption = "newest" | "oldest" | "name";
 export default function History() {
   const { isAuthenticated, isLoading } = useAuthRedirect();
   const router = useRouter();
-  const { setSections } = useAnalysis();
+  const {
+    setSections,
+    setSummary,
+    setFullText,
+    setFileName,
+    setClauses,
+    setRiskSummary,
+    setDocumentId,
+  } = useAnalysis();
   const apiCall = useApiCall();
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<DocumentItem[]>(
@@ -157,7 +165,37 @@ export default function History() {
         throw new Error(document.error);
       }
 
+      // Load all document data into context
       setSections(document.sections || []);
+      setSummary(document.ai_full_summary || document.summary || "");
+      setFullText(document.text || "");
+      setFileName(document.filename || "");
+      setDocumentId(document.id || documentId);
+
+      // Load clauses if available
+      if (document.clauses) {
+        setClauses(document.clauses);
+        setRiskSummary(document.risk_summary || { high: 0, medium: 0, low: 0 });
+      } else {
+        // Try to fetch clauses separately if not included
+        try {
+          const clauseRes = await apiCall(`/documents/${documentId}/clauses`);
+          if (clauseRes.ok) {
+            const clauseData = await clauseRes.json();
+            setClauses(clauseData.clauses || []);
+            setRiskSummary(
+              clauseData.risk_summary || { high: 0, medium: 0, low: 0 }
+            );
+          } else {
+            setClauses([]);
+            setRiskSummary({ high: 0, medium: 0, low: 0 });
+          }
+        } catch {
+          setClauses([]);
+          setRiskSummary({ high: 0, medium: 0, low: 0 });
+        }
+      }
+
       router.push("/review");
       toast.success("Document loaded successfully!");
     } catch (err) {

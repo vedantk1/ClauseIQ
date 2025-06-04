@@ -5,6 +5,7 @@ import re
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from enum import Enum
 import uuid
 import os
 import asyncio
@@ -111,6 +112,55 @@ class Section(BaseModel):
     heading: str
     summary: Optional[str] = None
     text: str
+
+# Enhanced clause models for detailed analysis
+class ClauseType(str, Enum):
+    COMPENSATION = "compensation"
+    TERMINATION = "termination"
+    NON_COMPETE = "non_compete"
+    CONFIDENTIALITY = "confidentiality"
+    BENEFITS = "benefits"
+    WORKING_CONDITIONS = "working_conditions"
+    INTELLECTUAL_PROPERTY = "intellectual_property"
+    DISPUTE_RESOLUTION = "dispute_resolution"
+    PROBATION = "probation"
+    GENERAL = "general"
+
+class RiskLevel(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+class Clause(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    heading: str
+    text: str
+    clause_type: ClauseType
+    risk_level: RiskLevel
+    summary: Optional[str] = None
+    risk_assessment: Optional[str] = None
+    recommendations: Optional[List[str]] = None
+    key_points: Optional[List[str]] = None
+    position_start: Optional[int] = None
+    position_end: Optional[int] = None
+
+class ClauseAnalysisResponse(BaseModel):
+    clauses: List[Clause]
+    total_clauses: int
+    risk_summary: Dict[str, int]
+    document_id: str
+
+# User preferences models
+class UserPreferencesRequest(BaseModel):
+    preferred_model: str = Field(..., description="User's preferred AI model")
+
+class UserPreferencesResponse(BaseModel):
+    preferred_model: str
+    available_models: List[str]
+
+class AvailableModelsResponse(BaseModel):
+    models: List[Dict[str, str]]
+    default_model: str
 
 # Health check endpoint
 @app.get("/")
@@ -327,6 +377,96 @@ async def reset_password(request: ResetPasswordRequest):
         print(f"Error in reset password: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+# User preferences endpoints
+@app.get("/auth/preferences", response_model=UserPreferencesResponse)
+async def get_user_preferences(current_user: dict = Depends(get_current_user)):
+    """Get user's preferences including preferred AI model."""
+    try:
+        from database import AVAILABLE_MODELS
+        storage = get_mongo_storage()
+        
+        # Get user's preferred model
+        preferred_model = storage.get_user_preferred_model(current_user["id"])
+        
+        return UserPreferencesResponse(
+            preferred_model=preferred_model,
+            available_models=AVAILABLE_MODELS
+        )
+        
+    except Exception as e:
+        print(f"Error getting user preferences: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.put("/auth/preferences")
+async def update_user_preferences(
+    preferences: UserPreferencesRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update user's preferences including preferred AI model."""
+    try:
+        from database import AVAILABLE_MODELS
+        storage = get_mongo_storage()
+        
+        # Validate the preferred model
+        if preferences.preferred_model not in AVAILABLE_MODELS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid model. Available models: {', '.join(AVAILABLE_MODELS)}"
+            )
+        
+        # Update user preferences
+        success = storage.update_user_preferences(
+            current_user["id"],
+            {"preferred_model": preferences.preferred_model}
+        )
+        
+        if not success:
+            raise HTTPException(
+                status_code=404,
+                detail="User not found"
+            )
+        
+        return {"message": "Preferences updated successfully", "preferred_model": preferences.preferred_model}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating user preferences: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/auth/available-models", response_model=AvailableModelsResponse)
+async def get_available_models():
+    """Get list of available AI models with descriptions."""
+    try:
+        from database import AVAILABLE_MODELS, DEFAULT_MODEL
+        
+        # Model descriptions
+        model_descriptions = {
+            "gpt-3.5-turbo": "Fast and cost-effective for most tasks",
+            "gpt-4.1-mini": "Balanced performance and accuracy",
+            "gpt-4.1-nano": "Ultra lightweight and fast",
+            "gpt-4o-mini": "Optimized for speed and efficiency",
+            "gpt-4o": "Most advanced model with superior accuracy"
+        }
+        
+        models = [
+            {
+                "id": model,
+                "name": model,
+                "description": model_descriptions.get(model, "Advanced AI model")
+            }
+            for model in AVAILABLE_MODELS
+        ]
+        
+        return AvailableModelsResponse(
+            models=models,
+            default_model=DEFAULT_MODEL
+        )
+        
+    except Exception as e:
+        print(f"Error getting available models: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @app.post("/extract-text/")
 async def extract_text(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
     """Extract text from uploaded PDF file."""
@@ -408,6 +548,102 @@ def extract_sections(text: str) -> List[Section]:
     
     return sections
 
+def extract_clauses(text: str) -> List[Clause]:
+    """Extract and categorize clauses from legal document text."""
+    clauses = []
+    
+    # Define clause patterns and their types
+    clause_patterns = {
+        ClauseType.COMPENSATION: [
+            r'(?i)(salary|wage|compensation|payment|remuneration).*?(?=\n\n|\Z|(?=\d+\.))',
+            r'(?i)(base pay|annual salary|hourly rate|commission|bonus).*?(?=\n\n|\Z|(?=\d+\.))'
+        ],
+        ClauseType.TERMINATION: [
+            r'(?i)(termination|terminate|dismissal|end of employment|resignation).*?(?=\n\n|\Z|(?=\d+\.))',
+            r'(?i)(notice period|severance|end this agreement).*?(?=\n\n|\Z|(?=\d+\.))'
+        ],
+        ClauseType.NON_COMPETE: [
+            r'(?i)(non-compete|non compete|restraint of trade|competition).*?(?=\n\n|\Z|(?=\d+\.))',
+            r'(?i)(solicit.*customers|compete.*business).*?(?=\n\n|\Z|(?=\d+\.))'
+        ],
+        ClauseType.CONFIDENTIALITY: [
+            r'(?i)(confidential|non-disclosure|proprietary|trade secret).*?(?=\n\n|\Z|(?=\d+\.))',
+            r'(?i)(confidentiality|private information|disclosure).*?(?=\n\n|\Z|(?=\d+\.))'
+        ],
+        ClauseType.BENEFITS: [
+            r'(?i)(benefits|health insurance|vacation|sick leave|pension|retirement).*?(?=\n\n|\Z|(?=\d+\.))',
+            r'(?i)(holiday|time off|insurance|medical).*?(?=\n\n|\Z|(?=\d+\.))'
+        ],
+        ClauseType.WORKING_CONDITIONS: [
+            r'(?i)(working hours|work schedule|location|remote work|office).*?(?=\n\n|\Z|(?=\d+\.))',
+            r'(?i)(duties|responsibilities|job description|role).*?(?=\n\n|\Z|(?=\d+\.))'
+        ],
+        ClauseType.INTELLECTUAL_PROPERTY: [
+            r'(?i)(intellectual property|copyright|patent|trademark|invention).*?(?=\n\n|\Z|(?=\d+\.))',
+            r'(?i)(work product|ownership|invention assignment).*?(?=\n\n|\Z|(?=\d+\.))'
+        ],
+        ClauseType.DISPUTE_RESOLUTION: [
+            r'(?i)(dispute|arbitration|mediation|court|jurisdiction|governing law).*?(?=\n\n|\Z|(?=\d+\.))',
+            r'(?i)(legal proceedings|litigation|resolution).*?(?=\n\n|\Z|(?=\d+\.))'
+        ],
+        ClauseType.PROBATION: [
+            r'(?i)(probation|probationary period|trial period|initial period).*?(?=\n\n|\Z|(?=\d+\.))'
+        ]
+    }
+    
+    # Extract clauses by type
+    for clause_type, patterns in clause_patterns.items():
+        for pattern in patterns:
+            matches = re.finditer(pattern, text, re.MULTILINE | re.DOTALL)
+            for match in matches:
+                clause_text = match.group(0).strip()
+                if len(clause_text) > 50:  # Only include substantial clauses
+                    # Generate heading from first sentence or line
+                    lines = clause_text.split('\n')
+                    heading = lines[0][:100] + "..." if len(lines[0]) > 100 else lines[0]
+                    
+                    clause = Clause(
+                        heading=heading,
+                        text=clause_text,
+                        clause_type=clause_type,
+                        risk_level=RiskLevel.MEDIUM,  # Default, will be assessed by AI
+                        position_start=match.start(),
+                        position_end=match.end()
+                    )
+                    clauses.append(clause)
+    
+    # If no specific clauses found, extract general sections
+    if not clauses:
+        sections = extract_sections(text)
+        for i, section in enumerate(sections):
+            clause = Clause(
+                heading=section.heading,
+                text=section.text,
+                clause_type=ClauseType.GENERAL,
+                risk_level=RiskLevel.LOW,
+                position_start=i * 1000,  # Approximate positioning
+                position_end=(i + 1) * 1000
+            )
+            clauses.append(clause)
+    
+    # Remove duplicates based on text similarity
+    unique_clauses = []
+    for clause in clauses:
+        is_duplicate = False
+        for existing in unique_clauses:
+            # Simple similarity check - if 80% of text overlaps, consider duplicate
+            overlap = len(set(clause.text.split()) & set(existing.text.split()))
+            total_words = len(set(clause.text.split()) | set(existing.text.split()))
+            similarity = overlap / total_words if total_words > 0 else 0
+            
+            if similarity > 0.8:
+                is_duplicate = True
+                break
+        
+        if not is_duplicate:
+            unique_clauses.append(clause)
+    
+    return unique_clauses
 @app.post("/analyze/")
 async def analyze_document(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
     """Extract text and split into logical sections for analysis."""
@@ -438,11 +674,15 @@ async def analyze_document(file: UploadFile = File(...), current_user: dict = De
         
         sections = extract_sections(text)
         
+        # Get user's preferred model
+        storage = get_mongo_storage()
+        user_model = storage.get_user_preferred_model(current_user["id"])
+        
         # Generate AI summaries for each section if OpenAI API is configured
         if openai_client:
             summary_tasks = []
             for section in sections:
-                task = generate_summary(section.text, section.heading)
+                task = generate_summary(section.text, section.heading, user_model)
                 summary_tasks.append(task)
             
             # Wait for all summaries to be generated concurrently
@@ -487,100 +727,299 @@ async def analyze_document(file: UploadFile = File(...), current_user: dict = De
             except Exception as e:
                 print(f"Warning: Could not remove temporary file {temp_file_path}: {e}")
 
-@app.get("/documents/")
-async def get_documents(current_user: dict = Depends(get_current_user)):
-    """Retrieve all documents for the current user"""
+@app.post("/analyze-clauses/", response_model=ClauseAnalysisResponse)
+async def analyze_clauses(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    """Extract and analyze clauses from uploaded PDF file with AI-powered risk assessment."""
+    validate_file(file)
+    
+    temp_file_path = None
     try:
-        # Get user-specific documents from storage
+        # Create a secure temporary file
+        temp_file_path = f"/tmp/{uuid.uuid4()}_{file.filename}"
+        
+        # Read file content and check size while reading
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large. Maximum size allowed: {MAX_FILE_SIZE_MB}MB"
+            )
+        
+        # Save the file temporarily
+        with open(temp_file_path, "wb") as f:
+            f.write(content)
+        
+        # Extract text using pdfplumber
+        with pdfplumber.open(temp_file_path) as pdf:
+            text = ""
+            for page in pdf.pages:
+                text += page.extract_text() or ""
+        
+        # Extract clauses
+        clauses = extract_clauses(text)
+        
+        # Get user's preferred model
         storage = get_mongo_storage()
-        documents = storage.get_documents_for_user(current_user["id"])
-        return {"documents": documents}
+        user_model = storage.get_user_preferred_model(current_user["id"])
+        
+        # Analyze clauses with AI if OpenAI API is configured
+        if openai_client:
+            # Analyze clauses concurrently for better performance
+            analysis_tasks = [analyze_clause(clause, user_model) for clause in clauses]
+            analyzed_clauses = await asyncio.gather(*analysis_tasks)
+        else:
+            analyzed_clauses = clauses
+        
+        # Calculate risk summary
+        risk_summary = {
+            "high": sum(1 for clause in analyzed_clauses if clause.risk_level == RiskLevel.HIGH),
+            "medium": sum(1 for clause in analyzed_clauses if clause.risk_level == RiskLevel.MEDIUM),
+            "low": sum(1 for clause in analyzed_clauses if clause.risk_level == RiskLevel.LOW)
+        }
+        
+        # Create document with clauses
+        document_id = str(uuid.uuid4())
+        document = {
+            "id": document_id,
+            "filename": file.filename,
+            "upload_date": datetime.now().isoformat(),
+            "text": text,
+            "clauses": [clause.dict() for clause in analyzed_clauses],
+            "risk_summary": risk_summary,
+            "user_id": current_user["id"]
+        }
+        
+        # Save document to storage with user association
+        storage.save_document_for_user(document, current_user["id"])
+        
+        return ClauseAnalysisResponse(
+            clauses=analyzed_clauses,
+            total_clauses=len(analyzed_clauses),
+            risk_summary=risk_summary,
+            document_id=document_id
+        )
+        
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions
     except Exception as e:
-        print(f"Error retrieving documents: {str(e)}")
-        return {"documents": [], "error": str(e)}
+        print(f"Error analyzing clauses: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while analyzing clauses: {str(e)}"
+        )
+    finally:
+        # Clean up temporary file
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.remove(temp_file_path)
+            except Exception as e:
+                print(f"Warning: Could not remove temporary file {temp_file_path}: {e}")
 
-@app.get("/documents/{document_id}")
-async def get_document(document_id: str, current_user: dict = Depends(get_current_user)):
-    """Retrieve a specific document by ID for the current user"""
+@app.get("/documents/{document_id}/clauses")
+async def get_document_clauses(document_id: str, current_user: dict = Depends(get_current_user)):
+    """Retrieve clauses for a specific document."""
     try:
         storage = get_mongo_storage()
         document = storage.get_document_for_user(document_id, current_user["id"])
-        if document:
-            return document
-        return {"error": "Document not found"}
+        
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        clauses = document.get("clauses", [])
+        risk_summary = document.get("risk_summary", {"high": 0, "medium": 0, "low": 0})
+        
+        return ClauseAnalysisResponse(
+            clauses=[Clause(**clause) for clause in clauses],
+            total_clauses=len(clauses),
+            risk_summary=risk_summary,
+            document_id=document_id
+        )
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Error retrieving document: {str(e)}")
-        return {"error": str(e)}
+        print(f"Error retrieving document clauses: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 # Function to generate a summary for a section using AI
-async def generate_summary(section_text: str, section_heading: str = "") -> str:
+async def generate_summary(section_text: str, section_heading: str = "", model: str = "gpt-3.5-turbo") -> str:
     """Generate a summary for a section using OpenAI's API"""
     if not openai_client:
         return "AI summary not available - API key not configured"
     
     try:
         prompt = f"""
-Summarize the following legal text from a section titled '{section_heading}' in an employment contract.
-Provide a concise, clear summary focusing on the main points that would be important for a non-lawyer to understand.
+Please provide a clear, concise summary of the following section from a legal document.
+Focus on what this means for the employee in plain language.
 
-TEXT TO SUMMARIZE:
-{section_text[:4000]}  # Limit to 4000 chars to avoid token limits
+Section: {section_heading}
+Content: {section_text[:3000]}
 
-SUMMARY:
+Summary:
 """
         response = await openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",  # Can be upgraded to GPT-4 for better results
+            model=model,
             messages=[
-                {"role": "system", "content": "You are a legal assistant that provides clear, professional summaries of legal text."},
+                {"role": "system", "content": "You are a helpful legal assistant that explains contract terms in simple language for non-lawyers."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.5,
-            max_tokens=200
+            temperature=0.3,
+            max_tokens=300
         )
         
         summary = response.choices[0].message.content.strip()
         return summary
     except OpenAIError as e:
-        print(f"Error generating AI summary: {str(e)}")
+        print(f"Error generating summary (OpenAI): {str(e)}")
         return "Error generating summary - API issue"
     except Exception as e:
         print(f"Unexpected error in summary generation: {str(e)}")
         return "Error generating summary"
 
-async def generate_document_summary(full_text: str, filename: str = "") -> str:
-    """Generate a summary for the entire document using OpenAI's API"""
+async def generate_document_summary(document_text: str, filename: str = "", model: str = "gpt-3.5-turbo") -> str:
+    """Generate a summary for an entire document using OpenAI's API"""
     if not openai_client:
         return "AI summary not available - API key not configured"
     
     try:
         prompt = f"""
-Please provide a concise summary of the following legal document: {filename}.
-The summary should highlight the key clauses, obligations, and important terms for a non-lawyer to quickly understand the document's essence.
-Focus on aspects like contract type, main parties, term/duration, key responsibilities, and any critical conditions or clauses.
+Please provide a comprehensive yet concise summary of the following employment contract document.
+Focus on the key terms, obligations, and what this means for the employee in plain language.
+Highlight important sections like compensation, benefits, termination conditions, and any notable clauses.
 
-DOCUMENT TEXT:
-{full_text[:12000]} # Limiting input to manage token usage for GPT-3.5-turbo (approx 4k tokens limit for model, leaving room for prompt and response)
+Document: {filename}
+Content: {document_text[:4000]}
 
-SUMMARY:
+Summary:
 """
         response = await openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model=model,
             messages=[
-                {"role": "system", "content": "You are a helpful legal assistant that provides clear, concise summaries of entire legal documents."},
+                {"role": "system", "content": "You are a helpful legal assistant that explains employment contracts in simple language for non-lawyers. Provide clear, comprehensive summaries that help people understand their contracts."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.3, # Slightly lower for more factual summary
-            max_tokens=500 # Increased for a potentially longer full document summary
+            temperature=0.3,
+            max_tokens=500
         )
         
         summary = response.choices[0].message.content.strip()
         return summary
     except OpenAIError as e:
         print(f"Error generating document summary (OpenAI): {str(e)}")
-        return f"Error generating summary via AI: {str(e)}"
+        return "Error generating document summary - API issue"
     except Exception as e:
         print(f"Unexpected error in document summary generation: {str(e)}")
-        return f"Unexpected error generating summary: {str(e)}"
+        return "Error generating document summary"
+
+async def analyze_clause(clause: Clause, model: str = "gpt-3.5-turbo") -> Clause:
+    """Analyze a clause for risk assessment and generate recommendations."""
+    if not openai_client:
+        clause.summary = "AI analysis not available - API key not configured"
+        clause.risk_assessment = "Risk assessment requires AI analysis"
+        clause.recommendations = ["Configure OpenAI API key for detailed analysis"]
+        clause.key_points = ["Manual review recommended"]
+        return clause
+    
+    try:
+        prompt = f"""
+Analyze the following employment contract clause and provide:
+1. A brief summary in plain language
+2. Risk assessment (LOW/MEDIUM/HIGH) with explanation
+3. Key points the employee should understand
+4. Specific recommendations or concerns
+
+Clause Type: {clause.clause_type.value}
+Clause Text: {clause.text[:2000]}
+
+Please format your response as:
+SUMMARY: [brief plain language explanation]
+RISK: [LOW/MEDIUM/HIGH] - [explanation]
+KEY_POINTS: [3-5 bullet points]
+RECOMMENDATIONS: [specific advice or concerns]
+"""
+        
+        response = await openai_client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "You are an expert legal analyst helping employees understand contract clauses. Focus on practical implications and potential risks."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,
+            max_tokens=600
+        )
+        
+        analysis = response.choices[0].message.content.strip()
+        
+        # Parse the response
+        lines = analysis.split('\n')
+        summary = ""
+        risk_assessment = ""
+        key_points = []
+        recommendations = []
+        
+        current_section = None
+        for line in lines:
+            line = line.strip()
+            if line.startswith('SUMMARY:'):
+                current_section = 'summary'
+                summary = line.replace('SUMMARY:', '').strip()
+            elif line.startswith('RISK:'):
+                current_section = 'risk'
+                risk_text = line.replace('RISK:', '').strip()
+                risk_assessment = risk_text
+                # Extract risk level
+                if 'HIGH' in risk_text.upper():
+                    clause.risk_level = RiskLevel.HIGH
+                elif 'MEDIUM' in risk_text.upper():
+                    clause.risk_level = RiskLevel.MEDIUM
+                else:
+                    clause.risk_level = RiskLevel.LOW
+            elif line.startswith('KEY_POINTS:'):
+                current_section = 'key_points'
+                if ':' in line:
+                    point = line.split(':', 1)[1].strip()
+                    if point:
+                        key_points.append(point)
+            elif line.startswith('RECOMMENDATIONS:'):
+                current_section = 'recommendations'
+                if ':' in line:
+                    rec = line.split(':', 1)[1].strip()
+                    if rec:
+                        recommendations.append(rec)
+            elif line.startswith('-') or line.startswith('•'):
+                # Bullet point
+                point = line.lstrip('-•').strip()
+                if current_section == 'key_points':
+                    key_points.append(point)
+                elif current_section == 'recommendations':
+                    recommendations.append(point)
+            elif line and current_section == 'summary':
+                summary += " " + line
+            elif line and current_section == 'risk':
+                risk_assessment += " " + line
+        
+        # Update clause with analysis
+        clause.summary = summary or "Analysis generated successfully"
+        clause.risk_assessment = risk_assessment or "Risk assessment completed"
+        clause.key_points = key_points if key_points else ["Review clause carefully"]
+        clause.recommendations = recommendations if recommendations else ["Consider legal consultation if needed"]
+        
+        return clause
+        
+    except OpenAIError as e:
+        print(f"Error analyzing clause (OpenAI): {str(e)}")
+        clause.summary = "Error in AI analysis - API issue"
+        clause.risk_assessment = f"Analysis failed: {str(e)}"
+        clause.recommendations = ["Manual review required due to analysis error"]
+        clause.key_points = ["AI analysis unavailable"]
+        return clause
+    except Exception as e:
+        print(f"Unexpected error in clause analysis: {str(e)}")
+        clause.summary = "Error in clause analysis"
+        clause.risk_assessment = "Analysis failed due to technical error"
+        clause.recommendations = ["Manual review recommended"]
+        clause.key_points = ["Technical error occurred"]
+        return clause
 
 @app.post("/process-document/", response_model=ProcessDocumentResponse)
 async def process_document(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
@@ -613,10 +1052,14 @@ async def process_document(file: UploadFile = File(...), current_user: dict = De
         if not extracted_text.strip():
             raise HTTPException(status_code=400, detail="No text could be extracted from the PDF.")
 
+        # Get user's preferred model
+        storage = get_mongo_storage()
+        user_model = storage.get_user_preferred_model(current_user["id"])
+        
         # Generate summary for the entire document
         ai_summary = "Summary not generated." # Default
         if openai_client:
-            ai_summary = await generate_document_summary(extracted_text, file.filename)
+            ai_summary = await generate_document_summary(extracted_text, file.filename, user_model)
         else:
             ai_summary = "OpenAI client not configured. Summary not generated."
             

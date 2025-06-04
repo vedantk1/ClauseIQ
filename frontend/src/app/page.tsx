@@ -16,7 +16,15 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const router = useRouter();
-  const { setSections, setSummary, setFullText, setFileName } = useAnalysis();
+  const {
+    setSections,
+    setSummary,
+    setFullText,
+    setFileName,
+    setClauses,
+    setRiskSummary,
+    setDocumentId,
+  } = useAnalysis();
   const apiCall = useApiCall();
 
   const handleFileChange = (selectedFile: File | null) => {
@@ -71,21 +79,24 @@ export default function Home() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await apiCall(`/process-document/`, {
+      // First, process the document for basic analysis
+      const processRes = await apiCall(`/process-document/`, {
         method: "POST",
         body: formData,
       });
 
-      if (!res.ok) {
-        const errorData = await res
+      if (!processRes.ok) {
+        const errorData = await processRes
           .json()
-          .catch(() => ({ detail: res.statusText }));
+          .catch(() => ({ detail: processRes.statusText }));
         toast.dismiss(loadingToast);
         toast.error(
-          `Error: ${res.status} ${errorData.detail || "Failed to process"}`
+          `Error: ${processRes.status} ${
+            errorData.detail || "Failed to process"
+          }`
         );
         throw new Error(
-          `HTTP error! status: ${res.status}, details: ${errorData.detail}`
+          `HTTP error! status: ${processRes.status}, details: ${errorData.detail}`
         );
       }
 
@@ -96,16 +107,76 @@ export default function Home() {
         summary: string;
       }
 
-      const data = (await res.json()) as ProcessResponse;
+      const processData = (await processRes.json()) as ProcessResponse;
 
-      // Store the results in context
-      setFileName(data.filename);
-      setFullText(data.full_text);
-      setSummary(data.summary);
+      // Store basic results in context
+      setFileName(processData.filename);
+      setFullText(processData.full_text);
+      setSummary(processData.summary);
+      setDocumentId(processData.id);
       setSections([]);
 
+      // Update loading message for clause analysis
       toast.dismiss(loadingToast);
-      toast.success("Document processed successfully!");
+      const clauseLoadingToast = toast.loading("Analyzing clauses...");
+
+      // Now analyze clauses
+      const clauseFormData = new FormData();
+      clauseFormData.append("file", file);
+
+      const clauseRes = await apiCall(`/analyze-clauses/`, {
+        method: "POST",
+        body: clauseFormData,
+      });
+
+      if (clauseRes.ok) {
+        interface ClauseAnalysisResponse {
+          clauses: Array<{
+            id: string;
+            heading: string;
+            text: string;
+            clause_type:
+              | "compensation"
+              | "termination"
+              | "non_compete"
+              | "confidentiality"
+              | "benefits"
+              | "working_conditions"
+              | "intellectual_property"
+              | "dispute_resolution"
+              | "probation"
+              | "general";
+            risk_level: "low" | "medium" | "high";
+            summary?: string;
+            risk_assessment?: string;
+            recommendations?: string[];
+            key_points?: string[];
+            position_start?: number;
+            position_end?: number;
+          }>;
+          total_clauses: number;
+          risk_summary: {
+            high: number;
+            medium: number;
+            low: number;
+          };
+          document_id: string;
+        }
+
+        const clauseData = (await clauseRes.json()) as ClauseAnalysisResponse;
+
+        // Store clause results in context
+        setClauses(clauseData.clauses);
+        setRiskSummary(clauseData.risk_summary);
+      } else {
+        // Clause analysis failed, but continue with basic analysis
+        console.warn("Clause analysis failed, continuing with basic analysis");
+        setClauses([]);
+        setRiskSummary({ high: 0, medium: 0, low: 0 });
+      }
+
+      toast.dismiss(clauseLoadingToast);
+      toast.success("Document analysis complete!");
 
       router.push("/review");
     } catch (error) {
