@@ -15,7 +15,8 @@ An intelligent legal document analysis tool that uses AI to help non-lawyers und
 - **Section Analysis**: Intelligent document segmentation and section-by-section analysis
 - **User Authentication**: Secure JWT-based authentication with password reset functionality
 - **Document Storage**: MongoDB integration for document history and retrieval
-- **Modern UI**: Clean, responsive Next.js interface with Tailwind CSS
+- **Document Management**: Upload, view, search, sort, and delete documents with confirmation dialogs
+- **Modern UI**: Clean, responsive Next.js interface with Tailwind CSS and grid/list view modes
 - **Security**: File validation, secure temporary file handling, and input sanitization
 - **Real-time Processing**: Asynchronous processing with progress feedback
 
@@ -120,14 +121,20 @@ Frontend will be available at: http://localhost:3000
 
 ## API Endpoints
 
-| Endpoint             | Method | Description                                  |
-| -------------------- | ------ | -------------------------------------------- |
-| `/`                  | GET    | Health check                                 |
-| `/extract-text/`     | POST   | Extract raw text from PDF                    |
-| `/analyze/`          | POST   | Full analysis with section breakdown         |
-| `/process-document/` | POST   | Complete document processing with AI summary |
-| `/documents/`        | GET    | List all processed documents                 |
-| `/documents/{id}`    | GET    | Get specific document                        |
+| Endpoint                | Method | Description                                  |
+| ----------------------- | ------ | -------------------------------------------- |
+| `/`                     | GET    | Health check                                 |
+| `/extract-text/`        | POST   | Extract raw text from PDF                    |
+| `/analyze/`             | POST   | Full analysis with section breakdown         |
+| `/process-document/`    | POST   | Complete document processing with AI summary |
+| `/documents/`           | GET    | List all processed documents                 |
+| `/documents/{id}`       | GET    | Get specific document                        |
+| `/documents/{id}`       | DELETE | Delete specific document (user must own it)  |
+| `/auth/register`        | POST   | User registration                            |
+| `/auth/login`           | POST   | User authentication                          |
+| `/auth/me`              | GET    | Get current user info                        |
+| `/auth/forgot-password` | POST   | Request password reset                       |
+| `/auth/reset-password`  | POST   | Reset password with token                    |
 
 ## Testing
 
@@ -196,10 +203,15 @@ Comprehensive documentation is available in the [`documentation/`](./documentati
 
 ## Usage
 
-1. **Upload Document**: Select a PDF employment contract
-2. **AI Analysis**: Get intelligent summaries and section breakdowns
-3. **Review Results**: View plain-language explanations of legal terms
-4. **Document History**: Access previously analyzed documents
+1. **Create Account**: Register or login to access the platform
+2. **Upload Document**: Select a PDF employment contract for analysis
+3. **AI Analysis**: Get intelligent summaries and section breakdowns using your preferred AI model
+4. **Review Results**: View plain-language explanations of legal terms and clauses
+5. **Document Management**:
+   - Access your document history with search and sorting
+   - Switch between grid and list view modes
+   - Delete documents you no longer need (with confirmation)
+   - View detailed analysis for any previous document
 
 ## Contributing
 

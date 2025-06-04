@@ -230,6 +230,14 @@ curl -X POST "http://localhost:8000/analyze/" \
 # Get user's documents
 curl -X GET "http://localhost:8000/documents/" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+# Get specific document
+curl -X GET "http://localhost:8000/documents/{document_id}" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+# Delete specific document (user must own it)
+curl -X DELETE "http://localhost:8000/documents/{document_id}" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
 ---

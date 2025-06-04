@@ -218,6 +218,7 @@ All ClauseIQ document processing functions now accept model parameter:
 | `/process-document/` | POST   | Full AI processing    | ✅ Working | Yes           |
 | `/documents/`        | GET    | List all documents    | ✅ Working | Yes           |
 | `/documents/{id}`    | GET    | Get specific document | ✅ Working | Yes           |
+| `/documents/{id}`    | DELETE | Delete document       | ✅ Working | Yes           |
 
 ### **Authentication Endpoints:**
 
