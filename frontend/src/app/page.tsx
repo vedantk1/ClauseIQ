@@ -79,103 +79,76 @@ export default function Home() {
       const formData = new FormData();
       formData.append("file", file);
 
-      // First, process the document for basic analysis
-      const processRes = await apiCall(`/process-document/`, {
+      // Use the new unified endpoint for complete document analysis
+      const analysisRes = await apiCall(`/analyze-document/`, {
         method: "POST",
         body: formData,
       });
 
-      if (!processRes.ok) {
-        const errorData = await processRes
+      if (!analysisRes.ok) {
+        const errorData = await analysisRes
           .json()
-          .catch(() => ({ detail: processRes.statusText }));
+          .catch(() => ({ detail: analysisRes.statusText }));
         toast.dismiss(loadingToast);
         toast.error(
-          `Error: ${processRes.status} ${
-            errorData.detail || "Failed to process"
+          `Error: ${analysisRes.status} ${
+            errorData.detail || "Failed to analyze document"
           }`
         );
         throw new Error(
-          `HTTP error! status: ${processRes.status}, details: ${errorData.detail}`
+          `HTTP error! status: ${analysisRes.status}, details: ${errorData.detail}`
         );
       }
 
-      interface ProcessResponse {
+      interface AnalyzeDocumentResponse {
         id: string;
         filename: string;
         full_text: string;
         summary: string;
+        clauses: Array<{
+          id: string;
+          heading: string;
+          text: string;
+          clause_type:
+            | "compensation"
+            | "termination"
+            | "non_compete"
+            | "confidentiality"
+            | "benefits"
+            | "working_conditions"
+            | "intellectual_property"
+            | "dispute_resolution"
+            | "probation"
+            | "general";
+          risk_level: "low" | "medium" | "high";
+          summary?: string;
+          risk_assessment?: string;
+          recommendations?: string[];
+          key_points?: string[];
+          position_start?: number;
+          position_end?: number;
+        }>;
+        total_clauses: number;
+        risk_summary: {
+          high: number;
+          medium: number;
+          low: number;
+        };
       }
 
-      const processData = (await processRes.json()) as ProcessResponse;
+      const analysisData =
+        (await analysisRes.json()) as AnalyzeDocumentResponse;
 
-      // Store basic results in context
-      setFileName(processData.filename);
-      setFullText(processData.full_text);
-      setSummary(processData.summary);
-      setDocumentId(processData.id);
-      setSections([]);
+      // Store all results in context from the unified response
+      setFileName(analysisData.filename);
+      setFullText(analysisData.full_text);
+      setSummary(analysisData.summary);
+      setDocumentId(analysisData.id);
+      setSections([]); // Keep empty for compatibility
+      setClauses(analysisData.clauses);
+      setRiskSummary(analysisData.risk_summary);
 
-      // Update loading message for clause analysis
       toast.dismiss(loadingToast);
-      const clauseLoadingToast = toast.loading("Analyzing clauses...");
-
-      // Now analyze clauses
-      const clauseFormData = new FormData();
-      clauseFormData.append("file", file);
-
-      const clauseRes = await apiCall(`/analyze-clauses/`, {
-        method: "POST",
-        body: clauseFormData,
-      });
-
-      if (clauseRes.ok) {
-        interface ClauseAnalysisResponse {
-          clauses: Array<{
-            id: string;
-            heading: string;
-            text: string;
-            clause_type:
-              | "compensation"
-              | "termination"
-              | "non_compete"
-              | "confidentiality"
-              | "benefits"
-              | "working_conditions"
-              | "intellectual_property"
-              | "dispute_resolution"
-              | "probation"
-              | "general";
-            risk_level: "low" | "medium" | "high";
-            summary?: string;
-            risk_assessment?: string;
-            recommendations?: string[];
-            key_points?: string[];
-            position_start?: number;
-            position_end?: number;
-          }>;
-          total_clauses: number;
-          risk_summary: {
-            high: number;
-            medium: number;
-            low: number;
-          };
-          document_id: string;
-        }
-
-        const clauseData = (await clauseRes.json()) as ClauseAnalysisResponse;
-
-        // Store clause results in context
-        setClauses(clauseData.clauses);
-        setRiskSummary(clauseData.risk_summary);
-      } else {
-        // Clause analysis failed, but continue with basic analysis
-        console.warn("Clause analysis failed, continuing with basic analysis");
-        setClauses([]);
-        setRiskSummary({ high: 0, medium: 0, low: 0 });
-      }
-
-      toast.dismiss(clauseLoadingToast);
       toast.success("Document analysis complete!");
 
       router.push("/review");

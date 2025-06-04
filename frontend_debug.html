@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Frontend Auth Test & Debug</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+      .section {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      .log {
+        background: #f5f5f5;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 3px;
+        font-family: monospace;
+      }
+      button {
+        padding: 10px 15px;
+        margin: 5px;
+        background: #007cba;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #005a87;
+      }
+      .success {
+        color: green;
+      }
+      .error {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ClauseIQ Frontend Authentication Debug</h1>
+
+    <div class="section">
+      <h2>Authentication Test</h2>
+      <button onclick="clearAuth()">Clear Auth</button>
+      <button onclick="testLogin()">Login (Backend)</button>
+      <button onclick="checkTokens()">Check Tokens</button>
+      <button onclick="testDocuments()">Test Documents API</button>
+      <button onclick="visitHistory()">Visit History Page</button>
+    </div>
+
+    <div class="section">
+      <h2>Debug Logs</h2>
+      <div id="logs"></div>
+    </div>
+
+    <script>
+      const API_BASE_URL = "http://localhost:8000";
+      const FRONTEND_URL = "http://localhost:3000";
+
+      function log(message, type = "info") {
+        const logs = document.getElementById("logs");
+        const timestamp = new Date().toLocaleTimeString();
+        const className =
+          type === "error" ? "error" : type === "success" ? "success" : "";
+        logs.innerHTML += `<div class="log ${className}">[${timestamp}] ${message}</div>`;
+        logs.scrollTop = logs.scrollHeight;
+      }
+
+      function clearAuth() {
+        localStorage.clear();
+        log("✅ Cleared all localStorage data");
+      }
+
+      async function testLogin() {
+        try {
+          log("🔄 Attempting login...");
+          const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: "debug@test.com",
+              password: "testpass123",
+            }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`Login failed: ${JSON.stringify(error)}`);
+          }
+
+          const data = await response.json();
+          localStorage.setItem("access_token", data.access_token);
+          localStorage.setItem("refresh_token", data.refresh_token);
+
+          log("✅ Login successful! Tokens stored in localStorage", "success");
+          log(`   Access token: ${data.access_token.substring(0, 50)}...`);
+
+          // Test /auth/me
+          const meResponse = await fetch(`${API_BASE_URL}/auth/me`, {
+            headers: {
+              Authorization: `Bearer ${data.access_token}`,
+            },
+          });
+
+          if (meResponse.ok) {
+            const userData = await meResponse.json();
+            log(
+              `✅ /auth/me successful: ${userData.full_name} (${userData.email})`,
+              "success"
+            );
+          } else {
+            log("❌ /auth/me failed", "error");
+          }
+        } catch (err) {
+          log(`❌ Login error: ${err.message}`, "error");
+        }
+      }
+
+      function checkTokens() {
+        const accessToken = localStorage.getItem("access_token");
+        const refreshToken = localStorage.getItem("refresh_token");
+
+        log(`Access token exists: ${!!accessToken}`);
+        log(`Refresh token exists: ${!!refreshToken}`);
+
+        if (accessToken) {
+          log(`Access token preview: ${accessToken.substring(0, 50)}...`);
+        }
+      }
+
+      async function testDocuments() {
+        try {
+          const accessToken = localStorage.getItem("access_token");
+          if (!accessToken) {
+            log("❌ No access token found. Please login first.", "error");
+            return;
+          }
+
+          log("🔄 Testing documents endpoint...");
+          const response = await fetch(`${API_BASE_URL}/documents/`, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          log(`Documents response status: ${response.status}`);
+
+          if (response.ok) {
+            const data = await response.json();
+            log(
+              `✅ Documents API successful: ${JSON.stringify(data)}`,
+              "success"
+            );
+          } else {
+            const error = await response.text();
+            log(`❌ Documents API failed: ${error}`, "error");
+          }
+        } catch (err) {
+          log(`❌ Documents API error: ${err.message}`, "error");
+        }
+      }
+
+      function visitHistory() {
+        log("🔄 Opening history page in new tab...");
+        window.open(`${FRONTEND_URL}/history`, "_blank");
+      }
+
+      // Check initial state
+      window.onload = function () {
+        log("🚀 Debug page loaded");
+        checkTokens();
+      };
+    </script>
+  </body>
+</html>

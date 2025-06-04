@@ -1,0 +1,28 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Authentication Test Setup</title>
+</head>
+<body>
+    <h1>Setting up authentication...</h1>
+    <div id="status">Initializing...</div>
+    
+    <script>
+        const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmNGU3ZTE4Yy02MDMzLTQ3YTYtOGEwOC1jODZlMTY3YzEwNmIiLCJleHAiOjE3NDkwNjk3NzF9.dxMd4tFtGZZmj4Yvdr3SLWIdVEMC2-t82iKwzvemTGA";
+        const refreshToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmNGU3ZTE4Yy02MDMzLTQ3YTYtOGEwOC1jODZlMTY3YzEwNmIiLCJleHAiOjE3NDk2NzI3NzF9.uWZjb3jk8J-2BiO4ckZ0I9ow-NzPmNjuuTv0diEejYI";
+        
+        // Set tokens in localStorage
+        localStorage.setItem("access_token", accessToken);
+        localStorage.setItem("refresh_token", refreshToken);
+        
+        document.getElementById('status').innerHTML = 
+            "✅ Tokens set! Click to visit history page: <br><br>" +
+            "<a href='http://localhost:3000/history' target='_blank' style='padding: 10px 20px; background: #007cba; color: white; text-decoration: none; border-radius: 5px;'>Open History Page</a>";
+        
+        console.log("Tokens set in localStorage:");
+        console.log("Access token:", !!accessToken);
+        console.log("Refresh token:", !!refreshToken);
+    </script>
+</body>
+</html>

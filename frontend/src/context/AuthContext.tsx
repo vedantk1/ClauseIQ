@@ -47,8 +47,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [availableModels, setAvailableModels] = useState<AvailableModel[]>([]);
 
+  console.log(
+    "[AUTH CONTEXT DEBUG] AuthProvider render - user:",
+    user,
+    "isLoading:",
+    isLoading
+  );
+
   // Token management
-  const getAccessToken = () => localStorage.getItem("access_token");
+  const getAccessToken = () => {
+    const token = localStorage.getItem("access_token");
+    console.log(
+      "[AUTH CONTEXT DEBUG] getAccessToken called, token exists:",
+      !!token
+    );
+    return token;
+  };
   const getRefreshToken = () => localStorage.getItem("refresh_token");
 
   const setTokens = (accessToken: string, refreshToken: string) => {
@@ -119,16 +133,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Load preferences and available models
   const loadPreferences = async () => {
+    const accessToken = getAccessToken();
+    if (!accessToken) return;
+
     try {
       // Load user preferences
-      const prefsResponse = await apiCall("/auth/preferences");
+      const prefsResponse = await fetch(`${API_BASE_URL}/auth/preferences`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
       if (prefsResponse.ok) {
         const prefsData = await prefsResponse.json();
         setPreferences({ preferred_model: prefsData.preferred_model });
       }
 
       // Load available models
-      const modelsResponse = await apiCall("/auth/available-models");
+      const modelsResponse = await fetch(
+        `${API_BASE_URL}/auth/available-models`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (modelsResponse.ok) {
         const modelsData = await modelsResponse.json();
         setAvailableModels(modelsData.models || []);
@@ -163,12 +193,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Load user from token on app start
   useEffect(() => {
+    console.log("[AUTH CONTEXT DEBUG] useEffect triggered for loading user");
+
     const loadUser = async () => {
+      console.log("[AUTH CONTEXT DEBUG] loadUser called");
       const accessToken = getAccessToken();
+
       if (!accessToken) {
+        console.log(
+          "[AUTH CONTEXT DEBUG] No access token found, setting isLoading to false"
+        );
         setIsLoading(false);
         return;
       }
+
+      console.log(
+        "[AUTH CONTEXT DEBUG] Access token found, attempting to load user"
+      );
 
       try {
         const response = await fetch(`${API_BASE_URL}/auth/me`, {
@@ -176,23 +217,67 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             Authorization: `Bearer ${accessToken}`,
           },
         });
+
+        console.log(
+          "[AUTH CONTEXT DEBUG] /auth/me response status:",
+          response.status
+        );
+
         if (response.ok) {
           const userData = await response.json();
+          console.log("[AUTH CONTEXT DEBUG] User data loaded:", userData);
           setUser(userData);
-          // Load preferences after setting user
-          await loadPreferences();
+
+          // Load preferences directly without using apiCall to avoid circular dependency
+          try {
+            const prefsResponse = await fetch(
+              `${API_BASE_URL}/auth/preferences`,
+              {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            if (prefsResponse.ok) {
+              const prefsData = await prefsResponse.json();
+              setPreferences({ preferred_model: prefsData.preferred_model });
+            }
+
+            const modelsResponse = await fetch(
+              `${API_BASE_URL}/auth/available-models`,
+              {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            if (modelsResponse.ok) {
+              const modelsData = await modelsResponse.json();
+              setAvailableModels(modelsData.models || []);
+            }
+          } catch (error) {
+            console.error(
+              "[AUTH CONTEXT DEBUG] Failed to load preferences:",
+              error
+            );
+          }
         } else {
+          console.log("[AUTH CONTEXT DEBUG] /auth/me failed, clearing tokens");
           clearTokens();
         }
-      } catch {
+      } catch (error) {
+        console.error("[AUTH CONTEXT DEBUG] Error loading user:", error);
         clearTokens();
       } finally {
+        console.log("[AUTH CONTEXT DEBUG] Setting isLoading to false");
         setIsLoading(false);
       }
     };
 
     loadUser();
-  }, [loadPreferences]);
+  }, []); // Remove dependency to prevent circular dependency
 
   const login = async (email: string, password: string) => {
     try {
@@ -334,7 +419,9 @@ export const useApiCall = () => {
   const { refreshToken, logout } = useAuth();
 
   return async (url: string, options: RequestInit = {}) => {
+    console.log("[API CALL DEBUG] Making API call to:", url);
     const accessToken = localStorage.getItem("access_token");
+    console.log("[API CALL DEBUG] Access token exists:", !!accessToken);
 
     // Prepare headers - don't set Content-Type for FormData (let browser set it)
     const headers: Record<string, string> = {};
@@ -345,6 +432,8 @@ export const useApiCall = () => {
       headers["Authorization"] = `Bearer ${accessToken}`;
     }
 
+    console.log("[API CALL DEBUG] Request headers:", headers);
+
     const response = await fetch(`${API_BASE_URL}${url}`, {
       ...options,
       headers: {
@@ -353,11 +442,18 @@ export const useApiCall = () => {
       },
     });
 
+    console.log("[API CALL DEBUG] Response status:", response.status);
+
     // If token expired, try to refresh
     if (response.status === 401 && accessToken) {
+      console.log("[API CALL DEBUG] 401 error, attempting token refresh");
       try {
         await refreshToken();
         const newAccessToken = localStorage.getItem("access_token");
+        console.log(
+          "[API CALL DEBUG] Token refresh successful, new token exists:",
+          !!newAccessToken
+        );
 
         // Prepare headers for retry
         const retryHeaders: Record<string, string> = {};
@@ -368,6 +464,7 @@ export const useApiCall = () => {
           retryHeaders["Authorization"] = `Bearer ${newAccessToken}`;
         }
 
+        console.log("[API CALL DEBUG] Retrying request with new token");
         // Retry the original request with new token
         const retryResponse = await fetch(`${API_BASE_URL}${url}`, {
           ...options,
@@ -377,8 +474,13 @@ export const useApiCall = () => {
           },
         });
 
+        console.log(
+          "[API CALL DEBUG] Retry response status:",
+          retryResponse.status
+        );
         return retryResponse;
-      } catch {
+      } catch (error) {
+        console.error("[API CALL DEBUG] Token refresh failed:", error);
         // Refresh failed, logout user
         logout();
         throw new Error("Session expired. Please login again.");

@@ -841,6 +841,59 @@ async def get_document_clauses(document_id: str, current_user: dict = Depends(ge
         print(f"Error retrieving document clauses: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+# Add Pydantic models for listing and retrieving documents
+class DocumentListItem(BaseModel):
+    id: str
+    filename: str
+    upload_date: str
+    sections: List[Section]
+
+class DocumentListResponse(BaseModel):
+    documents: List[DocumentListItem]
+
+class DocumentDetailResponse(BaseModel):
+    id: str
+    filename: str
+    upload_date: str
+    text: str
+    ai_full_summary: Optional[str] = None
+    summary: Optional[str] = None
+    sections: List[Section]
+    user_id: str
+
+# List all documents for the current user
+@app.get("/documents/", response_model=DocumentListResponse)
+async def list_documents(current_user: dict = Depends(get_current_user)):
+    storage = get_mongo_storage()
+    user_docs = storage.get_documents_for_user(current_user["id"])
+    return {"documents": user_docs}
+
+# Retrieve a single document by ID
+@app.get("/documents/{document_id}", response_model=DocumentDetailResponse)
+async def retrieve_document(document_id: str, current_user: dict = Depends(get_current_user)):
+    storage = get_mongo_storage()
+    document = storage.get_document_for_user(document_id, current_user["id"])
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return document
+
+# Delete a document by ID
+@app.delete("/documents/{document_id}")
+async def delete_document(document_id: str, current_user: dict = Depends(get_current_user)):
+    storage = get_mongo_storage()
+    
+    # First check if the document exists and belongs to the user
+    document = storage.get_document_for_user(document_id, current_user["id"])
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    # Delete the document
+    success = storage.delete_document_for_user(document_id, current_user["id"])
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to delete document")
+    
+    return {"message": "Document deleted successfully"}
+
 # Function to generate a summary for a section using AI
 async def generate_summary(section_text: str, section_heading: str = "", model: str = "gpt-3.5-turbo") -> str:
     """Generate a summary for a section using OpenAI's API"""
@@ -1092,6 +1145,120 @@ async def process_document(file: UploadFile = File(...), current_user: dict = De
         raise HTTPException(
             status_code=500,
             detail=f"An error occurred while processing the document: {str(e)}"
+        )
+    finally:
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.remove(temp_file_path)
+            except Exception as e:
+                print(f"Warning: Could not remove temporary file {temp_file_path}: {e}")
+
+# Enhanced unified response model for the new unified endpoint
+class AnalyzeDocumentResponse(BaseModel):
+    id: str
+    filename: str
+    full_text: str  # Or a snippet/confirmation
+    summary: str
+    clauses: List[Clause]
+    total_clauses: int
+    risk_summary: Dict[str, int]
+
+@app.post("/analyze-document/", response_model=AnalyzeDocumentResponse)
+async def analyze_document_unified(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    """
+    Unified endpoint that combines document processing and clause analysis.
+    Extracts text from PDF, generates document summary, extracts and analyzes clauses,
+    and saves everything to the database in one operation.
+    """
+    validate_file(file)
+    
+    temp_file_path = None
+    extracted_text = ""
+    try:
+        # Create a secure temporary file
+        temp_file_path = f"/tmp/{uuid.uuid4()}_{file.filename}"
+        
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large. Maximum size allowed: {MAX_FILE_SIZE_MB}MB"
+            )
+        
+        with open(temp_file_path, "wb") as f:
+            f.write(content)
+        
+        # Extract text using pdfplumber
+        with pdfplumber.open(temp_file_path) as pdf:
+            for page in pdf.pages:
+                extracted_text += page.extract_text() or ""
+        
+        if not extracted_text.strip():
+            raise HTTPException(status_code=400, detail="No text could be extracted from the PDF.")
+
+        # Get user's preferred model
+        storage = get_mongo_storage()
+        user_model = storage.get_user_preferred_model(current_user["id"])
+        
+        # Generate document-level summary
+        ai_summary = "Summary not generated."  # Default
+        if openai_client:
+            ai_summary = await generate_document_summary(extracted_text, file.filename, user_model)
+        else:
+            ai_summary = "OpenAI client not configured. Summary not generated."
+        
+        # Extract and analyze clauses
+        clauses = extract_clauses(extracted_text)
+        
+        # Analyze clauses with AI if OpenAI API is configured
+        if openai_client:
+            # Analyze clauses concurrently for better performance
+            analysis_tasks = [analyze_clause(clause, user_model) for clause in clauses]
+            analyzed_clauses = await asyncio.gather(*analysis_tasks)
+        else:
+            analyzed_clauses = clauses
+        
+        # Calculate risk summary
+        risk_summary = {
+            "high": sum(1 for clause in analyzed_clauses if clause.risk_level == RiskLevel.HIGH),
+            "medium": sum(1 for clause in analyzed_clauses if clause.risk_level == RiskLevel.MEDIUM),
+            "low": sum(1 for clause in analyzed_clauses if clause.risk_level == RiskLevel.LOW)
+        }
+        
+        # Create unified document entry with both summary and clauses
+        doc_id = str(uuid.uuid4())
+        document_data = {
+            "id": doc_id,
+            "filename": file.filename,
+            "upload_date": datetime.now().isoformat(),
+            "text": extracted_text,
+            "ai_full_summary": ai_summary,
+            "sections": [],  # Keeping for compatibility
+            "clauses": [clause.dict() for clause in analyzed_clauses],
+            "risk_summary": risk_summary,
+            "user_id": current_user["id"]
+        }
+        
+        # Save unified document to storage in one operation
+        storage.save_document_for_user(document_data, current_user["id"])
+        
+        return AnalyzeDocumentResponse(
+            id=doc_id,
+            filename=file.filename,
+            full_text=extracted_text[:500] + "..." if len(extracted_text) > 500 else extracted_text,
+            summary=ai_summary,
+            clauses=analyzed_clauses,
+            total_clauses=len(analyzed_clauses),
+            risk_summary=risk_summary
+        )
+        
+    except HTTPException:
+        raise 
+    except Exception as e:
+        print(f"Error in unified document analysis: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while analyzing the document: {str(e)}"
         )
     finally:
         if temp_file_path and os.path.exists(temp_file_path):

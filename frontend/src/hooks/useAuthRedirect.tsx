@@ -8,7 +8,16 @@ export function useAuthRedirect() {
   const router = useRouter();
 
   useEffect(() => {
+    console.log(
+      "[AUTH REDIRECT DEBUG] useAuthRedirect - isLoading:",
+      isLoading,
+      "isAuthenticated:",
+      isAuthenticated
+    );
+
+    // Only redirect if we're sure the user is not authenticated and not still loading
     if (!isLoading && !isAuthenticated) {
+      console.log("[AUTH REDIRECT DEBUG] Redirecting to login...");
       router.push("/login");
     }
   }, [isAuthenticated, isLoading, router]);

@@ -168,6 +168,10 @@ class MongoDocumentStorage:
             # Ensure the user_id is set in the document
             document_dict['user_id'] = user_id
             
+            # Safeguard: Ensure sections field is properly initialized
+            if 'sections' not in document_dict or document_dict['sections'] is None:
+                document_dict['sections'] = []
+            
             # Add timestamp if not present
             if 'upload_date' not in document_dict:
                 document_dict['upload_date'] = datetime.utcnow().isoformat()
@@ -595,6 +599,34 @@ class MongoDocumentStorage:
             raise
         except Exception as e:
             logger.error(f"Unexpected error retrieving document for user: {e}")
+            raise
+
+    def delete_document_for_user(self, doc_id: str, user_id: str) -> bool:
+        """
+        Delete a document by ID for a specific user.
+        
+        Args:
+            doc_id: Document ID to delete
+            user_id: ID of the user who owns the document
+            
+        Returns:
+            bool: True if document was deleted, False if not found
+        """
+        try:
+            result = self.db.collection.delete_one({"id": doc_id, "user_id": user_id})
+            
+            if result.deleted_count > 0:
+                logger.info(f"Document {doc_id} deleted successfully for user {user_id}")
+                return True
+            else:
+                logger.info(f"Document {doc_id} not found for deletion by user {user_id}")
+                return False
+                
+        except PyMongoError as e:
+            logger.error(f"Error deleting document {doc_id} for user {user_id}: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error deleting document for user: {e}")
             raise
 
 

@@ -2,8 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAnalysis } from "@/context/AnalysisContext";
-import { useApiCall } from "@/context/AuthContext";
-import { useAuthRedirect } from "@/hooks/useAuthRedirect";
+import { useAuth, useApiCall } from "@/context/AuthContext";
 import toast from "react-hot-toast";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
@@ -21,7 +20,6 @@ import {
   CheckCircle,
   AlertTriangle,
   RefreshCw,
-  Trash2,
 } from "lucide-react";
 
 interface DocumentItem {
@@ -39,7 +37,7 @@ type ViewMode = "grid" | "list";
 type SortOption = "newest" | "oldest" | "name";
 
 export default function History() {
-  const { isAuthenticated, isLoading } = useAuthRedirect();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const {
     setSections,
@@ -61,58 +59,78 @@ export default function History() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
 
+  // Handle authentication redirect
   useEffect(() => {
-    console.log("[HISTORY DEBUG] useEffect triggered with apiCall");
-    console.log("[HISTORY DEBUG] isAuthenticated:", isAuthenticated);
-    console.log("[HISTORY DEBUG] isLoading:", isLoading);
+    if (!authLoading && !isAuthenticated) {
+      console.log(
+        "[HISTORY DEBUG] User not authenticated, redirecting to login"
+      );
+      router.push("/login");
+      return;
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  // Fetch documents only when authenticated
+  useEffect(() => {
+    if (authLoading) {
+      console.log("[HISTORY DEBUG] Still loading authentication, waiting...");
+      return;
+    }
+
+    if (!isAuthenticated) {
+      console.log("[HISTORY DEBUG] Not authenticated, skipping document fetch");
+      return;
+    }
+
+    console.log("[HISTORY DEBUG] Authenticated, fetching documents...");
 
     const fetchDocuments = async () => {
-      console.log("[HISTORY DEBUG] Starting fetchDocuments");
       try {
-        console.log("[HISTORY DEBUG] Calling apiCall('/documents/')");
-        const res = await apiCall(`/documents/`);
-        console.log("[HISTORY DEBUG] apiCall response status:", res.status);
-        console.log("[HISTORY DEBUG] apiCall response ok:", res.ok);
+        setLoading(true);
+        setError(null);
+
+        console.log("[HISTORY DEBUG] Making API call to /documents/");
+        const res = await apiCall("/documents/");
+        console.log("[HISTORY DEBUG] API response status:", res.status);
 
         if (!res.ok) {
           const errorText = await res.text();
-          console.log("[HISTORY DEBUG] Error response text:", errorText);
+          console.log("[HISTORY DEBUG] API error response:", errorText);
           throw new Error(
             `Error retrieving documents: ${res.status} - ${errorText}`
           );
         }
 
         const data = await res.json();
-        console.log("[HISTORY DEBUG] Documents data:", data);
+        console.log("[HISTORY DEBUG] Documents data received:", data);
 
         if (data.error) {
-          console.log("[HISTORY DEBUG] Data contains error:", data.error);
           throw new Error(data.error);
         }
 
         const docs = data.documents || [];
-        console.log("[HISTORY DEBUG] Setting documents:", docs);
+        console.log(
+          "[HISTORY DEBUG] Setting documents:",
+          docs.length,
+          "documents"
+        );
         setDocuments(docs);
         setFilteredDocuments(docs);
       } catch (err) {
-        console.error("[HISTORY DEBUG] Failed to fetch documents:", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to load document history"
-        );
+        console.error("[HISTORY DEBUG] Error fetching documents:", err);
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "Failed to load document history";
+        setError(errorMessage);
         toast.error("Failed to load document history");
       } finally {
-        console.log("[HISTORY DEBUG] Setting loading to false");
         setLoading(false);
       }
     };
 
-    if (!isLoading) {
-      console.log("[HISTORY DEBUG] Not loading, calling fetchDocuments");
-      fetchDocuments();
-    } else {
-      console.log("[HISTORY DEBUG] Still loading, skipping fetchDocuments");
-    }
-  }, [apiCall, isLoading, isAuthenticated]);
+    fetchDocuments();
+  }, [authLoading, isAuthenticated, apiCall]);
 
   // Filter and sort documents
   useEffect(() => {
@@ -142,6 +160,29 @@ export default function History() {
 
     setFilteredDocuments(filtered);
   }, [documents, searchQuery, sortBy]);
+
+  // Show loading state while authentication is being checked
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, show a message (redirect should happen via useEffect)
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
 
   const formatDate = (dateString: string) => {
     try {
@@ -234,62 +275,6 @@ export default function History() {
     // Re-trigger the fetch
     window.location.reload();
   };
-
-  const handleDeleteDocument = async (
-    documentId: string,
-    documentName: string
-  ) => {
-    // Confirm deletion
-    if (
-      !window.confirm(
-        `Are you sure you want to delete "${documentName}"? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
-
-    try {
-      const res = await apiCall(`/documents/${documentId}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(
-          `Error deleting document: ${res.status} - ${errorText}`
-        );
-      }
-
-      // Remove the document from the local state
-      setDocuments((prevDocs) =>
-        prevDocs.filter((doc) => doc.id !== documentId)
-      );
-      setFilteredDocuments((prevDocs) =>
-        prevDocs.filter((doc) => doc.id !== documentId)
-      );
-
-      toast.success("Document deleted successfully!");
-    } catch (err) {
-      console.error("Failed to delete document:", err);
-      toast.error(
-        err instanceof Error ? err.message : "Failed to delete document"
-      );
-    }
-  };
-
-  // Auth loading check
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-purple"></div>
-      </div>
-    );
-  }
-
-  // Don't render if not authenticated
-  if (!isAuthenticated) {
-    return null;
-  }
 
   // Loading State
   if (loading) {
@@ -492,16 +477,6 @@ export default function History() {
                       <span>{getRelativeTime(doc.upload_date)}</span>
                     </div>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteDocument(doc.id, doc.filename);
-                    }}
-                    className="p-2 rounded-lg hover:bg-status-error/10 text-text-tertiary hover:text-status-error transition-colors"
-                    title="Delete document"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
                 </div>
 
                 {/* Document Stats */}
@@ -568,26 +543,14 @@ export default function History() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 ml-4">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteDocument(doc.id, doc.filename);
-                    }}
-                    className="p-2 rounded-lg hover:bg-status-error/10 text-text-tertiary hover:text-status-error transition-colors"
-                    title="Delete document"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                  <Button
-                    variant="secondary"
-                    onClick={() => handleViewDocument(doc.id)}
-                    className="group-hover:bg-accent-purple group-hover:text-white transition-colors"
-                  >
-                    View Analysis
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
+                <Button
+                  variant="secondary"
+                  onClick={() => handleViewDocument(doc.id)}
+                  className="ml-4 group-hover:bg-accent-purple group-hover:text-white transition-colors"
+                >
+                  View Analysis
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
               </div>
             </Card>
           ))}

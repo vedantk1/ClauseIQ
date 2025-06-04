@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns="http://www.w3.org/2000/svg"
+   width="1024"
+   height="1024"
+   viewBox="0 0 1024 1024">
+  <!-- all strokes, no fills – fully transparent background -->
+  <!-- Lid -->
+  <path d="M256 256 H768" stroke="#707070" stroke-width="120" stroke-linecap="round" fill="none"/>
+  <!-- Handle -->
+  <path d="M384 128 H640" stroke="#707070" stroke-width="120" stroke-linecap="round" fill="none"/>
+  <!-- Body outline (rounded bottom corners) -->
+  <path d="M304 256
+           V736
+           A96 96 0 0 0 400 832
+           H624
+           A96 96 0 0 0 720 736
+           V256"
+        stroke="#707070" stroke-width="120" stroke-linejoin="round" fill="none"/>
+  <!-- Inner separators (slightly thinner so they don’t overwhelm) -->
+  <path d="M448 384 V704" stroke="#707070" stroke-width="90" stroke-linecap="round" fill="none"/>
+  <path d="M576 384 V704" stroke="#707070" stroke-width="90" stroke-linecap="round" fill="none"/>
+</svg>
