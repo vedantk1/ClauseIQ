@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, status
 import pdfplumber
 from fastapi.middleware.cors import CORSMiddleware
 import re
@@ -7,17 +7,61 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 import uuid
 import os
-import json
 import asyncio
 from openai import AsyncOpenAI, OpenAIError
 from config import (
     OPENAI_API_KEY, 
     CORS_ORIGINS, 
-    STORAGE_DIR, 
     MAX_FILE_SIZE_MB, 
     ALLOWED_FILE_TYPES
 )
 from database import get_mongo_storage
+from email_service import send_password_reset_email
+from auth import (
+    create_access_token,
+    create_refresh_token,
+    verify_token,
+    get_password_hash,
+    verify_password,
+    get_current_user,
+    UserCreate,
+    UserLogin,
+    UserResponse,
+    Token,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    create_password_reset_token,
+    verify_password_reset_token,
+    validate_password
+)
+
+# Constants
+MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+
+def validate_file(file: UploadFile):
+    """Validate uploaded file for size, type, and security."""
+    # Check file size
+    if hasattr(file, 'size') and file.size and file.size > MAX_FILE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size allowed: {MAX_FILE_SIZE_MB}MB"
+        )
+    
+    # Check file type if filename is provided
+    if file.filename:
+        # Check for unsafe filename patterns
+        if '..' in file.filename or '/' in file.filename or '\\' in file.filename:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid filename - path traversal characters not allowed"
+            )
+        
+        # Check file extension
+        if not any(file.filename.lower().endswith(ext) for ext in ALLOWED_FILE_TYPES):
+            raise HTTPException(
+                status_code=400,
+                detail=f"File type not supported. Allowed types: {', '.join(ALLOWED_FILE_TYPES)}"
+            )
 
 # Initialize OpenAI client if API key is provided and valid
 if OPENAI_API_KEY and OPENAI_API_KEY != "your_api_key_here" and OPENAI_API_KEY.startswith("sk-"):
@@ -45,25 +89,6 @@ async def startup_event():
         print(f"Warning: MongoDB connection failed: {e}")
         print("Application will continue but document storage may not work properly")
 
-# Helper class for document storage - MongoDB wrapper for backward compatibility
-class DocumentStorage:
-    """Backward-compatible wrapper for MongoDB storage."""
-    
-    @staticmethod
-    def save_document(document_dict):
-        """Save document using MongoDB storage."""
-        return get_mongo_storage().save_document(document_dict)
-
-    @staticmethod
-    def get_document(doc_id):
-        """Get document using MongoDB storage."""
-        return get_mongo_storage().get_document(doc_id)
-
-    @staticmethod
-    def get_all_documents():
-        """Get all documents using MongoDB storage."""
-        return get_mongo_storage().get_all_documents()
-
 # CORS settings with configurable origins
 app.add_middleware(
     CORSMiddleware,
@@ -79,6 +104,9 @@ class ProcessDocumentResponse(BaseModel):
     full_text: str # Or a snippet/confirmation
     summary: str
 
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
 class Section(BaseModel):
     heading: str
     summary: Optional[str] = None
@@ -90,36 +118,217 @@ async def root():
     """Health check endpoint."""
     return {"message": "Legal AI Backend is running", "version": "1.0.0"}
 
-# File validation constants
-MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024  # Convert MB to bytes
-
-def validate_file(file: UploadFile) -> None:
-    """Validate uploaded file for security and constraints."""
-    # Check file size
-    if hasattr(file, 'size') and file.size and file.size > MAX_FILE_SIZE_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail=f"File too large. Maximum size allowed: {MAX_FILE_SIZE_MB}MB"
-        )
-    
-    # Check file type
-    if file.filename:
-        file_extension = os.path.splitext(file.filename)[1].lower()
-        if file_extension not in ALLOWED_FILE_TYPES:
+# Authentication endpoints
+@app.post("/auth/register", response_model=Token)
+async def register(user_data: UserCreate):
+    """Register a new user and return authentication tokens."""
+    try:
+        storage = get_mongo_storage()
+        
+        # Check if user already exists
+        existing_user = storage.get_user_by_email(user_data.email)
+        if existing_user:
             raise HTTPException(
                 status_code=400,
-                detail=f"File type not supported. Allowed types: {', '.join(ALLOWED_FILE_TYPES)}"
+                detail="User with this email already exists"
             )
-    
-    # Check filename for security
-    if file.filename and ('..' in file.filename or '/' in file.filename or '\\' in file.filename):
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid filename. Filename contains unsafe characters."
+        
+        # Hash password
+        hashed_password = get_password_hash(user_data.password)
+        
+        # Create user data
+        user_id = str(uuid.uuid4())
+        user_dict = {
+            "id": user_id,
+            "email": user_data.email,
+            "hashed_password": hashed_password,
+            "full_name": user_data.full_name
+        }
+        
+        # Save user to database
+        storage.create_user(user_dict)
+        
+        # Create tokens for immediate login after registration
+        access_token = create_access_token(data={"sub": user_id})
+        refresh_token = create_refresh_token(data={"sub": user_id})
+        
+        return Token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer"
         )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error creating user: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.post("/auth/login", response_model=Token)
+async def login(user_data: UserLogin):
+    """Authenticate user and return tokens."""
+    try:
+        storage = get_mongo_storage()
+        
+        # Get user by email
+        user = storage.get_user_by_email(user_data.email)
+        if not user:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid email or password"
+            )
+        
+        # Verify password
+        if not verify_password(user_data.password, user["hashed_password"]):
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid email or password"
+            )
+        
+        # Create tokens
+        access_token = create_access_token(data={"sub": user["id"]})
+        refresh_token = create_refresh_token(data={"sub": user["id"]})
+        
+        return Token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error during login: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.post("/auth/refresh", response_model=Token)
+async def refresh_access_token(request: RefreshTokenRequest):
+    """Refresh access token using refresh token."""
+    try:
+        # Verify refresh token
+        payload = verify_token(request.refresh_token)
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        # Check if user still exists
+        storage = get_mongo_storage()
+        user = storage.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        # Create new tokens
+        access_token = create_access_token(data={"sub": user_id})
+        new_refresh_token = create_refresh_token(data={"sub": user_id})
+        
+        return Token(
+            access_token=access_token,
+            refresh_token=new_refresh_token,
+            token_type="bearer"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error refreshing token: {str(e)}")
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+@app.get("/auth/me", response_model=UserResponse)
+async def get_current_user_info(current_user: dict = Depends(get_current_user)):
+    """Get current user information."""
+    return UserResponse(
+        id=current_user["id"],
+        email=current_user["email"],
+        full_name=current_user["full_name"]
+    )
+
+@app.post("/auth/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest):
+    """Send password reset email to user."""
+    try:
+        storage = get_mongo_storage()
+        
+        # Check if user exists
+        user = storage.get_user_by_email(request.email)
+        if not user:
+            # Don't reveal whether email exists or not for security
+            return {"message": "If an account with this email exists, you will receive a password reset link."}
+        
+        # Create password reset token
+        reset_token = create_password_reset_token(request.email)
+        
+        # Send password reset email
+        email_sent = await send_password_reset_email(
+            to_email=request.email,
+            full_name=user["full_name"],
+            reset_token=reset_token
+        )
+        
+        if email_sent:
+            return {"message": "If an account with this email exists, you will receive a password reset link."}
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to send password reset email. Please try again later."
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in forgot password: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.post("/auth/reset-password")
+async def reset_password(request: ResetPasswordRequest):
+    """Reset user password using reset token."""
+    try:
+        # Verify reset token
+        email = verify_password_reset_token(request.token)
+        if not email:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid or expired reset token"
+            )
+        
+        # Validate new password
+        if not validate_password(request.new_password):
+            raise HTTPException(
+                status_code=400,
+                detail="Password must be at least 8 characters long and contain letters and numbers"
+            )
+        
+        storage = get_mongo_storage()
+        
+        # Check if user still exists
+        user = storage.get_user_by_email(email)
+        if not user:
+            raise HTTPException(
+                status_code=400,
+                detail="User account not found"
+            )
+        
+        # Hash new password
+        new_hashed_password = get_password_hash(request.new_password)
+        
+        # Update user password
+        password_updated = storage.update_user_password(email, new_hashed_password)
+        
+        if not password_updated:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to update password"
+            )
+        
+        return {"message": "Password reset successfully. You can now log in with your new password."}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in reset password: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.post("/extract-text/")
-async def extract_text(file: UploadFile = File(...)):
+async def extract_text(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
     """Extract text from uploaded PDF file."""
     validate_file(file)
     
@@ -200,7 +409,7 @@ def extract_sections(text: str) -> List[Section]:
     return sections
 
 @app.post("/analyze/")
-async def analyze_document(file: UploadFile = File(...)):
+async def analyze_document(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
     """Extract text and split into logical sections for analysis."""
     validate_file(file)
     
@@ -252,11 +461,13 @@ async def analyze_document(file: UploadFile = File(...)):
             "filename": file.filename,
             "upload_date": datetime.now().isoformat(),
             "text": text,
-            "sections": section_dicts
+            "sections": section_dicts,
+            "user_id": current_user["id"]
         }
         
-        # Save document to our file storage
-        DocumentStorage.save_document(document)
+        # Save document to our storage with user association
+        storage = get_mongo_storage()
+        storage.save_document_for_user(document, current_user["id"])
         
         return {"sections": section_dicts}
         
@@ -277,21 +488,23 @@ async def analyze_document(file: UploadFile = File(...)):
                 print(f"Warning: Could not remove temporary file {temp_file_path}: {e}")
 
 @app.get("/documents/")
-async def get_documents():
-    """Retrieve all documents from the storage"""
+async def get_documents(current_user: dict = Depends(get_current_user)):
+    """Retrieve all documents for the current user"""
     try:
-        # Get documents from file storage
-        documents = DocumentStorage.get_all_documents()
+        # Get user-specific documents from storage
+        storage = get_mongo_storage()
+        documents = storage.get_documents_for_user(current_user["id"])
         return {"documents": documents}
     except Exception as e:
         print(f"Error retrieving documents: {str(e)}")
         return {"documents": [], "error": str(e)}
 
 @app.get("/documents/{document_id}")
-async def get_document(document_id: str):
-    """Retrieve a specific document by ID"""
+async def get_document(document_id: str, current_user: dict = Depends(get_current_user)):
+    """Retrieve a specific document by ID for the current user"""
     try:
-        document = DocumentStorage.get_document(document_id)
+        storage = get_mongo_storage()
+        document = storage.get_document_for_user(document_id, current_user["id"])
         if document:
             return document
         return {"error": "Document not found"}
@@ -370,7 +583,7 @@ SUMMARY:
         return f"Unexpected error generating summary: {str(e)}"
 
 @app.post("/process-document/", response_model=ProcessDocumentResponse)
-async def process_document(file: UploadFile = File(...)):
+async def process_document(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
     """
     Extracts text from an uploaded PDF, generates a summary for the entire document,
     saves it, and returns the summary.
@@ -415,10 +628,12 @@ async def process_document(file: UploadFile = File(...)):
             "upload_date": datetime.now().isoformat(),
             "text": extracted_text, # Storing full extracted text
             "ai_full_summary": ai_summary, # New field for the overall summary
-            "sections": [] # Keeping sections for potential future use or if analyze is still used
+            "sections": [], # Keeping sections for potential future use or if analyze is still used
+            "user_id": current_user["id"]
         }
         
-        DocumentStorage.save_document(document_data)
+        storage = get_mongo_storage()
+        storage.save_document_for_user(document_data, current_user["id"])
         
         return ProcessDocumentResponse(
             id=doc_id,
