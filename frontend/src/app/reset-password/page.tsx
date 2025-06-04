@@ -1,11 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/Button";
 import { ArrowLeft, CheckCircle, AlertCircle, Eye, EyeOff } from "lucide-react";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -14,7 +14,7 @@ export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [token, setToken] = useState("");
-  
+
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -63,16 +63,19 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/auth/reset-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token: token,
-          new_password: newPassword,
-        }),
-      });
+      const response = await fetch(
+        "http://localhost:8000/auth/reset-password",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token: token,
+            new_password: newPassword,
+          }),
+        }
+      );
 
       if (response.ok) {
         setIsSuccess(true);
@@ -80,7 +83,7 @@ export default function ResetPasswordPage() {
         const data = await response.json();
         setError(data.detail || "Failed to reset password. Please try again.");
       }
-    } catch (error) {
+    } catch {
       setError("Network error. Please check your connection and try again.");
     } finally {
       setIsLoading(false);
@@ -95,19 +98,17 @@ export default function ResetPasswordPage() {
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-accent-green/10 flex items-center justify-center">
               <CheckCircle className="w-8 h-8 text-accent-green" />
             </div>
-            
+
             <h2 className="text-2xl font-heading font-bold text-text-primary mb-4">
               Password Reset Successful
             </h2>
-            
+
             <p className="text-text-secondary mb-6">
-              Your password has been successfully reset. You can now sign in with your new password.
+              Your password has been successfully reset. You can now sign in
+              with your new password.
             </p>
 
-            <Button
-              onClick={() => router.push("/login")}
-              className="w-full"
-            >
+            <Button onClick={() => router.push("/login")} className="w-full">
               Sign In Now
             </Button>
           </div>
@@ -124,13 +125,14 @@ export default function ResetPasswordPage() {
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-accent-rose/10 flex items-center justify-center">
               <AlertCircle className="w-8 h-8 text-accent-rose" />
             </div>
-            
+
             <h2 className="text-2xl font-heading font-bold text-text-primary mb-4">
               Invalid Reset Link
             </h2>
-            
+
             <p className="text-text-secondary mb-6">
-              This password reset link is invalid or has expired. Please request a new password reset.
+              This password reset link is invalid or has expired. Please request
+              a new password reset.
             </p>
 
             <div className="space-y-3">
@@ -140,7 +142,7 @@ export default function ResetPasswordPage() {
               >
                 Request New Reset Link
               </Button>
-              
+
               <Link
                 href="/login"
                 className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
@@ -193,11 +195,16 @@ export default function ResetPasswordPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
               <p className="text-xs text-text-muted mt-1">
-                Password must be at least 8 characters and contain letters and numbers
+                Password must be at least 8 characters and contain letters and
+                numbers
               </p>
             </div>
 
@@ -225,7 +232,11 @@ export default function ResetPasswordPage() {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
                 >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -240,7 +251,9 @@ export default function ResetPasswordPage() {
               type="submit"
               variant="primary"
               size="lg"
-              disabled={isLoading || !newPassword.trim() || !confirmPassword.trim()}
+              disabled={
+                isLoading || !newPassword.trim() || !confirmPassword.trim()
+              }
               className="w-full"
             >
               {isLoading ? "Resetting..." : "Reset Password"}
@@ -259,5 +272,26 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md mx-auto">
+        <div className="bg-bg-surface rounded-lg border border-border-muted p-8 shadow-lg text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-purple mx-auto mb-4"></div>
+          <p className="text-text-secondary">Loading...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
