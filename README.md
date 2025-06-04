@@ -1,8 +1,8 @@
-# ClauseIQ - Employment Contract Analyzer
+# ClauseIQ - Employment Contract Analyzer (Dev Branch)
 
 An intelligent legal document analysis tool that uses AI to help non-lawyers understand employment contracts by providing clear, plain-language summaries of complex legal text.
 
-![ClauseIQ Demo](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![ClauseIQ Demo](https://img.shields.io/badge/Status-Development-orange)
 ![Python](https://img.shields.io/badge/Python-3.13-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-15.3.3-black)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.12-009688)
@@ -165,6 +165,32 @@ docker-compose up
 - **Input Sanitization**: Comprehensive validation of all inputs
 - **Environment Security**: Sensitive credentials in environment variables
 - **CORS Configuration**: Configurable cross-origin resource sharing
+
+## 📚 Documentation
+
+**🔄 Living Resource System**: Our documentation is a continuously updated living resource, maintained by AI agents and developers to ensure accuracy and relevance.
+
+Comprehensive documentation is available in the [`documentation/`](./documentation/) folder:
+
+### **🤖 AI Agent Handover**
+
+- **[Handover Report](./documentation/AI_AGENT_HANDOVER_REPORT.md)** - Complete project overview for AI agents
+- **[Technical Appendix](./documentation/TECHNICAL_APPENDIX.md)** - Implementation details and code examples
+- **[Handover Checklist](./documentation/HANDOVER_CHECKLIST.md)** - Step-by-step verification guide
+
+### **🔧 Development**
+
+- **[Contributing Guide](./documentation/CONTRIBUTING.md)** - Development workflow and guidelines
+- **[Knowledge Base](./documentation/AI_AGENT_KNOWLEDGE_BASE.md)** - Technical reference
+- **[Deployment Guide](./documentation/DEPLOYMENT-GUIDE.md)** - Production deployment
+- **[Project Changelog](./documentation/PROJECT_CHANGELOG.md)** - Complete project evolution history
+
+### **📖 Features**
+
+- **[Password Reset Setup](./documentation/FORGOT_PASSWORD_SETUP.md)** - Authentication implementation
+- **[MongoDB Migration](./documentation/MONGODB_MIGRATION_SUMMARY.md)** - Database migration guide
+
+**👉 Start with [Documentation Index](./documentation/README.md) for complete navigation**
 
 ## Usage
 
