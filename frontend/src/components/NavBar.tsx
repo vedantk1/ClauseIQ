@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import clsx from "clsx";
 
@@ -9,12 +9,19 @@ const links = [
   { href: "/review", label: "Review" },
   { href: "/history", label: "History" },
   { href: "/analytics", label: "Analytics" },
+  { href: "/settings", label: "Settings" },
   { href: "/about", label: "About" },
 ];
 
 export default function NavBar() {
   const path = usePathname();
+  const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
 
   return (
     <nav className="bg-bg-surface border-b border-border-muted">
@@ -66,7 +73,7 @@ export default function NavBar() {
                     Welcome, {user?.full_name || user?.email}
                   </span>
                   <button
-                    onClick={logout}
+                    onClick={handleLogout}
                     className="px-3 py-1 text-sm font-medium text-text-secondary hover:text-text-primary border border-border-muted hover:border-border-primary rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-2 focus-visible:ring-offset-bg-surface"
                   >
                     Sign Out
@@ -137,7 +144,7 @@ export default function NavBar() {
                 {user?.full_name || user?.email}
               </div>
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="block w-full text-left px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-bg-elevated rounded-md transition-colors"
               >
                 Sign Out

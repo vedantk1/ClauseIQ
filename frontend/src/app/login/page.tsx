@@ -9,6 +9,7 @@ export default function LoginPage() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
 
+  // If authenticated, redirect to home
   useEffect(() => {
     if (isAuthenticated) {
       router.push("/");
@@ -18,10 +19,6 @@ export default function LoginPage() {
   const handleAuthSuccess = () => {
     router.push("/");
   };
-
-  if (isAuthenticated) {
-    return null; // Prevent flash while redirecting
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">

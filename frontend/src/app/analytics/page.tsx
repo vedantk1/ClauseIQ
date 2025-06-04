@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import Skeleton from "@/components/Skeleton";
@@ -46,6 +47,7 @@ interface AnalyticsData {
 type TimeRange = "7d" | "30d" | "90d" | "1y";
 
 export default function AnalyticsDashboard() {
+  const { isAuthenticated, isLoading } = useAuthRedirect();
   const router = useRouter();
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
     null
@@ -158,6 +160,20 @@ export default function AnalyticsDashboard() {
         return "bg-surface-secondary";
     }
   };
+
+  // Auth loading check
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-purple"></div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   if (loading) {
     return (

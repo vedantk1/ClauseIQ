@@ -1,4 +1,23 @@
+"use client";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
+
 export default function About() {
+  const { isAuthenticated, isLoading } = useAuthRedirect();
+
+  // Auth loading check
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-purple"></div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-2xl font-semibold mb-6">About ClauseIQ</h1>
