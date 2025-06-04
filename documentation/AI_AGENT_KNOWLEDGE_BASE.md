@@ -1,4 +1,39 @@
-# 🤖 AI Agent Knowledge Base
+# **Last Updated:** June 4, 2025 - 6:30 PM
+
+**Purpose:** Essential knowledge repository for AI coding agents working on the ClauseIQ project  
+**Instructions:** READ THIS FILE FIRST when starting any agent session. UPDATE before every major commit.
+
+---
+
+## 🚨 **CRITICAL RECENT UPDATE (June 4, 2025 - 6:00 PM)**
+
+### **🔧 MAJOR BUG FIX COMPLETED:**
+
+- ✅ **Issue**: HTTP 500 errors in `/process-document/` endpoint due to missing `generate_document_summary` function
+- ✅ **Resolution**: Added comprehensive document-level AI summary function with:
+  - Employment contract-specific OpenAI prompts
+  - 4000 character text limit handling
+  - 500 token response limit
+  - Robust error handling for API failures
+- ✅ **Deployment**: Fix successfully deployed to production
+- ✅ **Status**: All document processing now fully functional
+
+### **🌐 URL UPDATES COMPLETED:**
+
+- ✅ **Frontend URLs**: Updated to new Vercel domains across all documentation
+- ✅ **Backend URL**: Updated to `legal-ai-6ppy.onrender.com` across all files
+- ✅ **Documentation**: 14 files updated with current deployment URLs
+
+### **🤖 NEW FEATURE DISCOVERY:**
+
+- ✅ **AI Model Selection Feature**: Discovered completed but undocumented feature implementation
+  - Users can now select preferred AI model (GPT-3.5-turbo, GPT-4.1-mini, GPT-4.1-nano, GPT-4O-mini, GPT-4O)
+  - Full backend API with preferences endpoints and model management
+  - Complete frontend Settings page with responsive UI
+  - Authentication integration and database persistence
+  - All document processing now uses user's preferred model
+
+--- Agent Knowledge Base
 
 **Last Updated:** June 3, 2025  
 **Purpose:** Essential knowledge repository for AI coding agents working on the ClauseIQ project  
@@ -44,6 +79,7 @@ ClauseIQ is an employment contract analyzer that helps non-lawyers understand co
 - **Backend:** FastAPI + Python 3.13 + MongoDB + OpenAI API
 - **Deployment:** Vercel (frontend) + Render (backend)
 - **Database:** MongoDB Atlas (migrated from JSON files)
+- **AI Models:** User-selectable models (GPT-3.5-turbo, GPT-4.1-mini, GPT-4.1-nano, GPT-4O-mini, GPT-4O)
 
 ---
 
@@ -51,8 +87,8 @@ ClauseIQ is an employment contract analyzer that helps non-lawyers understand co
 
 ### **Current Deployment:**
 
-- **Frontend:** https://legalai-by79fe7l0-vedant-khandelwals-projects-4795dd43.vercel.app
-- **Backend:** https://clauseiq-6ppy.onrender.com
+- **Frontend:** https://legalai-eight.vercel.app
+- **Backend:** https://legal-ai-6ppy.onrender.com
 - **Status:** ✅ BOTH SERVICES RUNNING
 
 ### **🔒 CRITICAL DEPLOYMENT DISCOVERY (June 2, 2025):**
@@ -67,8 +103,8 @@ ClauseIQ is an employment contract analyzer that helps non-lawyers understand co
 
 ```bash
 curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" \
-     -H "Referer: https://legalai-by79fe7l0-vedant-khandelwals-projects-4795dd43.vercel.app/" \
-     https://clauseiq-6ppy.onrender.com/
+     -H "Referer: https://legalai-eight.vercel.app/" \
+     https://legal-ai-6ppy.onrender.com/
 ```
 
 ### **Environment Variables:**
@@ -76,7 +112,7 @@ curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit
 **Vercel (Frontend):**
 
 ```
-NEXT_PUBLIC_API_URL=https://clauseiq-6ppy.onrender.com
+NEXT_PUBLIC_API_URL=https://legal-ai-6ppy.onrender.com
 NEXT_PUBLIC_MAX_FILE_SIZE_MB=10
 ```
 
@@ -85,8 +121,16 @@ NEXT_PUBLIC_MAX_FILE_SIZE_MB=10
 ```
 MONGODB_URI=mongodb+srv://... (Atlas connection)
 OPENAI_API_KEY=sk-proj-... (GPT-3.5-turbo access)
-CORS_ORIGINS=https://legalai-by79fe7l0-vedant-khandelwals-projects-4795dd43.vercel.app
+CORS_ORIGINS=https://legalai-eight.vercel.app
 ```
+
+### **📍 All Vercel Deployment URLs:**
+
+- **Primary (Production):** https://legalai-eight.vercel.app
+- **Git Branch:** https://legalai-git-main-vedant-khandelwals-projects-4795dd43.vercel.app
+- **Preview:** https://legalai-d13yavbvh-vedant-khandelwals-projects-4795dd43.vercel.app
+
+> **Note:** All three URLs point to the same main branch deployment. Use the primary URL for production access.
 
 ---
 
@@ -113,6 +157,50 @@ CORS_ORIGINS=https://legalai-by79fe7l0-vedant-khandelwals-projects-4795dd43.verc
   "processing_status": "completed"
 }
 ```
+
+---
+
+## 🤖 AI MODEL SELECTION FEATURE
+
+### **Feature Overview:**
+
+ClauseIQ includes a complete AI model selection system allowing users to choose their preferred OpenAI model for document analysis.
+
+### **Available Models:**
+
+1. **GPT-3.5-turbo** - Fast and cost-effective (default)
+2. **GPT-4.1-mini** - Balanced performance and accuracy
+3. **GPT-4.1-nano** - Ultra lightweight and fast
+4. **GPT-4O-mini** - Optimized for speed and efficiency
+5. **GPT-4O** - Most advanced model with superior accuracy
+
+### **Implementation Status:**
+
+- ✅ **Backend API**: Complete with 3 endpoints
+  - `GET /auth/preferences` - Retrieve user's model preference
+  - `PUT /auth/preferences` - Update user's preferred model
+  - `GET /auth/available-models` - List all available models
+- ✅ **Frontend UI**: Settings page at `/settings` with responsive design
+- ✅ **Database Integration**: User preferences stored in MongoDB
+- ✅ **Authentication**: Secure, user-specific preferences
+- ✅ **Document Processing**: All AI calls use user's selected model
+
+### **API Integration:**
+
+All ClauseIQ document processing functions now accept model parameter:
+
+- `generate_summary()` - Section-level summaries
+- `generate_document_summary()` - Document-level summaries
+- `/analyze/` endpoint - Uses user's preferred model
+- `/process-document/` endpoint - Uses user's preferred model
+
+### **User Experience:**
+
+1. User logs in → Preferences automatically loaded
+2. Navigate to Settings → Click Settings in navigation
+3. Select AI Model → Choose from available options
+4. Save Changes → Instant feedback and persistence
+5. Use ClauseIQ → All analysis uses selected model
 
 ---
 
@@ -309,6 +397,36 @@ const ProtectedComponent = () => {
 ---
 
 ## 📝 AGENT UPDATE LOG
+
+### **June 4, 2025 - 6:00 PM - CRITICAL BUG FIX & URL Updates**
+
+- **CRITICAL BUG RESOLVED:**
+
+  - Added missing `generate_document_summary` function causing HTTP 500 errors in `/process-document/`
+  - Function generates document-level AI summaries using OpenAI GPT-3.5-turbo
+  - Employment contract-specific prompts with 4000 char limit and robust error handling
+  - Successfully deployed to production - all document processing now functional
+
+- **DEPLOYMENT URL UPDATES:**
+
+  - Updated all documentation with new deployment URLs (14 files modified)
+  - Frontend: Updated to `legalai-eight.vercel.app` and documented all 3 Vercel URLs
+  - Backend: Updated to `legal-ai-6ppy.onrender.com` across all files
+  - Completed git merge of dev→main branch and pushed to production
+
+- **PRODUCTION STATUS:**
+
+  - ✅ Backend: Auto-deployed with bug fix
+  - ✅ Frontend: Auto-deployed with updated API URLs
+  - ✅ Testing: HTTP 500 errors resolved, document processing verified
+  - ✅ Documentation: All URLs synchronized with current deployments
+
+- **AI MODEL SELECTION FEATURE DOCUMENTATION:**
+  - ✅ Added comprehensive feature documentation to knowledge base
+  - ✅ Updated handover report with new API endpoints and frontend features
+  - ✅ Updated main README.md with AI Model Selection feature
+  - ✅ Documented migration script (`migrate_user_preferences.py`) for existing users
+  - ✅ All undocumented features now properly integrated into main documentation
 
 ### **June 3, 2025 - Major Project Cleanup & Authentication Fixes**
 

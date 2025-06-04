@@ -190,6 +190,9 @@ GET  /auth/me             # Get current user info
 POST /auth/refresh        # Refresh access token
 POST /auth/forgot-password # Request password reset
 POST /auth/reset-password  # Reset password with token
+GET  /auth/preferences    # Get user's AI model preferences
+PUT  /auth/preferences    # Update user's AI model preferences
+GET  /auth/available-models # Get available AI models
 ```
 
 ### Document Endpoints:
@@ -218,6 +221,7 @@ GET  /docs              # Swagger documentation
 - **Login/Register**: Unified authentication form
 - **Forgot Password**: Email request form
 - **Reset Password**: Password reset with validation
+- **Settings Page**: AI model selection and user preferences
 - **Document Viewer**: Display extracted text and AI analysis
 
 ### UI/UX Features:
@@ -268,7 +272,7 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 Frontend (`.env.local`):
 
 ```env
-NEXT_PUBLIC_API_URL=https://clauseiq-6ppy.onrender.com
+NEXT_PUBLIC_API_URL=https://legal-ai-6ppy.onrender.com
 ```
 
 ---
@@ -461,7 +465,7 @@ documents = db["documents"].find({})
 ### Important URLs:
 
 - **Frontend**: Vercel auto-generated URL
-- **Backend**: https://clauseiq-6ppy.onrender.com
+- **Backend**: https://legal-ai-6ppy.onrender.com
 - **Database**: MongoDB Atlas cluster
 - **Documentation**: http://localhost:8000/docs (local)
 

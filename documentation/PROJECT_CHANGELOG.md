@@ -30,6 +30,58 @@
 
 ## 🔄 **RECENT CHANGES**
 
+### **[2025-06-04] - CRITICAL BUG FIX: HTTP 500 Error Resolution + URL Updates**
+
+**Type**: Critical Bug Fix + Documentation Update  
+**Impact**: Backend + Frontend + Documentation  
+**Agent**: GitHub Copilot
+
+**Changes:**
+
+- ✅ **CRITICAL FIX**: Added missing `generate_document_summary` function in `backend/main.py`
+- ✅ **Bug Resolution**: Fixed HTTP 500 errors in `/process-document/` endpoint
+- ✅ **Function Implementation**: Added comprehensive document-level AI summary generation
+- ✅ **Error Handling**: Added proper OpenAI API error handling and fallback responses
+- ✅ **Git Operations**: Successfully merged dev branch into main branch (fast-forward)
+- ✅ **Deployment**: Pushed updated main branch to remote origin (commit a9dd1aa)
+- ✅ **URL Updates**: Updated all documentation with new deployment URLs:
+  - **Frontend**: Updated to `legalai-eight.vercel.app` (primary)
+  - **Backend**: Updated to `legal-ai-6ppy.onrender.com`
+- ✅ **Documentation Sync**: Updated 14 files across documentation and config
+
+**Technical Details:**
+
+```python
+async def generate_document_summary(document_text: str, filename: str = "", model: str = "gpt-3.5-turbo") -> str:
+    """Generate a summary for an entire document using OpenAI's API"""
+    # Employment contract-specific prompt
+    # 4000 character text limit with 500 token response limit
+    # Comprehensive error handling for API failures
+```
+
+**Files Modified:**
+
+- `backend/main.py` (added missing function)
+- `frontend/.env.example` (backend URL update)
+- `documentation/AI_AGENT_KNOWLEDGE_BASE.md` (URLs + date update)
+- `documentation/TECHNICAL_APPENDIX.md` (URL updates)
+- `documentation/HANDOVER_CHECKLIST.md` (URL updates)
+- `documentation/AI_AGENT_HANDOVER_REPORT.md` (URL updates)
+- `documentation/PROJECT_CHANGELOG.md` (URL updates)
+- `documentation/HANDOVER_COMPLETION_SUMMARY.md` (URL updates)
+- `documentation/REBRANDING_SUMMARY.md` (URL updates)
+
+**Production Status:**
+
+- ✅ **Backend**: Auto-deployed to Render with bug fix
+- ✅ **Frontend**: Auto-deployed to Vercel with updated API URLs
+- ✅ **Testing**: HTTP 500 errors resolved, document processing functional
+- ✅ **Documentation**: All URLs and references updated
+
+**🎉 CRITICAL ISSUE RESOLVED: Application now fully operational in production**
+
+---
+
 ### **[2025-06-04] - Living Resource System Implementation (COMPLETION)**
 
 **Type**: Documentation + System Architecture  
@@ -132,7 +184,7 @@
 **Production URLs:**
 
 - Frontend: Vercel auto-deployment
-- Backend: https://clauseiq-6ppy.onrender.com
+- Backend: https://legal-ai-6ppy.onrender.com
 
 ---
 
@@ -272,7 +324,7 @@
 ### **Active Deployments**
 
 - **Frontend**: Vercel (auto-deployment from main branch)
-- **Backend**: Render (https://clauseiq-6ppy.onrender.com)
+- **Backend**: Render (https://legal-ai-6ppy.onrender.com)
 - **Database**: MongoDB Atlas (3 active user accounts)
 - **Email Service**: Gmail SMTP (clauseiq@gmail.com)
 

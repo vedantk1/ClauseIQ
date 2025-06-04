@@ -73,7 +73,7 @@
    ```
 3. **Check production deployments**:
    - Frontend: Verify Vercel URL works
-   - Backend: Test https://clauseiq-6ppy.onrender.com
+   - Backend: Test https://legal-ai-6ppy.onrender.com
 4. **Review current user accounts** (3 accounts confirmed)
 
 ### **FIRST DAY:**
@@ -105,7 +105,7 @@ OpenAI: sk-proj-itnfYKSRsy1yNytqHWMnZP2AsiUFEqAYujaWncV9_OfQl6YvRloQIDXlVp97Cz5F
 
 - Local Backend: http://localhost:8000
 - Local Frontend: http://localhost:3000
-- Production Backend: https://clauseiq-6ppy.onrender.com
+- Production Backend: https://legal-ai-6ppy.onrender.com
 - Production Frontend: [Vercel auto-generated]
 - API Docs: http://localhost:8000/docs
 

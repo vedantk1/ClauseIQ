@@ -9,9 +9,11 @@ An intelligent legal document analysis tool that uses AI to help non-lawyers und
 
 ## Features
 
-- **AI-Powered Summaries**: Uses OpenAI GPT-3.5-turbo to generate clear, concise summaries
+- **AI-Powered Summaries**: Uses OpenAI GPT models to generate clear, concise summaries
+- **AI Model Selection**: Users can choose their preferred AI model (GPT-3.5-turbo, GPT-4.1-mini, GPT-4.1-nano, GPT-4O-mini, GPT-4O)
 - **PDF Text Extraction**: Robust PDF processing with `pdfplumber`
 - **Section Analysis**: Intelligent document segmentation and section-by-section analysis
+- **User Authentication**: Secure JWT-based authentication with password reset functionality
 - **Document Storage**: MongoDB integration for document history and retrieval
 - **Modern UI**: Clean, responsive Next.js interface with Tailwind CSS
 - **Security**: File validation, secure temporary file handling, and input sanitization

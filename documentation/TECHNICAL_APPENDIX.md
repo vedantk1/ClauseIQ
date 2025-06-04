@@ -283,7 +283,7 @@ STORAGE_DIR=./documents_storage
 NEXT_PUBLIC_API_URL=http://localhost:8000
 
 # For production:
-# NEXT_PUBLIC_API_URL=https://clauseiq-6ppy.onrender.com
+# NEXT_PUBLIC_API_URL=https://legal-ai-6ppy.onrender.com
 
 # File Upload Configuration
 NEXT_PUBLIC_MAX_FILE_SIZE_MB=10
@@ -296,8 +296,8 @@ OPENAI_API_KEY=sk-proj-***
 MONGODB_URI=mongodb+srv://vedant:***@cluster0.vgw0eqn.mongodb.net/
 SMTP_USERNAME=clauseiq@gmail.com
 SMTP_PASSWORD=akul omqd saut awfo
-CORS_ORIGINS=https://your-vercel-app.vercel.app,http://localhost:3000
-FRONTEND_URL=https://your-vercel-app.vercel.app
+CORS_ORIGINS=https://legalai-eight.vercel.app,http://localhost:3000
+FRONTEND_URL=https://legalai-eight.vercel.app
 ```
 
 ---
@@ -479,7 +479,7 @@ services:
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://clauseiq-6ppy.onrender.com"
+    "NEXT_PUBLIC_API_URL": "https://legal-ai-6ppy.onrender.com"
   }
 }
 ```
