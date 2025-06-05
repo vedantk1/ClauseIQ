@@ -21,6 +21,17 @@ export default function Settings() {
   const [fullName, setFullName] = useState("");
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
+  // Debug logging for availableModels
+  React.useEffect(() => {
+    console.log("[SETTINGS DEBUG] availableModels:", availableModels);
+    console.log(
+      "[SETTINGS DEBUG] availableModels length:",
+      availableModels.length
+    );
+    console.log("[SETTINGS DEBUG] preferences:", preferences);
+    console.log("[SETTINGS DEBUG] selectedModel:", selectedModel);
+  }, [availableModels, preferences, selectedModel]);
+
   // Initialize selectedModel only once when preferences load
   React.useEffect(() => {
     if (preferences?.preferred_model && !hasInitialized) {

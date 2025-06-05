@@ -2,7 +2,7 @@
 Authentication and user management routes.
 """
 import uuid
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from database import get_mongo_storage
 from email_service import send_password_reset_email
 from auth import (
@@ -81,14 +81,20 @@ async def register(user_data: UserCreate):
 
 
 @router.post("/login", response_model=Token)
-async def login(user_data: UserLogin):
+async def login(user_data: UserLogin, request: Request):
     """Authenticate user and return tokens."""
+    from middleware.security import security_monitor
+    
+    client_ip = request.client.host if request.client else "unknown"
+    
     try:
         storage = get_mongo_storage()
         
         # Get user by email
         user = storage.get_user_by_email(user_data.email)
         if not user:
+            # Record failed authentication attempt
+            security_monitor.record_auth_failure(client_ip, user_data.email)
             raise HTTPException(
                 status_code=401,
                 detail="Invalid email or password"
@@ -96,6 +102,8 @@ async def login(user_data: UserLogin):
         
         # Verify password
         if not verify_password(user_data.password, user["hashed_password"]):
+            # Record failed authentication attempt
+            security_monitor.record_auth_failure(client_ip, user_data.email)
             raise HTTPException(
                 status_code=401,
                 detail="Invalid email or password"
@@ -241,7 +249,7 @@ async def reset_password(request: ResetPasswordRequest):
 async def get_user_preferences(current_user: dict = Depends(get_current_user)):
     """Get user's preferences including preferred AI model."""
     try:
-        from database import AVAILABLE_MODELS
+        from ai_models.models import AIModelConfig
         storage = get_mongo_storage()
         
         # Get user's preferred model
@@ -249,7 +257,7 @@ async def get_user_preferences(current_user: dict = Depends(get_current_user)):
         
         return UserPreferencesResponse(
             preferred_model=preferred_model,
-            available_models=AVAILABLE_MODELS
+            available_models=AIModelConfig.get_model_ids()
         )
         
     except Exception as e:
@@ -264,17 +272,21 @@ async def update_user_preferences(
 ):
     """Update user's preferences including preferred AI model."""
     try:
-        from database import AVAILABLE_MODELS
+        from ai_models.models import AIModelConfig
         
         # Validate the model is available
-        if preferences.preferred_model not in AVAILABLE_MODELS:
+        if not AIModelConfig.is_valid_model(preferences.preferred_model):
+            valid_models = AIModelConfig.get_model_ids()
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid model. Available models: {AVAILABLE_MODELS}"
+                detail=f"Invalid model. Available models: {valid_models}"
             )
         
         storage = get_mongo_storage()
-        success = storage.update_user_preferred_model(current_user["id"], preferences.preferred_model)
+        success = storage.update_user_preferences(
+            current_user["id"], 
+            {"preferred_model": preferences.preferred_model}
+        )
         
         if not success:
             raise HTTPException(status_code=500, detail="Failed to update preferences")
@@ -298,7 +310,7 @@ async def update_user_profile(
         storage = get_mongo_storage()
         
         # Update user profile
-        success = storage.update_user_profile(
+        success = storage.update_user(
             current_user["id"],
             {"full_name": profile_update.full_name}
         )
@@ -319,18 +331,11 @@ async def update_user_profile(
 async def get_available_models():
     """Get list of available AI models with descriptions."""
     try:
-        from database import AVAILABLE_MODELS, MODEL_DESCRIPTIONS, DEFAULT_MODEL
-        
-        models = []
-        for model in AVAILABLE_MODELS:
-            models.append({
-                "name": model,
-                "description": MODEL_DESCRIPTIONS.get(model, "AI model for document analysis")
-            })
+        from ai_models.models import AIModelConfig
         
         return AvailableModelsResponse(
-            models=models,
-            default_model=DEFAULT_MODEL
+            models=AIModelConfig.get_models_for_api(),
+            default_model=AIModelConfig.get_default_model()
         )
         
     except Exception as e:

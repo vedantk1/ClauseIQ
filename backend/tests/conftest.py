@@ -51,3 +51,66 @@ def mock_openai():
 @pytest.fixture
 def sample_pdf_content():
     return b"%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n/Pages 2 0 R\n>>\nendobj\nxref\n0 3\n0000000000 65535 f \ntrailer\n<<\n/Size 3\n/Root 1 0 R\n>>\nstartxref\n9\n%%EOF"
+
+# Authentication fixtures for testing
+@pytest.fixture
+def test_user():
+    """Create a test user for authentication tests."""
+    return {
+        "id": "test-user-123",
+        "email": "test@example.com",
+        "full_name": "Test User",
+        "hashed_password": "$2b$12$mock.hashed.password"
+    }
+
+@pytest.fixture
+def mock_auth(test_user):
+    """Mock authentication to bypass JWT verification in tests."""
+    # Override the dependency in the FastAPI app
+    from main import app
+    from auth import get_current_user
+    
+    def mock_get_current_user():
+        return test_user
+    
+    # Override the dependency
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+    yield mock_get_current_user
+    
+    # Clean up the override after the test
+    if get_current_user in app.dependency_overrides:
+        del app.dependency_overrides[get_current_user]
+
+@pytest.fixture
+def auth_headers():
+    """Provide mock authorization headers for API requests."""
+    return {"Authorization": "Bearer mock-jwt-token"}
+
+# Mock MongoDB storage for tests
+@pytest.fixture
+def mock_mongo_storage():
+    """Mock MongoDB storage operations for tests."""
+    with patch('database.get_mongo_storage') as mock_storage, \
+         patch('routers.documents.get_mongo_storage') as mock_router_storage:
+        
+        mock_storage_instance = MagicMock()
+        
+        # Configure methods for user-specific operations
+        mock_storage_instance.get_documents_for_user.return_value = []
+        mock_storage_instance.get_document_for_user.return_value = None
+        mock_storage_instance.delete_document_for_user.return_value = True
+        mock_storage_instance.delete_all_documents_for_user.return_value = 0
+        mock_storage_instance.save_document_for_user.return_value = "test-doc-id"
+        
+        # Configure common storage methods for backward compatibility
+        mock_storage_instance.save_document.return_value = True
+        mock_storage_instance.get_document.return_value = None
+        mock_storage_instance.get_all_documents.return_value = []
+        mock_storage_instance.delete_document.return_value = True
+        mock_storage_instance.get_documents_count.return_value = 0
+        
+        # Both patches return the same mock instance
+        mock_storage.return_value = mock_storage_instance
+        mock_router_storage.return_value = mock_storage_instance
+        
+        yield mock_storage_instance

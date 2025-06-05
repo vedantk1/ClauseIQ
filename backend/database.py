@@ -13,16 +13,8 @@ from config import MONGODB_URI, MONGODB_DATABASE, MONGODB_COLLECTION
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Available AI models for user selection
-AVAILABLE_MODELS = [
-    "gpt-3.5-turbo",
-    "gpt-4.1-mini", 
-    "gpt-4.1-nano",
-    "gpt-4o-mini",
-    "gpt-4o"
-]
-
-DEFAULT_MODEL = "gpt-3.5-turbo"
+# Import AI model configuration
+from ai_models.models import AIModelConfig
 
 class MongoDBConnection:
     """Singleton MongoDB connection handler."""
@@ -324,7 +316,7 @@ class MongoDocumentStorage:
             
             # Add default model preference if not provided
             if 'preferred_model' not in user_data:
-                user_data['preferred_model'] = DEFAULT_MODEL
+                user_data['preferred_model'] = AIModelConfig.get_default_model()
             
             # Insert user
             result = self.db.users_collection.insert_one(user_data)
@@ -489,8 +481,9 @@ class MongoDocumentStorage:
         try:
             # Validate preferred_model if provided
             if 'preferred_model' in preferences:
-                if preferences['preferred_model'] not in AVAILABLE_MODELS:
-                    raise ValueError(f"Invalid model. Must be one of: {', '.join(AVAILABLE_MODELS)}")
+                if not AIModelConfig.is_valid_model(preferences['preferred_model']):
+                    valid_models = ', '.join(AIModelConfig.get_model_ids())
+                    raise ValueError(f"Invalid model. Must be one of: {valid_models}")
             
             # Add update timestamp
             preferences['updated_at'] = datetime.utcnow().isoformat()
@@ -530,18 +523,18 @@ class MongoDocumentStorage:
             user = self.get_user_by_id(user_id)
             if user and 'preferred_model' in user:
                 # Validate that the stored model is still available
-                if user['preferred_model'] in AVAILABLE_MODELS:
+                if AIModelConfig.is_valid_model(user['preferred_model']):
                     return user['preferred_model']
                 else:
                     logger.warning(f"User {user_id} has invalid preferred model {user['preferred_model']}, using default")
-                    return DEFAULT_MODEL
+                    return AIModelConfig.get_default_model()
             else:
                 logger.info(f"No preferred model found for user {user_id}, using default")
-                return DEFAULT_MODEL
+                return AIModelConfig.get_default_model()
                 
         except Exception as e:
             logger.error(f"Error retrieving preferred model for user {user_id}: {e}")
-            return DEFAULT_MODEL
+            return AIModelConfig.get_default_model()
 
     def get_documents_for_user(self, user_id: str) -> List[Dict[str, Any]]:
         """
@@ -650,6 +643,32 @@ class MongoDocumentStorage:
             raise
         except Exception as e:
             logger.error(f"Unexpected error deleting all documents for user: {e}")
+            raise
+
+    def get_database_info(self) -> Dict[str, Any]:
+        """
+        Get database connection information for health checks.
+        
+        Returns:
+            Dict containing database status information
+        """
+        try:
+            # Simple ping to test connectivity
+            self.db._client.admin.command('ping')
+            
+            # Get database stats
+            stats = self.db._db.command('dbstats')
+            
+            return {
+                "status": "connected",
+                "database": MONGODB_DATABASE,
+                "collections": self.db._db.list_collection_names(),
+                "storage_size": stats.get('storageSize', 0),
+                "data_size": stats.get('dataSize', 0),
+                "indexes": stats.get('indexes', 0)
+            }
+        except Exception as e:
+            logger.error(f"Error getting database info: {e}")
             raise
 
 

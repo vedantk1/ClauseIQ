@@ -1,6 +1,8 @@
 """
-Configuration module for the Legal AI backend.
-Uses environment variables for secure configuration management.
+Legacy configuration module for backward compatibility.
+This module provides the old configuration interface while using the new settings system.
+
+DEPRECATED: Use settings.py directly for new code.
 """
 import os
 from dotenv import load_dotenv
@@ -8,42 +10,46 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# OpenAI Configuration
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "your_api_key_here")
+def _get_settings():
+    """Get fresh settings instance (avoiding import-time caching)."""
+    from settings import Settings
+    return Settings()
+
+# Get the new settings instance
+_settings = _get_settings()
+
+# Export individual configuration values for backward compatibility
+OPENAI_API_KEY = _settings.openai.api_key
 
 # Server Configuration
-HOST = os.getenv("HOST", "localhost")
-PORT = int(os.getenv("PORT", "8000"))
-
-# CORS Configuration
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
+HOST = _settings.server.host
+PORT = _settings.server.port
+CORS_ORIGINS = _settings.server.cors_origins
 
 # File Upload Configuration
-MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", "10"))
-ALLOWED_FILE_TYPES = os.getenv("ALLOWED_FILE_TYPES", ".pdf").split(",")
-
-# Storage Configuration
-STORAGE_DIR = os.getenv("STORAGE_DIR", "./documents_storage")
+MAX_FILE_SIZE_MB = _settings.file_upload.max_file_size_mb
+ALLOWED_FILE_TYPES = _settings.file_upload.allowed_file_types
+STORAGE_DIR = _settings.file_upload.storage_dir
 
 # MongoDB Configuration
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
-MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", "legal_ai")
-MONGODB_COLLECTION = os.getenv("MONGODB_COLLECTION", "documents")
+MONGODB_URI = _settings.database.uri
+MONGODB_DATABASE = _settings.database.database
+MONGODB_COLLECTION = _settings.database.collection
 
 # JWT Configuration
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-this-in-production")
-JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-JWT_REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+JWT_SECRET_KEY = _settings.jwt.secret_key
+JWT_ALGORITHM = _settings.jwt.algorithm
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = _settings.jwt.access_token_expire_minutes
+JWT_REFRESH_TOKEN_EXPIRE_DAYS = _settings.jwt.refresh_token_expire_days
 
 # Email Configuration
-SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-EMAIL_FROM = os.getenv("EMAIL_FROM", "noreply@legalai.com")
-EMAIL_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "Legal AI")
+SMTP_HOST = _settings.email.smtp_host
+SMTP_PORT = _settings.email.smtp_port
+SMTP_USERNAME = _settings.email.smtp_username
+SMTP_PASSWORD = _settings.email.smtp_password
+EMAIL_FROM = _settings.email.email_from
+EMAIL_FROM_NAME = _settings.email.email_from_name
 
 # Password Reset Configuration
-PASSWORD_RESET_TOKEN_EXPIRE_MINUTES = int(os.getenv("PASSWORD_RESET_TOKEN_EXPIRE_MINUTES", "30"))
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+PASSWORD_RESET_TOKEN_EXPIRE_MINUTES = _settings.security.password_reset_token_expire_minutes
+FRONTEND_URL = _settings.security.frontend_url

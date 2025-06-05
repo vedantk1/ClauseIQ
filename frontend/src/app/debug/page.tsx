@@ -8,15 +8,35 @@ export default function AuthDebugPage() {
   const apiCall = useApiCall();
   const [debugInfo, setDebugInfo] = useState<string[]>([]);
   const [documents, setDocuments] = useState<any>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const addDebugInfo = (message: string) => {
-    console.log(message);
-    setDebugInfo(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+    if (typeof window !== "undefined") {
+      console.log(message);
+      setDebugInfo((prev) => [
+        ...prev,
+        `${new Date().toLocaleTimeString()}: ${message}`,
+      ]);
+    }
   };
 
   useEffect(() => {
-    addDebugInfo(`Auth state - isLoading: ${isLoading}, isAuthenticated: ${isAuthenticated}, user: ${user?.email || 'null'}`);
-  }, [isLoading, isAuthenticated, user]);
+    if (isMounted) {
+      addDebugInfo(
+        `Auth state - isLoading: ${isLoading}, isAuthenticated: ${isAuthenticated}, user: ${
+          user?.email || "null"
+        }`
+      );
+    }
+  }, [isLoading, isAuthenticated, user, isMounted]);
+
+  if (!isMounted) {
+    return <div>Loading...</div>;
+  }
 
   const testDirectLogin = async () => {
     addDebugInfo("Testing direct login...");
@@ -24,9 +44,12 @@ export default function AuthDebugPage() {
       const response = await fetch("http://localhost:8000/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "debug@test.com", password: "testpass123" })
+        body: JSON.stringify({
+          email: "debug@test.com",
+          password: "testpass123",
+        }),
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem("access_token", data.access_token);
@@ -46,7 +69,7 @@ export default function AuthDebugPage() {
     try {
       const response = await apiCall("/documents/");
       addDebugInfo(`Documents API response status: ${response.status}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         setDocuments(data);
@@ -69,23 +92,35 @@ export default function AuthDebugPage() {
   return (
     <div style={{ padding: "20px", fontFamily: "monospace" }}>
       <h1>ClauseIQ Authentication Debug</h1>
-      
+
       <div style={{ marginBottom: "20px" }}>
         <h2>Current State</h2>
         <p>Loading: {isLoading ? "Yes" : "No"}</p>
         <p>Authenticated: {isAuthenticated ? "Yes" : "No"}</p>
         <p>User: {user ? `${user.full_name} (${user.email})` : "None"}</p>
-        <p>Access Token: {localStorage.getItem("access_token") ? "Present" : "Missing"}</p>
+        <p>
+          Access Token:{" "}
+          {localStorage.getItem("access_token") ? "Present" : "Missing"}
+        </p>
       </div>
 
       <div style={{ marginBottom: "20px" }}>
-        <button onClick={testDirectLogin} style={{ margin: "5px", padding: "10px" }}>
+        <button
+          onClick={testDirectLogin}
+          style={{ margin: "5px", padding: "10px" }}
+        >
           Login Directly
         </button>
-        <button onClick={testDocuments} style={{ margin: "5px", padding: "10px" }}>
+        <button
+          onClick={testDocuments}
+          style={{ margin: "5px", padding: "10px" }}
+        >
           Test Documents API
         </button>
-        <button onClick={clearTokens} style={{ margin: "5px", padding: "10px" }}>
+        <button
+          onClick={clearTokens}
+          style={{ margin: "5px", padding: "10px" }}
+        >
           Clear Tokens
         </button>
       </div>
@@ -93,7 +128,9 @@ export default function AuthDebugPage() {
       {documents && (
         <div style={{ marginBottom: "20px" }}>
           <h3>Documents Data:</h3>
-          <pre style={{ background: "#f5f5f5", padding: "10px", overflow: "auto" }}>
+          <pre
+            style={{ background: "#f5f5f5", padding: "10px", overflow: "auto" }}
+          >
             {JSON.stringify(documents, null, 2)}
           </pre>
         </div>
@@ -101,7 +138,14 @@ export default function AuthDebugPage() {
 
       <div>
         <h3>Debug Log:</h3>
-        <div style={{ background: "#f5f5f5", padding: "10px", height: "300px", overflow: "auto" }}>
+        <div
+          style={{
+            background: "#f5f5f5",
+            padding: "10px",
+            height: "300px",
+            overflow: "auto",
+          }}
+        >
           {debugInfo.map((info, index) => (
             <div key={index}>{info}</div>
           ))}

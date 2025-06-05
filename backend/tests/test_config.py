@@ -9,6 +9,45 @@ from config import (
     MAX_FILE_SIZE_MB,
     ALLOWED_FILE_TYPES
 )
+from settings import get_settings
+
+
+class TestLegacyConfig:
+    """Test legacy configuration for backward compatibility."""
+    
+    def test_config_defaults(self):
+        """Test default configuration values."""
+        assert MAX_FILE_SIZE_MB == 10
+        assert ALLOWED_FILE_TYPES == [".pdf"]
+        assert isinstance(CORS_ORIGINS, list)
+
+
+class TestNewSettings:
+    """Test new Pydantic settings system."""
+    
+    def test_settings_loading(self):
+        """Test that settings load correctly."""
+        settings = get_settings()
+        assert settings.file_upload.max_file_size_mb == 10
+        assert settings.file_upload.allowed_file_types == [".pdf"]
+        assert isinstance(settings.server.cors_origins, list)
+    
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test123"})
+    def test_openai_key_from_env(self):
+        """Test OpenAI API key loading from environment."""
+        # Clear cache and reload
+        get_settings.cache_clear()
+        settings = get_settings()
+        assert settings.openai.api_key == "sk-test123"
+    
+    @patch.dict(os.environ, {"CORS_ORIGINS": "http://localhost:3000,https://example.com"})
+    def test_cors_origins_from_env(self):
+        """Test CORS origins loading from environment."""
+        get_settings.cache_clear()
+        settings = get_settings()
+        expected_origins = ["http://localhost:3000", "https://example.com"]
+        assert settings.server.cors_origins == expected_origins
+
 
 class TestConfig:
     """Test configuration loading and validation."""
