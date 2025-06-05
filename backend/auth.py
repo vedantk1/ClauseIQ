@@ -57,6 +57,9 @@ class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str = Field(..., min_length=8)
 
+class UserProfileUpdate(BaseModel):
+    full_name: str = Field(..., min_length=2, max_length=100)
+
 # Password utilities
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""

@@ -58,6 +58,18 @@ export default function AnalyticsDashboard() {
   const [isTimeRangeDropdownOpen, setTimeRangeDropdownOpen] = useState(false);
   const timeRangeDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Risk filter states
+  const [isRiskFilterOpen, setRiskFilterOpen] = useState(false);
+  const [riskFilter, setRiskFilter] = useState({
+    high: true,
+    medium: true,
+    low: true,
+  });
+  const [riskSort, setRiskSort] = useState<
+    "count-desc" | "count-asc" | "level"
+  >("count-desc");
+  const riskFilterRef = useRef<HTMLDivElement>(null);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -67,6 +79,12 @@ export default function AnalyticsDashboard() {
       ) {
         setTimeRangeDropdownOpen(false);
       }
+      if (
+        riskFilterRef.current &&
+        !riskFilterRef.current.contains(event.target as Node)
+      ) {
+        setRiskFilterOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -74,67 +92,55 @@ export default function AnalyticsDashboard() {
   }, []);
 
   useEffect(() => {
-    // Simulate API call with mock data
+    // Fetch real analytics data from API
     const fetchAnalytics = async () => {
       setLoading(true);
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          throw new Error("No access token found");
+        }
 
-      // Mock data
-      const mockData: AnalyticsData = {
-        totalDocuments: 47,
-        documentsThisMonth: 12,
-        riskyClausesCaught: 23,
-        timeSavedHours: 156,
-        avgRiskScore: 2.3,
-        recentActivity: [
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/analytics/dashboard`,
           {
-            id: "1",
-            document: "Employment_Contract_v2.pdf",
-            action: "Analyzed",
-            timestamp: "2025-06-03T10:30:00Z",
-            riskLevel: "medium",
-          },
-          {
-            id: "2",
-            document: "Service_Agreement.docx",
-            action: "Risk flagged",
-            timestamp: "2025-06-02T15:45:00Z",
-            riskLevel: "high",
-          },
-          {
-            id: "3",
-            document: "NDA_Template.pdf",
-            action: "Reviewed",
-            timestamp: "2025-06-02T09:15:00Z",
-            riskLevel: "low",
-          },
-          {
-            id: "4",
-            document: "Partnership_Agreement.pdf",
-            action: "Analyzed",
-            timestamp: "2025-06-01T14:20:00Z",
-            riskLevel: "medium",
-          },
-        ],
-        monthlyStats: [
-          { month: "Jan", documents: 8, risks: 12 },
-          { month: "Feb", documents: 15, risks: 18 },
-          { month: "Mar", documents: 12, risks: 14 },
-          { month: "Apr", documents: 18, risks: 22 },
-          { month: "May", documents: 22, risks: 28 },
-          { month: "Jun", documents: 12, risks: 15 },
-        ],
-        riskBreakdown: {
-          high: 8,
-          medium: 15,
-          low: 24,
-        },
-      };
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-      setAnalyticsData(mockData);
-      setLoading(false);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data: AnalyticsData = await response.json();
+        setAnalyticsData(data);
+      } catch (error) {
+        console.error("Error fetching analytics:", error);
+
+        // Fallback to basic mock data on error
+        const fallbackData: AnalyticsData = {
+          totalDocuments: 0,
+          documentsThisMonth: 0,
+          riskyClausesCaught: 0,
+          timeSavedHours: 0,
+          avgRiskScore: 1.0,
+          recentActivity: [],
+          monthlyStats: [],
+          riskBreakdown: {
+            high: 0,
+            medium: 0,
+            low: 0,
+          },
+        };
+        setAnalyticsData(fallbackData);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchAnalytics();
@@ -278,6 +284,53 @@ export default function AnalyticsDashboard() {
       </div>
     );
   }
+
+  // Process risk data with filters and sorting
+  const riskData = [
+    {
+      level: "high",
+      count: analyticsData.riskBreakdown.high,
+      color: "bg-status-error",
+      dotColor: "bg-status-error",
+      label: "High Risk",
+    },
+    {
+      level: "medium",
+      count: analyticsData.riskBreakdown.medium,
+      color: "bg-status-warning",
+      dotColor: "bg-status-warning",
+      label: "Medium Risk",
+    },
+    {
+      level: "low",
+      count: analyticsData.riskBreakdown.low,
+      color: "bg-status-success",
+      dotColor: "bg-status-success",
+      label: "Low Risk",
+    },
+  ]
+    .filter((item) => riskFilter[item.level as keyof typeof riskFilter])
+    .sort((a, b) => {
+      switch (riskSort) {
+        case "count-desc":
+          return b.count - a.count;
+        case "count-asc":
+          return a.count - b.count;
+        case "level":
+          const levelOrder = { high: 3, medium: 2, low: 1 };
+          return (
+            levelOrder[b.level as keyof typeof levelOrder] -
+            levelOrder[a.level as keyof typeof levelOrder]
+          );
+        default:
+          return 0;
+      }
+    });
+
+  const totalFilteredRisks = riskData.reduce(
+    (sum, item) => sum + item.count,
+    0
+  );
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -496,95 +549,156 @@ export default function AnalyticsDashboard() {
             <h3 className="text-lg font-semibold text-text-primary">
               Risk Distribution
             </h3>
-            <Button variant="tertiary" size="sm">
-              <Filter className="w-4 h-4" />
-            </Button>
+            <div className="relative" ref={riskFilterRef}>
+              <Button
+                variant="tertiary"
+                size="sm"
+                onClick={() => setRiskFilterOpen(!isRiskFilterOpen)}
+              >
+                <Filter className="w-4 h-4" />
+              </Button>
+              {isRiskFilterOpen && (
+                <div className="absolute top-full right-0 mt-1 w-64 bg-bg-elevated border border-border-muted rounded-lg shadow-lg z-10">
+                  <div className="p-4">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-text-primary mb-2 block">
+                          Show Risk Levels
+                        </label>
+                        <div className="space-y-2">
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={riskFilter.high}
+                              onChange={(e) =>
+                                setRiskFilter((prev) => ({
+                                  ...prev,
+                                  high: e.target.checked,
+                                }))
+                              }
+                              className="w-4 h-4 text-accent-purple bg-bg-surface border-border-muted rounded focus:ring-accent-purple/20"
+                            />
+                            <div className="w-3 h-3 rounded-full bg-status-error"></div>
+                            <span className="text-sm text-text-primary">
+                              High Risk
+                            </span>
+                          </label>
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={riskFilter.medium}
+                              onChange={(e) =>
+                                setRiskFilter((prev) => ({
+                                  ...prev,
+                                  medium: e.target.checked,
+                                }))
+                              }
+                              className="w-4 h-4 text-accent-purple bg-bg-surface border-border-muted rounded focus:ring-accent-purple/20"
+                            />
+                            <div className="w-3 h-3 rounded-full bg-status-warning"></div>
+                            <span className="text-sm text-text-primary">
+                              Medium Risk
+                            </span>
+                          </label>
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={riskFilter.low}
+                              onChange={(e) =>
+                                setRiskFilter((prev) => ({
+                                  ...prev,
+                                  low: e.target.checked,
+                                }))
+                              }
+                              className="w-4 h-4 text-accent-purple bg-bg-surface border-border-muted rounded focus:ring-accent-purple/20"
+                            />
+                            <div className="w-3 h-3 rounded-full bg-status-success"></div>
+                            <span className="text-sm text-text-primary">
+                              Low Risk
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <hr className="border-border-muted" />
+
+                      <div>
+                        <label className="text-sm font-medium text-text-primary mb-2 block">
+                          Sort By
+                        </label>
+                        <select
+                          value={riskSort}
+                          onChange={(e) =>
+                            setRiskSort(e.target.value as typeof riskSort)
+                          }
+                          className="w-full px-3 py-2 bg-bg-surface border border-border-muted rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-purple/20 focus:border-accent-purple text-sm"
+                        >
+                          <option value="count-desc">
+                            Count (High to Low)
+                          </option>
+                          <option value="count-asc">Count (Low to High)</option>
+                          <option value="level">Risk Level</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           <div className="space-y-4">
             {/* Risk Bars */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-status-error"></div>
-                  <span className="text-sm font-medium text-text-primary">
-                    High Risk
-                  </span>
+            {riskData.length > 0 ? (
+              <div className="space-y-3">
+                {riskData.map((risk) => (
+                  <div key={risk.level} className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-3 h-3 rounded-full ${risk.dotColor}`}
+                        ></div>
+                        <span className="text-sm font-medium text-text-primary">
+                          {risk.label}
+                        </span>
+                      </div>
+                      <span className="text-sm text-text-secondary">
+                        {risk.count}
+                      </span>
+                    </div>
+                    <div className="w-full bg-surface-secondary rounded-full h-2">
+                      <div
+                        className={`${risk.color} h-2 rounded-full transition-all`}
+                        style={{
+                          width:
+                            totalFilteredRisks > 0
+                              ? `${(risk.count / totalFilteredRisks) * 100}%`
+                              : "0%",
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-surface-secondary flex items-center justify-center">
+                  <Filter className="w-6 h-6 text-text-tertiary" />
                 </div>
-                <span className="text-sm text-text-secondary">
-                  {analyticsData.riskBreakdown.high}
-                </span>
+                <p className="text-text-secondary text-sm">
+                  No risk data matches your current filter settings
+                </p>
+                <Button
+                  variant="tertiary"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() =>
+                    setRiskFilter({ high: true, medium: true, low: true })
+                  }
+                >
+                  Reset Filters
+                </Button>
               </div>
-              <div className="w-full bg-surface-secondary rounded-full h-2">
-                <div
-                  className="bg-status-error h-2 rounded-full transition-all"
-                  style={{
-                    width: `${
-                      (analyticsData.riskBreakdown.high /
-                        (analyticsData.riskBreakdown.high +
-                          analyticsData.riskBreakdown.medium +
-                          analyticsData.riskBreakdown.low)) *
-                      100
-                    }%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-status-warning"></div>
-                  <span className="text-sm font-medium text-text-primary">
-                    Medium Risk
-                  </span>
-                </div>
-                <span className="text-sm text-text-secondary">
-                  {analyticsData.riskBreakdown.medium}
-                </span>
-              </div>
-              <div className="w-full bg-surface-secondary rounded-full h-2">
-                <div
-                  className="bg-status-warning h-2 rounded-full transition-all"
-                  style={{
-                    width: `${
-                      (analyticsData.riskBreakdown.medium /
-                        (analyticsData.riskBreakdown.high +
-                          analyticsData.riskBreakdown.medium +
-                          analyticsData.riskBreakdown.low)) *
-                      100
-                    }%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-status-success"></div>
-                  <span className="text-sm font-medium text-text-primary">
-                    Low Risk
-                  </span>
-                </div>
-                <span className="text-sm text-text-secondary">
-                  {analyticsData.riskBreakdown.low}
-                </span>
-              </div>
-              <div className="w-full bg-surface-secondary rounded-full h-2">
-                <div
-                  className="bg-status-success h-2 rounded-full transition-all"
-                  style={{
-                    width: `${
-                      (analyticsData.riskBreakdown.low /
-                        (analyticsData.riskBreakdown.high +
-                          analyticsData.riskBreakdown.medium +
-                          analyticsData.riskBreakdown.low)) *
-                      100
-                    }%`,
-                  }}
-                ></div>
-              </div>
-            </div>
+            )}
           </div>
         </Card>
       </div>

@@ -34,6 +34,7 @@ interface AuthContextType {
   logout: () => void;
   refreshToken: () => Promise<void>;
   updatePreferences: (preferences: UserPreferences) => Promise<void>;
+  updateProfile: (fullName: string) => Promise<void>;
   loadPreferences: () => Promise<void>;
 }
 
@@ -186,6 +187,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to update preferences"
+      );
+      throw error;
+    }
+  };
+
+  // Update user profile
+  const updateProfile = async (fullName: string) => {
+    try {
+      const response = await apiCall("/auth/profile", {
+        method: "PUT",
+        body: JSON.stringify({ full_name: fullName }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // Update user state with new full_name
+        setUser((prev) =>
+          prev ? { ...prev, full_name: result.full_name } : null
+        );
+        toast.success("Profile updated successfully!");
+      } else {
+        const error = await response.json();
+        throw new Error(error.detail || "Failed to update profile");
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update profile"
       );
       throw error;
     }
@@ -401,6 +429,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     refreshToken,
     updatePreferences,
     loadPreferences,
+    updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

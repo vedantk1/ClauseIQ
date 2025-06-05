@@ -8,10 +8,18 @@ import { toast } from "react-hot-toast";
 
 export default function Settings() {
   const { isAuthenticated, isLoading } = useAuthRedirect();
-  const { preferences, availableModels, updatePreferences } = useAuth();
+  const {
+    user,
+    preferences,
+    availableModels,
+    updatePreferences,
+    updateProfile,
+  } = useAuth();
   const [selectedModel, setSelectedModel] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   // Initialize selectedModel only once when preferences load
   React.useEffect(() => {
@@ -28,6 +36,40 @@ export default function Settings() {
       setHasInitialized(true);
     }
   }, [preferences, availableModels, hasInitialized]);
+
+  // Initialize fullName when user data loads
+  React.useEffect(() => {
+    if (user?.full_name !== undefined) {
+      setFullName(user.full_name);
+    }
+  }, [user?.full_name]);
+
+  const handleSaveProfile = async () => {
+    console.log("handleSaveProfile called with fullName:", fullName);
+    console.log("Current user full_name:", user?.full_name);
+
+    if (!fullName.trim()) {
+      toast.error("Please enter your full name");
+      return;
+    }
+
+    if (fullName.trim() === user?.full_name) {
+      toast.error("No changes to save");
+      return;
+    }
+
+    setIsUpdatingProfile(true);
+    try {
+      console.log("Calling updateProfile with:", fullName.trim());
+      await updateProfile(fullName.trim());
+      console.log("Profile update successful");
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      toast.error("Failed to update profile");
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
 
   const handleSavePreferences = async () => {
     if (!selectedModel) {
@@ -66,6 +108,53 @@ export default function Settings() {
           <h1 className="text-3xl font-bold text-text-primary mb-8">
             Settings
           </h1>
+
+          {/* Profile Settings Section */}
+          <Card className="p-6 mb-6">
+            <h2 className="text-xl font-semibold text-text-primary mb-6">
+              Profile Information
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-2">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Enter your full name"
+                  className="w-full px-4 py-3 bg-bg-primary border border-border-muted rounded-lg focus:ring-2 focus:ring-accent-purple focus:border-accent-purple outline-none transition-colors text-text-primary placeholder-text-muted"
+                />
+                <p className="text-xs text-text-secondary mt-1">
+                  This name will be displayed throughout the application
+                </p>
+              </div>
+
+              <div className="pt-4 border-t border-border-muted">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-text-secondary">
+                      Current name:{" "}
+                      <span className="font-medium text-text-primary">
+                        {user?.full_name || "Not set"}
+                      </span>
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleSaveProfile}
+                    loading={isUpdatingProfile}
+                    disabled={
+                      !fullName.trim() || fullName.trim() === user?.full_name
+                    }
+                  >
+                    {isUpdatingProfile ? "Updating..." : "Update Name"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
 
           <Card className="p-6">
             <h2 className="text-xl font-semibold text-text-primary mb-6">
