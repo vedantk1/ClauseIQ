@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import Card from "@/components/Card";
@@ -17,6 +17,7 @@ import {
   Target,
   Shield,
   Zap,
+  ChevronDown,
 } from "lucide-react";
 
 interface AnalyticsData {
@@ -54,6 +55,23 @@ export default function AnalyticsDashboard() {
   );
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
+  const [isTimeRangeDropdownOpen, setTimeRangeDropdownOpen] = useState(false);
+  const timeRangeDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        timeRangeDropdownRef.current &&
+        !timeRangeDropdownRef.current.contains(event.target as Node)
+      ) {
+        setTimeRangeDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     // Simulate API call with mock data
@@ -274,17 +292,81 @@ export default function AnalyticsDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Time Range Selector */}
-          <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value as TimeRange)}
-            className="px-3 py-2 bg-surface-secondary border border-border-primary rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-purple/20 focus:border-accent-purple transition-colors"
-          >
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-            <option value="1y">Last year</option>
-          </select>
+          {/* Time Range Dropdown */}
+          <div className="relative" ref={timeRangeDropdownRef}>
+            <button
+              onClick={() => setTimeRangeDropdownOpen(!isTimeRangeDropdownOpen)}
+              className="px-3 py-2 bg-bg-elevated border border-border-muted rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-purple/20 focus:border-accent-purple transition-colors hover:bg-bg-elevated/80 flex items-center gap-2 min-w-[140px] justify-between"
+            >
+              <span>
+                {timeRange === "7d" && "Last 7 days"}
+                {timeRange === "30d" && "Last 30 days"}
+                {timeRange === "90d" && "Last 90 days"}
+                {timeRange === "1y" && "Last year"}
+              </span>
+              <ChevronDown
+                className={`w-4 h-4 text-text-tertiary transition-transform ${
+                  isTimeRangeDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            {isTimeRangeDropdownOpen && (
+              <div className="absolute top-full right-0 mt-1 w-full bg-bg-elevated border border-border-muted rounded-lg shadow-lg z-10">
+                <button
+                  onClick={() => {
+                    setTimeRange("7d");
+                    setTimeRangeDropdownOpen(false);
+                  }}
+                  className={`w-full px-3 py-2 text-left text-text-primary hover:bg-bg-surface transition-colors first:rounded-t-lg ${
+                    timeRange === "7d"
+                      ? "bg-accent-purple/10 text-accent-purple"
+                      : ""
+                  }`}
+                >
+                  Last 7 days
+                </button>
+                <button
+                  onClick={() => {
+                    setTimeRange("30d");
+                    setTimeRangeDropdownOpen(false);
+                  }}
+                  className={`w-full px-3 py-2 text-left text-text-primary hover:bg-bg-surface transition-colors ${
+                    timeRange === "30d"
+                      ? "bg-accent-purple/10 text-accent-purple"
+                      : ""
+                  }`}
+                >
+                  Last 30 days
+                </button>
+                <button
+                  onClick={() => {
+                    setTimeRange("90d");
+                    setTimeRangeDropdownOpen(false);
+                  }}
+                  className={`w-full px-3 py-2 text-left text-text-primary hover:bg-bg-surface transition-colors ${
+                    timeRange === "90d"
+                      ? "bg-accent-purple/10 text-accent-purple"
+                      : ""
+                  }`}
+                >
+                  Last 90 days
+                </button>
+                <button
+                  onClick={() => {
+                    setTimeRange("1y");
+                    setTimeRangeDropdownOpen(false);
+                  }}
+                  className={`w-full px-3 py-2 text-left text-text-primary hover:bg-bg-surface transition-colors last:rounded-b-lg ${
+                    timeRange === "1y"
+                      ? "bg-accent-purple/10 text-accent-purple"
+                      : ""
+                  }`}
+                >
+                  Last year
+                </button>
+              </div>
+            )}
+          </div>
           <Button variant="secondary">
             <Download className="w-4 h-4 mr-2" />
             Export
