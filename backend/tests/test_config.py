@@ -2,14 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 import os
 import tempfile
-from config import (
-    OPENAI_API_KEY,
-    CORS_ORIGINS, 
-    STORAGE_DIR,
-    MAX_FILE_SIZE_MB,
-    ALLOWED_FILE_TYPES
-)
-from settings import get_settings
+from settings import get_settings, get_legacy_config
 
 
 class TestLegacyConfig:
@@ -17,9 +10,10 @@ class TestLegacyConfig:
     
     def test_config_defaults(self):
         """Test default configuration values."""
-        assert MAX_FILE_SIZE_MB == 10
-        assert ALLOWED_FILE_TYPES == [".pdf"]
-        assert isinstance(CORS_ORIGINS, list)
+        legacy_config = get_legacy_config()
+        assert legacy_config["MAX_FILE_SIZE_MB"] == 10
+        assert legacy_config["ALLOWED_FILE_TYPES"] == [".pdf"]
+        assert isinstance(legacy_config["CORS_ORIGINS"], list)
 
 
 class TestNewSettings:

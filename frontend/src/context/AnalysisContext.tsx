@@ -1,42 +1,15 @@
 "use client";
 import React, { createContext, useContext, useState } from "react";
+// Import shared types
+import {
+  Section,
+  Clause,
+  ClauseType,
+  RiskLevel,
+  RiskSummary,
+} from "../../../shared/types/common";
 
-interface Section {
-  heading: string;
-  text: string;
-  summary?: string;
-}
-
-interface Clause {
-  id: string;
-  heading: string;
-  text: string;
-  clause_type:
-    | "compensation"
-    | "termination"
-    | "non_compete"
-    | "confidentiality"
-    | "benefits"
-    | "working_conditions"
-    | "intellectual_property"
-    | "dispute_resolution"
-    | "probation"
-    | "general";
-  risk_level: "low" | "medium" | "high";
-  summary?: string;
-  risk_assessment?: string;
-  recommendations?: string[];
-  key_points?: string[];
-  position_start?: number;
-  position_end?: number;
-}
-
-interface RiskSummary {
-  high: number;
-  medium: number;
-  low: number;
-}
-
+// Define the Analysis context interface
 interface AnalysisCtx {
   sections: Section[];
   setSections: (sections: Section[]) => void;

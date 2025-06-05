@@ -1,0 +1,15 @@
+{
+  "name": "@clauseiq/shared-types",
+  "version": "1.0.0",
+  "description": "Shared types for ClauseIQ frontend and backend",
+  "main": "types/common.ts",
+  "types": "types/common.ts",
+  "files": [
+    "types"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "ClauseIQ Team",
+  "license": "MIT"
+}

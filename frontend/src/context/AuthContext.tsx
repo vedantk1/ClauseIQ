@@ -1,23 +1,12 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
-
-interface User {
-  id: string;
-  email: string;
-  full_name: string;
-  created_at: string;
-}
-
-interface UserPreferences {
-  preferred_model: string;
-}
-
-interface AvailableModel {
-  id: string;
-  name: string;
-  description: string;
-}
+// Import shared types
+import {
+  User,
+  UserPreferences,
+  AvailableModel,
+} from "../../../shared/types/common";
 
 interface AuthContextType {
   user: User | null;

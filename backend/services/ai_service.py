@@ -4,15 +4,18 @@ AI processing and OpenAI integration service.
 import asyncio
 from typing import Optional
 from openai import AsyncOpenAI, OpenAIError
-from config import OPENAI_API_KEY
+from settings import get_settings
 from models.common import Clause, RiskLevel, ClauseType
 
 
-# Initialize OpenAI client if API key is provided and valid
-if OPENAI_API_KEY and OPENAI_API_KEY != "your_api_key_here" and OPENAI_API_KEY.startswith("sk-"):
-    openai_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+# Initialize OpenAI client
+settings = get_settings()
+api_key = settings.openai.api_key
+
+if api_key and api_key != "your_api_key_here" and api_key.startswith("sk-"):
+    openai_client = AsyncOpenAI(api_key=api_key)
     print("OpenAI client initialized successfully")
-elif OPENAI_API_KEY and OPENAI_API_KEY != "your_api_key_here":
+elif api_key and api_key != "your_api_key_here":
     print("Warning: Invalid OpenAI API key format. AI-powered summaries will not be available.")
     openai_client = None
 else:

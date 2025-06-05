@@ -6,12 +6,13 @@ import re
 import pdfplumber
 from typing import List
 from fastapi import UploadFile, HTTPException
-from config import MAX_FILE_SIZE_MB, ALLOWED_FILE_TYPES
+from settings import get_settings
 from models.common import Section, Clause, ClauseType, RiskLevel
 
 
-# Constants
-MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+# Get settings instance
+settings = get_settings()
+MAX_FILE_SIZE_BYTES = settings.file_upload.max_file_size_mb * 1024 * 1024
 
 
 def validate_file(file: UploadFile):
@@ -20,7 +21,7 @@ def validate_file(file: UploadFile):
     if hasattr(file, 'size') and file.size and file.size > MAX_FILE_SIZE_BYTES:
         raise HTTPException(
             status_code=413,
-            detail=f"File too large. Maximum size allowed: {MAX_FILE_SIZE_MB}MB"
+            detail=f"File too large. Maximum size allowed: {settings.file_upload.max_file_size_mb}MB"
         )
     
     # Check file type if filename is provided
@@ -33,10 +34,10 @@ def validate_file(file: UploadFile):
             )
         
         # Check file extension
-        if not any(file.filename.lower().endswith(ext) for ext in ALLOWED_FILE_TYPES):
+        if not any(file.filename.lower().endswith(ext) for ext in settings.file_upload.allowed_file_types):
             raise HTTPException(
                 status_code=400,
-                detail=f"File type not supported. Allowed types: {', '.join(ALLOWED_FILE_TYPES)}"
+                detail=f"File type not supported. Allowed types: {', '.join(settings.file_upload.allowed_file_types)}"
             )
 
 

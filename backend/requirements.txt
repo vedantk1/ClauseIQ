@@ -15,7 +15,7 @@ httpx==0.28.1
 idna==3.10
 jiter==0.10.0
 openai==1.84.0
-pdfminer.six==20250506
+pdfminer.six==20250327
 pdfplumber==0.11.6
 pillow==11.2.1
 pycparser==2.22
@@ -37,3 +37,5 @@ passlib[bcrypt]==1.7.4
 aiosmtplib==4.0.1
 email-validator==2.2.0
 psutil==6.1.0
+# Local shared types package
+-e ../shared

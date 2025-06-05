@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from config import CORS_ORIGINS
+from settings import get_settings
 from routers import auth, documents, analysis, analytics, health
 from middleware.rate_limiter import rate_limit_middleware
 from middleware.logging import logging_middleware
@@ -15,6 +15,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Get settings instance
+settings = get_settings()
 
 # Add middleware in correct order (LIFO - Last In, First Out)
 # Security middleware first (outermost layer)
@@ -32,7 +35,7 @@ app.middleware("http")(logging_middleware)
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins=settings.server.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

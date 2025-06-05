@@ -1,46 +1,50 @@
 """
 Common models and enums used across the application.
+This file now re-exports the shared types from the shared/types package.
 """
-from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
-from enum import Enum
 import uuid
+import sys
+import os
+from pathlib import Path
 
+# Add the shared directory to the Python path
+shared_path = Path(__file__).parent.parent.parent / "shared"
+sys.path.insert(0, str(shared_path))
 
-class ClauseType(str, Enum):
-    COMPENSATION = "compensation"
-    TERMINATION = "termination"
-    NON_COMPETE = "non_compete"
-    CONFIDENTIALITY = "confidentiality"
-    BENEFITS = "benefits"
-    WORKING_CONDITIONS = "working_conditions"
-    INTELLECTUAL_PROPERTY = "intellectual_property"
-    DISPUTE_RESOLUTION = "dispute_resolution"
-    PROBATION = "probation"
-    GENERAL = "general"
+# Import shared types
+from clauseiq_types.common import (
+    ClauseType,
+    RiskLevel,
+    Section as SharedSection,
+    Clause as SharedClause,
+    RiskSummary,
+    User as SharedUser,
+    UserPreferences,
+    AvailableModel,
+)
 
+# Re-export the shared types
+__all__ = [
+    "ClauseType",
+    "RiskLevel", 
+    "Section", 
+    "Clause", 
+    "RiskSummary",
+    "User",
+    "UserPreferences",
+    "AvailableModel",
+]
 
-class RiskLevel(str, Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
+# Add any extensions or customizations needed for backend-specific functionality
+from pydantic import BaseModel, Field
 
+# We subclass the shared models to add any backend-specific functionality
+class Section(SharedSection):
+    """Extends the shared Section model for backend-specific functionality."""
+    pass
 
-class Section(BaseModel):
-    heading: str
-    summary: Optional[str] = None
-    text: str
-
-
-class Clause(BaseModel):
+class Clause(SharedClause):
+    """Extends the shared Clause model for backend-specific functionality."""
+    # Override the id field to use UUID generation if not provided
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    heading: str
-    text: str
-    clause_type: ClauseType
-    risk_level: RiskLevel
-    summary: Optional[str] = None
-    risk_assessment: Optional[str] = None
-    recommendations: Optional[List[str]] = None
-    key_points: Optional[List[str]] = None
-    position_start: Optional[int] = None
-    position_end: Optional[int] = None

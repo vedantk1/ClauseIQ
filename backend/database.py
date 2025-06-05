@@ -7,7 +7,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from pymongo import MongoClient, DESCENDING
 from pymongo.errors import ConnectionFailure, PyMongoError, DuplicateKeyError
-from config import MONGODB_URI, MONGODB_DATABASE, MONGODB_COLLECTION
+from settings import get_settings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -36,11 +36,12 @@ class MongoDBConnection:
     def connect(self):
         """Establish MongoDB connection."""
         try:
-            self._client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+            settings = get_settings()
+            self._client = MongoClient(settings.database.uri, serverSelectionTimeoutMS=5000)
             # Test the connection
             self._client.admin.command('ismaster')
-            self._db = self._client[MONGODB_DATABASE]
-            self._collection = self._db[MONGODB_COLLECTION]
+            self._db = self._client[settings.database.database]
+            self._collection = self._db[settings.database.collection]
             
             # Create indexes for better performance
             self._collection.create_index("id", unique=True)
@@ -51,7 +52,7 @@ class MongoDBConnection:
             self._users_collection.create_index("email", unique=True)
             self._users_collection.create_index("id", unique=True)
             
-            logger.info(f"Successfully connected to MongoDB: {MONGODB_DATABASE}")
+            logger.info(f"Successfully connected to MongoDB: {settings.database.database}")
         except ConnectionFailure as e:
             logger.error(f"Failed to connect to MongoDB: {e}")
             raise

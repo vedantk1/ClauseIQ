@@ -15,19 +15,22 @@ backend_dir = Path(__file__).parent.parent / "backend"
 sys.path.insert(0, str(backend_dir))
 
 from database import get_mongo_storage
-from config import STORAGE_DIR
+from settings import get_settings
 
 def migrate_json_to_mongodb():
     """Migrate all JSON files from local storage to MongoDB."""
     
-    if not os.path.exists(STORAGE_DIR):
-        print(f"Storage directory {STORAGE_DIR} does not exist. No migration needed.")
+    settings = get_settings()
+    storage_dir = settings.file_upload.storage_dir
+    
+    if not os.path.exists(storage_dir):
+        print(f"Storage directory {storage_dir} does not exist. No migration needed.")
         return
     
-    json_files = [f for f in os.listdir(STORAGE_DIR) if f.endswith('.json')]
+    json_files = [f for f in os.listdir(storage_dir) if f.endswith('.json')]
     
     if not json_files:
-        print(f"No JSON files found in {STORAGE_DIR}. No migration needed.")
+        print(f"No JSON files found in {storage_dir}. No migration needed.")
         return
     
     print(f"Found {len(json_files)} JSON files to migrate...")
@@ -39,7 +42,7 @@ def migrate_json_to_mongodb():
     error_count = 0
     
     for filename in json_files:
-        filepath = os.path.join(STORAGE_DIR, filename)
+        filepath = os.path.join(storage_dir, filename)
         try:
             # Read the JSON file
             with open(filepath, 'r') as f:
@@ -68,12 +71,15 @@ def migrate_json_to_mongodb():
     print(f"Errors: {error_count} documents")
     
     if migrated_count > 0:
-        print(f"\nYou can now safely remove the JSON files from {STORAGE_DIR}")
+        print(f"\nYou can now safely remove the JSON files from {storage_dir}")
         print("To backup existing files: mkdir backup && mv *.json backup/")
 
 def verify_migration():
     """Verify that all documents were migrated correctly."""
     print("\nVerifying migration...")
+    
+    settings = get_settings()
+    storage_dir = settings.file_upload.storage_dir
     
     try:
         # Get all documents from MongoDB
@@ -81,8 +87,8 @@ def verify_migration():
         print(f"Total documents in MongoDB: {len(all_docs)}")
         
         # Count JSON files
-        if os.path.exists(STORAGE_DIR):
-            json_count = len([f for f in os.listdir(STORAGE_DIR) if f.endswith('.json')])
+        if os.path.exists(storage_dir):
+            json_count = len([f for f in os.listdir(storage_dir) if f.endswith('.json')])
             print(f"JSON files remaining: {json_count}")
             
             if json_count > 0 and len(all_docs) >= json_count:

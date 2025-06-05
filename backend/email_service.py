@@ -8,15 +8,7 @@ import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import List, Optional
-from config import (
-    SMTP_HOST, 
-    SMTP_PORT, 
-    SMTP_USERNAME, 
-    SMTP_PASSWORD, 
-    EMAIL_FROM, 
-    EMAIL_FROM_NAME,
-    FRONTEND_URL
-)
+from settings import get_settings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -26,13 +18,14 @@ class EmailService:
     """Email service for sending various types of emails."""
     
     def __init__(self):
-        self.smtp_host = SMTP_HOST
-        self.smtp_port = SMTP_PORT
-        self.smtp_username = SMTP_USERNAME
-        self.smtp_password = SMTP_PASSWORD
-        self.email_from = EMAIL_FROM
-        self.email_from_name = EMAIL_FROM_NAME
-        self.frontend_url = FRONTEND_URL
+        settings = get_settings()
+        self.smtp_host = settings.email.smtp_host
+        self.smtp_port = settings.email.smtp_port
+        self.smtp_username = settings.email.smtp_username
+        self.smtp_password = settings.email.smtp_password
+        self.email_from = settings.email.email_from
+        self.email_from_name = settings.email.email_from_name
+        self.frontend_url = settings.security.frontend_url
     
     async def send_email(
         self, 
