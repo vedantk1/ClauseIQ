@@ -629,6 +629,29 @@ class MongoDocumentStorage:
             logger.error(f"Unexpected error deleting document for user: {e}")
             raise
 
+    def delete_all_documents_for_user(self, user_id: str) -> int:
+        """
+        Delete all documents for a specific user.
+        
+        Args:
+            user_id: ID of the user whose documents should be deleted
+            
+        Returns:
+            int: Number of documents deleted
+        """
+        try:
+            result = self.db.collection.delete_many({"user_id": user_id})
+            
+            logger.info(f"Deleted {result.deleted_count} documents for user {user_id}")
+            return result.deleted_count
+                
+        except PyMongoError as e:
+            logger.error(f"Error deleting all documents for user {user_id}: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error deleting all documents for user: {e}")
+            raise
+
 
 # Global storage instance
 _mongo_storage = None

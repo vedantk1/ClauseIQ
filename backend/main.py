@@ -894,6 +894,16 @@ async def delete_document(document_id: str, current_user: dict = Depends(get_cur
     
     return {"message": "Document deleted successfully"}
 
+# Delete all documents for the current user
+@app.delete("/documents")
+async def delete_all_documents(current_user: dict = Depends(get_current_user)):
+    storage = get_mongo_storage()
+    
+    # Delete all documents for the user
+    deleted_count = storage.delete_all_documents_for_user(current_user["id"])
+    
+    return {"message": f"Successfully deleted {deleted_count} documents"}
+
 # Function to generate a summary for a section using AI
 async def generate_summary(section_text: str, section_heading: str = "", model: str = "gpt-3.5-turbo") -> str:
     """Generate a summary for a section using OpenAI's API"""

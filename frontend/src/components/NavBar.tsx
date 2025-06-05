@@ -7,7 +7,7 @@ import clsx from "clsx";
 const links = [
   { href: "/", label: "Upload" },
   { href: "/review", label: "Review" },
-  { href: "/history", label: "History" },
+  { href: "/documents", label: "Documents" },
   { href: "/analytics", label: "Analytics" },
   { href: "/settings", label: "Settings" },
   { href: "/about", label: "About" },

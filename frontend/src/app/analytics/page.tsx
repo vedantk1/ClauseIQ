@@ -516,7 +516,7 @@ export default function AnalyticsDashboard() {
           <Button
             variant="tertiary"
             size="sm"
-            onClick={() => router.push("/history")}
+            onClick={() => router.push("/documents")}
           >
             View All
           </Button>

@@ -13,7 +13,7 @@ describe("NavBar Component", () => {
     // Check for links that should be present (using getAllByText to handle duplicates for mobile/desktop)
     expect(screen.getAllByText("Upload")).toHaveLength(2); // Desktop + Mobile
     expect(screen.getAllByText("Review")).toHaveLength(2); // Desktop + Mobile
-    expect(screen.getAllByText("History")).toHaveLength(2); // Desktop + Mobile
+    expect(screen.getAllByText("Documents")).toHaveLength(2); // Desktop + Mobile
     expect(screen.getAllByText("Analytics")).toHaveLength(2); // Desktop + Mobile
     expect(screen.getAllByText("About")).toHaveLength(2); // Desktop + Mobile
     expect(screen.getByText("ClauseIQ")).toBeTruthy(); // Logo
