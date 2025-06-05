@@ -23,6 +23,7 @@ import {
   RefreshCw,
   Trash2,
   ChevronDown,
+  X,
 } from "lucide-react";
 
 interface DocumentItem {
@@ -62,6 +63,7 @@ export default function Documents() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -279,6 +281,43 @@ export default function Documents() {
     }
   };
 
+  const handleDeleteAllDocuments = async () => {
+    // Confirm deletion
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ALL ${documents.length} documents? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await apiCall(`/documents`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(
+          `Error deleting documents: ${res.status} - ${errorText}`
+        );
+      }
+
+      const result = await res.json();
+
+      // Clear all documents from the local state
+      setDocuments([]);
+      setFilteredDocuments([]);
+
+      toast.success(result.message || "All documents deleted successfully!");
+    } catch (err) {
+      console.error("Failed to delete all documents:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Failed to delete all documents"
+      );
+    }
+  };
+
   // Auth loading check
   if (isLoading) {
     return (
@@ -402,10 +441,18 @@ export default function Documents() {
             View and manage your analyzed legal documents
           </p>
         </div>
-        <Button onClick={() => router.push("/")}>
-          <Upload className="w-4 h-4 mr-2" />
-          Upload New
-        </Button>
+        <div className="flex gap-2">
+          {documents.length > 0 && (
+            <Button variant="danger" onClick={handleDeleteAllDocuments}>
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete All
+            </Button>
+          )}
+          <Button onClick={() => router.push("/")}>
+            <Upload className="w-4 h-4 mr-2" />
+            Upload New
+          </Button>
+        </div>
       </div>
 
       {/* Controls */}
@@ -679,6 +726,46 @@ export default function Documents() {
           </span>
         </div>
       </div>
+
+      {/* Delete All Confirmation Dialog */}
+      {isDeleteAllDialogOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-text-primary">
+                Confirm Deletion
+              </h3>
+              <button
+                onClick={() => setIsDeleteAllDialogOpen(false)}
+                className="p-2 rounded-full hover:bg-bg-muted transition-colors"
+                title="Close"
+              >
+                <X className="w-5 h-5 text-text-tertiary" />
+              </button>
+            </div>
+            <p className="text-text-secondary mb-4">
+              Are you sure you want to delete all documents? This action cannot
+              be undone.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleDeleteAllDocuments}
+                className="flex-1"
+                variant="danger"
+              >
+                Delete All
+              </Button>
+              <Button
+                onClick={() => setIsDeleteAllDialogOpen(false)}
+                className="flex-1"
+                variant="secondary"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
