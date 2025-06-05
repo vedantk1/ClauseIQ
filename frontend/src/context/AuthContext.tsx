@@ -127,31 +127,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!accessToken) return;
 
     try {
-      // Load user preferences
-      const prefsResponse = await fetch(`${API_BASE_URL}/auth/preferences`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-      if (prefsResponse.ok) {
-        const prefsData = await prefsResponse.json();
-        setPreferences({ preferred_model: prefsData.preferred_model });
-      }
-
-      // Load available models
-      const modelsResponse = await fetch(
-        `${API_BASE_URL}/auth/available-models`,
-        {
+      // Load user preferences with retry logic for rate limiting
+      try {
+        const prefsResponse = await fetch(`${API_BASE_URL}/auth/preferences`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
+        });
+
+        if (prefsResponse.ok) {
+          const prefsData = await prefsResponse.json();
+          setPreferences({ preferred_model: prefsData.preferred_model });
+        } else if (prefsResponse.status === 429) {
+          console.warn(
+            "Rate limited while loading preferences, will retry later"
+          );
+          // Don't throw error for rate limits, just log and continue
         }
-      );
-      if (modelsResponse.ok) {
-        const modelsData = await modelsResponse.json();
-        setAvailableModels(modelsData.models || []);
+      } catch (error) {
+        console.warn("Error loading preferences:", error);
+      }
+
+      // Load available models with retry logic for rate limiting
+      try {
+        const modelsResponse = await fetch(
+          `${API_BASE_URL}/auth/available-models`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (modelsResponse.ok) {
+          const modelsData = await modelsResponse.json();
+          setAvailableModels(modelsData.models || []);
+        } else if (modelsResponse.status === 429) {
+          console.warn("Rate limited while loading models, will retry later");
+          // Don't throw error for rate limits, just log and continue
+        }
+      } catch (error) {
+        console.warn("Error loading models:", error);
       }
     } catch (error) {
       console.error("Failed to load preferences:", error);

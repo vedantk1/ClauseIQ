@@ -95,7 +95,7 @@ class RateLimitConfig:
     
     # Default limits (requests per minute)
     DEFAULT = {"limit": 60, "window": 60}
-    AUTH = {"limit": 5, "window": 60}  # More restrictive for auth endpoints
+    AUTH = {"limit": 30, "window": 60}  # Allow more auth requests for login flows
     UPLOAD = {"limit": 10, "window": 60}  # Limited for file uploads
     AI_ANALYSIS = {"limit": 20, "window": 60}  # Limited for expensive AI operations
 
