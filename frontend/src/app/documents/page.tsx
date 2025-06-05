@@ -99,7 +99,6 @@ export default function Documents() {
 
         const docs = data.documents || [];
         setDocuments(docs);
-        setFilteredDocuments(docs);
       } catch (err) {
         console.error("Failed to fetch documents:", err);
         setError(
@@ -114,13 +113,14 @@ export default function Documents() {
     if (!isLoading) {
       fetchDocuments();
     }
-  }, [apiCall, isLoading, isAuthenticated]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, isAuthenticated]); // Intentionally omitting apiCall to prevent infinite loop
 
   // Filter and sort documents
   useEffect(() => {
-    const filtered = documents.filter((doc) =>
-      doc.filename.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filtered = documents.filter((doc) => {
+      return doc.filename.toLowerCase().includes(searchQuery.toLowerCase());
+    });
 
     // Sort documents
     filtered.sort((a, b) => {
