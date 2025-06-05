@@ -2,7 +2,7 @@
 
 An intelligent legal document analysis tool that uses AI to help non-lawyers understand employment contracts by providing clear, plain-language summaries of complex legal text.
 
-![ClauseIQ Demo](https://img.shields.io/badge/Status-Development-orange)
+![ClauseIQ Demo](https://img.shields.io/badge/Status-Production%20Ready-green)
 ![Python](https://img.shields.io/badge/Python-3.13-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-15.3.3-black)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.12-009688)
@@ -177,29 +177,25 @@ docker-compose up
 
 ## 📚 Documentation
 
-**🔄 Living Resource System**: Our documentation is a continuously updated living resource, maintained by AI agents and developers to ensure accuracy and relevance.
+Comprehensive documentation is available in the organized [`docs/`](./docs/) directory:
 
-Comprehensive documentation is available in the [`documentation/`](./documentation/) folder:
+### **Core Documentation**
 
-### **🤖 AI Agent Handover**
+- **[Documentation Index](./docs/INDEX.md)** - Complete documentation navigation
+- **[Contributing Guide](./docs/CONTRIBUTING.md)** - Development workflow and guidelines
+- **[Deployment Guide](./docs/DEPLOYMENT-GUIDE.md)** - Production deployment instructions
+- **[Technical Appendix](./docs/TECHNICAL_APPENDIX.md)** - Implementation details and architecture
 
-- **[Handover Report](./documentation/AI_AGENT_HANDOVER_REPORT.md)** - Complete project overview for AI agents
-- **[Technical Appendix](./documentation/TECHNICAL_APPENDIX.md)** - Implementation details and code examples
-- **[Handover Checklist](./documentation/HANDOVER_CHECKLIST.md)** - Step-by-step verification guide
+### **Project Status**
 
-### **🔧 Development**
+- **[Refactoring Completed](./REFACTORING_COMPLETED.md)** - Backend modularization summary
+- **[Project Changelog](./docs/PROJECT_CHANGELOG.md)** - Complete evolution history
 
-- **[Contributing Guide](./documentation/CONTRIBUTING.md)** - Development workflow and guidelines
-- **[Knowledge Base](./documentation/AI_AGENT_KNOWLEDGE_BASE.md)** - Technical reference
-- **[Deployment Guide](./documentation/DEPLOYMENT-GUIDE.md)** - Production deployment
-- **[Project Changelog](./documentation/PROJECT_CHANGELOG.md)** - Complete project evolution history
+### **Setup Guides**
 
-### **📖 Features**
+- **[Password Reset Setup](./docs/FORGOT_PASSWORD_SETUP.md)** - Email service configuration
 
-- **[Password Reset Setup](./documentation/FORGOT_PASSWORD_SETUP.md)** - Authentication implementation
-- **[MongoDB Migration](./documentation/MONGODB_MIGRATION_SUMMARY.md)** - Database migration guide
-
-**👉 Start with [Documentation Index](./documentation/README.md) for complete navigation**
+**👉 Start with [Documentation Index](./docs/INDEX.md) for complete navigation**
 
 ## Usage
 
