@@ -16,7 +16,7 @@ shared_path = Path(__file__).parent.parent.parent / "shared"
 sys.path.insert(0, str(shared_path))
 
 # Import shared types
-from shared.types.common import *
+from clauseiq_types.common import *
 
 T = TypeVar('T', bound=BaseModel)
 

@@ -1,5 +1,69 @@
 {
+  "name": "clauseiq-project",
+  "version": "1.0.0",
+  "description": "ClauseIQ - AI-powered contract analysis platform",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && uvicorn main:app --reload --host 0.0.0.0 --port 8000",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && python -m build",
+    "build:frontend": "cd frontend && npm run build",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd backend && python -m pytest tests/ -v --cov=backend --cov-report=html",
+    "test:frontend": "cd frontend && npm test",
+    "test:integration": "cd backend && python -m pytest tests/test_routers_integration.py -v",
+    "test:performance": "cd frontend && npm run test -- --testPathPattern=performance",
+    "test:accessibility": "cd frontend && npm run test -- --testPathPattern=accessibility",
+    "test:watch": "concurrently \"npm run test:backend:watch\" \"npm run test:frontend:watch\"",
+    "test:backend:watch": "cd backend && python -m pytest tests/ -v --cov=backend -f",
+    "test:frontend:watch": "cd frontend && npm test -- --watch",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "cd backend && python -m flake8 . && python -m black --check .",
+    "lint:frontend": "cd frontend && npm run lint",
+    "lint:fix": "npm run lint:backend:fix && npm run lint:frontend:fix",
+    "lint:backend:fix": "cd backend && python -m black . && python -m isort .",
+    "lint:frontend:fix": "cd frontend && npm run lint:fix",
+    "type-check": "npm run type-check:backend && npm run type-check:frontend",
+    "type-check:backend": "cd backend && python -m mypy .",
+    "type-check:frontend": "cd frontend && npm run type-check",
+    "setup": "npm run setup:backend && npm run setup:frontend",
+    "setup:backend": "cd backend && pip install -r requirements.txt",
+    "setup:frontend": "cd frontend && npm install",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "db:migrate": "cd backend && alembic upgrade head",
+    "db:seed": "cd backend && python scripts/seed_data.py",
+    "docs:generate": "cd backend && python -m sphinx-build -b html docs docs/_build",
+    "security:audit": "npm run security:audit:backend && npm run security:audit:frontend",
+    "security:audit:backend": "cd backend && python -m safety check",
+    "security:audit:frontend": "cd frontend && npm audit",
+    "coverage:report": "npm run coverage:backend && npm run coverage:frontend",
+    "coverage:backend": "cd backend && python -m pytest --cov=backend --cov-report=html --cov-report=term",
+    "coverage:frontend": "cd frontend && npm run test -- --coverage --watchAll=false"
+  },
   "dependencies": {
     "node-fetch": "^3.3.2"
-  }
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "python": ">=3.9.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/clauseiq-project.git"
+  },
+  "keywords": [
+    "ai",
+    "contract-analysis",
+    "legal-tech",
+    "nlp",
+    "document-processing"
+  ],
+  "author": "ClauseIQ Team",
+  "license": "MIT"
 }

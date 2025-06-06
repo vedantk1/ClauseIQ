@@ -1,8 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { useAnalysis } from "@/context/AnalysisContext";
-import { useApiCall } from "@/context/AuthContext";
+import { useAnalysis } from "@/context/AnalysisContext.v2";
+import { useApiCall } from "@/lib/apiUtils";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import toast from "react-hot-toast";
 import Button from "@/components/Button";
@@ -43,15 +43,7 @@ type SortOption = "newest" | "oldest" | "name";
 export default function Documents() {
   const { isAuthenticated, isLoading } = useAuthRedirect();
   const router = useRouter();
-  const {
-    setSections,
-    setSummary,
-    setFullText,
-    setFileName,
-    setClauses,
-    setRiskSummary,
-    setDocumentId,
-  } = useAnalysis();
+  const { loadDocument } = useAnalysis();
   const apiCall = useApiCall();
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<DocumentItem[]>(
@@ -179,49 +171,8 @@ export default function Documents() {
 
   const handleViewDocument = async (documentId: string) => {
     try {
-      const res = await apiCall(`/documents/${documentId}`);
-
-      if (!res.ok) {
-        throw new Error(`Error retrieving document: ${res.status}`);
-      }
-
-      const document = await res.json();
-
-      if (document.error) {
-        throw new Error(document.error);
-      }
-
-      // Load all document data into context
-      setSections(document.sections || []);
-      setSummary(document.ai_full_summary || document.summary || "");
-      setFullText(document.text || "");
-      setFileName(document.filename || "");
-      setDocumentId(document.id || documentId);
-
-      // Load clauses if available
-      if (document.clauses) {
-        setClauses(document.clauses);
-        setRiskSummary(document.risk_summary || { high: 0, medium: 0, low: 0 });
-      } else {
-        // Try to fetch clauses separately if not included
-        try {
-          const clauseRes = await apiCall(`/documents/${documentId}/clauses`);
-          if (clauseRes.ok) {
-            const clauseData = await clauseRes.json();
-            setClauses(clauseData.clauses || []);
-            setRiskSummary(
-              clauseData.risk_summary || { high: 0, medium: 0, low: 0 }
-            );
-          } else {
-            setClauses([]);
-            setRiskSummary({ high: 0, medium: 0, low: 0 });
-          }
-        } catch {
-          setClauses([]);
-          setRiskSummary({ high: 0, medium: 0, low: 0 });
-        }
-      }
-
+      // Use the v2 AnalysisContext loadDocument method
+      await loadDocument(documentId);
       router.push("/review");
       toast.success("Document loaded successfully!");
     } catch (err) {

@@ -2,14 +2,20 @@
   "name": "@clauseiq/shared-types",
   "version": "1.0.0",
   "description": "Shared types for ClauseIQ frontend and backend",
-  "main": "types/common.ts",
-  "types": "types/common.ts",
+  "main": "index.ts",
+  "types": "index.ts",
   "files": [
-    "types"
+    "index.ts",
+    "clauseiq_types/"
   ],
   "scripts": {
+    "build": "tsc",
+    "generate-types": "python3 ../scripts/generate_ts_types.py clauseiq_types/common.py clauseiq_types/common_generated.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "ClauseIQ Team",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
 }

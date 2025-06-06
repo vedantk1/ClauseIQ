@@ -1,6 +1,6 @@
 "use client";
-import { useAuth } from "@/context/AuthContext";
-import { useApiCall } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext.v2";
+import { useApiCall } from "@/lib/apiUtils";
 import { useEffect, useState } from "react";
 
 export default function AuthDebugPage() {

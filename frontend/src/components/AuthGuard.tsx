@@ -3,7 +3,7 @@
 // We now use page-level authentication with the useAuthRedirect hook.
 import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext.v2";
 
 const publicRoutes = ["/login", "/register"];
 

@@ -1,12 +1,8 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
-// Import shared types
-import {
-  User,
-  UserPreferences,
-  AvailableModel,
-} from "../../../shared/types/common";
+// Import shared types using the new structure
+import { User, UserPreferences, AvailableModel } from "@clauseiq/shared-types";
 
 interface AuthContextType {
   user: User | null;

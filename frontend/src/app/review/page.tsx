@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { useAnalysis } from "@/context/AnalysisContext";
+import { useAnalysis } from "@/context/AnalysisContext.v2";
 import { useRouter } from "next/navigation";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/Tabs";
@@ -9,17 +9,25 @@ import Button from "@/components/Button";
 
 export default function ReviewWorkspace() {
   const { isAuthenticated, isLoading } = useAuthRedirect();
+  const { currentDocument, setSelectedClause } = useAnalysis();
+  const router = useRouter();
+
+  // Extract data from currentDocument for easier access
   const {
-    summary,
-    fullText,
-    fileName,
+    filename: fileName,
     sections,
     clauses,
+    summary,
+    fullText,
     riskSummary,
     selectedClause,
-    setSelectedClause,
-  } = useAnalysis();
-  const router = useRouter();
+  } = currentDocument;
+
+  // Safe access with defaults
+  const safeRiskSummary = riskSummary || { high: 0, medium: 0, low: 0 };
+  const safeRiskHigh = safeRiskSummary?.high ?? 0;
+  const safeRiskMedium = safeRiskSummary?.medium ?? 0;
+  const safeRiskLow = safeRiskSummary?.low ?? 0;
   const [clauseFilter, setClauseFilter] = useState<
     "all" | "high" | "medium" | "low"
   >("all");
@@ -216,20 +224,20 @@ export default function ReviewWorkspace() {
                       <span className="text-text-secondary">Overall Risk</span>
                       <span
                         className={`font-medium ${
-                          riskSummary?.high > 0
+                          safeRiskHigh > 0
                             ? "text-accent-rose"
-                            : riskSummary?.medium > 0
+                            : safeRiskMedium > 0
                             ? "text-accent-amber"
-                            : riskSummary?.low > 0
+                            : safeRiskLow > 0
                             ? "text-accent-green"
                             : "text-text-secondary"
                         }`}
                       >
-                        {riskSummary?.high > 0
+                        {safeRiskHigh > 0
                           ? "High"
-                          : riskSummary?.medium > 0
+                          : safeRiskMedium > 0
                           ? "Medium"
-                          : riskSummary?.low > 0
+                          : safeRiskLow > 0
                           ? "Low"
                           : "Not analyzed"}
                       </span>
@@ -244,30 +252,30 @@ export default function ReviewWorkspace() {
                       Clause Insights
                     </h3>
                     <div className="space-y-3">
-                      {riskSummary?.high > 0 && (
+                      {safeRiskHigh > 0 && (
                         <div className="flex items-center gap-2 p-2 rounded bg-accent-rose/10">
                           <div className="w-2 h-2 bg-accent-rose rounded-full"></div>
                           <span className="text-sm text-accent-rose font-medium">
-                            {riskSummary.high} high-risk clause
-                            {riskSummary.high > 1 ? "s" : ""} found
+                            {safeRiskHigh} high-risk clause
+                            {safeRiskHigh > 1 ? "s" : ""} found
                           </span>
                         </div>
                       )}
-                      {riskSummary?.medium > 0 && (
+                      {safeRiskMedium > 0 && (
                         <div className="flex items-center gap-2 p-2 rounded bg-accent-amber/10">
                           <div className="w-2 h-2 bg-accent-amber rounded-full"></div>
                           <span className="text-sm text-accent-amber font-medium">
-                            {riskSummary.medium} medium-risk clause
-                            {riskSummary.medium > 1 ? "s" : ""} to review
+                            {safeRiskMedium} medium-risk clause
+                            {safeRiskMedium > 1 ? "s" : ""} to review
                           </span>
                         </div>
                       )}
-                      {riskSummary?.low > 0 && (
+                      {safeRiskLow > 0 && (
                         <div className="flex items-center gap-2 p-2 rounded bg-accent-green/10">
                           <div className="w-2 h-2 bg-accent-green rounded-full"></div>
                           <span className="text-sm text-accent-green font-medium">
-                            {riskSummary.low} low-risk clause
-                            {riskSummary.low > 1 ? "s" : ""} look good
+                            {safeRiskLow} low-risk clause
+                            {safeRiskLow > 1 ? "s" : ""} look good
                           </span>
                         </div>
                       )}
@@ -344,26 +352,26 @@ export default function ReviewWorkspace() {
 
                 {/* Risk Summary */}
                 {riskSummary &&
-                  (riskSummary.high > 0 ||
-                    riskSummary.medium > 0 ||
-                    riskSummary.low > 0) && (
+                  (safeRiskHigh > 0 ||
+                    safeRiskMedium > 0 ||
+                    safeRiskLow > 0) && (
                     <div className="grid grid-cols-3 gap-2 mb-4">
                       <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent-rose/10 border border-accent-rose/20">
                         <div className="w-3 h-3 rounded-full bg-accent-rose"></div>
                         <span className="text-sm font-medium text-accent-rose">
-                          {riskSummary.high} High
+                          {safeRiskHigh} High
                         </span>
                       </div>
                       <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent-amber/10 border border-accent-amber/20">
                         <div className="w-3 h-3 rounded-full bg-accent-amber"></div>
                         <span className="text-sm font-medium text-accent-amber">
-                          {riskSummary.medium} Medium
+                          {safeRiskMedium} Medium
                         </span>
                       </div>
                       <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent-green/10 border border-accent-green/20">
                         <div className="w-3 h-3 rounded-full bg-accent-green"></div>
                         <span className="text-sm font-medium text-accent-green">
-                          {riskSummary.low} Low
+                          {safeRiskLow} Low
                         </span>
                       </div>
                     </div>
@@ -446,7 +454,9 @@ export default function ReviewWorkspace() {
                         </div>
                         <p className="text-sm text-text-secondary line-clamp-2">
                           {clause.summary ||
-                            clause.text.substring(0, 100) + "..."}
+                            (clause.text
+                              ? clause.text.substring(0, 100) + "..."
+                              : "No content available")}
                         </p>
                       </div>
                     ))
@@ -638,9 +648,9 @@ export default function ReviewWorkspace() {
 
                 {/* Risk Overview */}
                 {riskSummary &&
-                  (riskSummary.high > 0 ||
-                    riskSummary.medium > 0 ||
-                    riskSummary.low > 0) && (
+                  (safeRiskHigh > 0 ||
+                    safeRiskMedium > 0 ||
+                    safeRiskLow > 0) && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                       <div className="bg-accent-rose/5 border border-accent-rose/20 rounded-lg p-4">
                         <div className="flex items-center gap-3">
@@ -651,7 +661,7 @@ export default function ReviewWorkspace() {
                           </div>
                           <div>
                             <div className="text-2xl font-bold text-accent-rose">
-                              {riskSummary.high}
+                              {safeRiskHigh}
                             </div>
                             <div className="text-sm text-accent-rose">
                               High Risk Clauses
@@ -668,7 +678,7 @@ export default function ReviewWorkspace() {
                           </div>
                           <div>
                             <div className="text-2xl font-bold text-accent-amber">
-                              {riskSummary.medium}
+                              {safeRiskMedium}
                             </div>
                             <div className="text-sm text-accent-amber">
                               Medium Risk Clauses
@@ -685,7 +695,7 @@ export default function ReviewWorkspace() {
                           </div>
                           <div>
                             <div className="text-2xl font-bold text-accent-green">
-                              {riskSummary.low}
+                              {safeRiskLow}
                             </div>
                             <div className="text-sm text-accent-green">
                               Low Risk Clauses

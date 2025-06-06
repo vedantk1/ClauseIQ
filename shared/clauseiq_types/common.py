@@ -71,6 +71,19 @@ class UserPreferences(BaseModel):
     preferred_model: str
 
 
+class Document(BaseModel):
+    """Document model."""
+    id: str
+    filename: str
+    upload_date: str
+    text: Optional[str] = None
+    ai_full_summary: Optional[str] = None
+    sections: Optional[List[Section]] = None
+    clauses: Optional[List[Clause]] = None
+    risk_summary: Optional[RiskSummary] = None
+    user_id: str
+
+
 class AvailableModel(BaseModel):
     """AI model configuration."""
     id: str

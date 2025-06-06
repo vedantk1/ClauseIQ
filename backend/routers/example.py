@@ -14,7 +14,7 @@ from pathlib import Path
 shared_path = Path(__file__).parent.parent.parent / "shared"
 sys.path.insert(0, str(shared_path))
 
-from shared.types.common import Clause, Section, ClauseType, RiskLevel
+from clauseiq_types.common import Clause, Section, ClauseType, RiskLevel
 
 # Import the API schema utilities
 from utils.api_schema import ApiSchema, CrudRouter

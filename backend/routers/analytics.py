@@ -1,20 +1,28 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from typing import List
 from datetime import datetime
 from models.analytics import AnalyticsData, AnalyticsActivity, AnalyticsMonthlyStats, AnalyticsRiskBreakdown
-from database import get_mongo_storage
+from database.service import get_document_service
+from middleware.api_standardization import APIResponse, create_success_response, create_error_response
+from middleware.versioning import versioned_response
 from auth import get_current_user
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
-@router.get("/dashboard", response_model=AnalyticsData)
-async def get_analytics_dashboard(current_user: dict = Depends(get_current_user)):
+@router.get("/dashboard", response_model=APIResponse[AnalyticsData])
+@versioned_response
+async def get_analytics_dashboard(
+    request: Request,
+    current_user: dict = Depends(get_current_user)
+):
     """Get analytics dashboard data with real user document statistics."""
+    correlation_id = getattr(request.state, 'correlation_id', None)
+    
     try:
-        storage = get_mongo_storage()
+        service = await get_document_service()
         
         # Get all documents for the user
-        documents = storage.get_documents_for_user(current_user["id"])
+        documents = await service.get_documents_for_user(current_user["id"])
         
         # Calculate basic statistics
         total_documents = len(documents)
@@ -113,12 +121,15 @@ async def get_analytics_dashboard(current_user: dict = Depends(get_current_user)
             )
         )
         
-        return analytics_data
+        return create_success_response(
+            data=analytics_data,
+            correlation_id=correlation_id
+        )
         
     except Exception as e:
         print(f"Error generating analytics: {str(e)}")
         # Return default/empty data on error
-        return AnalyticsData(
+        default_analytics = AnalyticsData(
             totalDocuments=0,
             documentsThisMonth=0,
             riskyClausesCaught=0,
@@ -127,4 +138,11 @@ async def get_analytics_dashboard(current_user: dict = Depends(get_current_user)
             recentActivity=[],
             monthlyStats=[],
             riskBreakdown=AnalyticsRiskBreakdown(high=0, medium=0, low=0)
+        )
+        
+        return create_error_response(
+            code="ANALYTICS_GENERATION_FAILED",
+            message=f"Failed to generate analytics: {str(e)}",
+            details={"fallback_data": default_analytics.dict()},
+            correlation_id=correlation_id
         )

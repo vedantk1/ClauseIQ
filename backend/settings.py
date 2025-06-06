@@ -1,12 +1,18 @@
 """
 Centralized settings configuration for ClauseIQ.
 Uses Pydantic Settings for validation and environment variable management.
+
+DEPRECATED: Use config.environments.get_environment_config() for new code.
+This module is maintained for backward compatibility.
 """
 from functools import lru_cache
 from typing import List, Optional
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from pydantic_settings import BaseSettings
 import os
+
+# Import new configuration system
+from config.environments import get_environment_config, EnvironmentConfig
 
 
 class Settings(BaseSettings):
@@ -145,8 +151,20 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings() -> Settings:
-    """Get cached settings instance."""
+    """Get cached settings instance.
+    
+    DEPRECATED: Use config.environments.get_environment_config() for new code.
+    """
     return Settings()
+
+
+# New configuration system - recommended for new code
+def get_config() -> EnvironmentConfig:
+    """Get validated environment configuration.
+    
+    This is the recommended way to access configuration in new code.
+    """
+    return get_environment_config()
 
 
 # Export common settings for backward compatibility

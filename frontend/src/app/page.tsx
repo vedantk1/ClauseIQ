@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAnalysis } from "@/context/AnalysisContext";
-import { useApiCall } from "@/context/AuthContext";
+import { useAnalysis } from "@/context/AnalysisContext.v2";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import config from "@/config/config";
 import Button from "@/components/Button";
@@ -13,19 +12,9 @@ import clsx from "clsx";
 export default function Home() {
   const { isAuthenticated, isLoading } = useAuthRedirect();
   const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const router = useRouter();
-  const {
-    setSections,
-    setSummary,
-    setFullText,
-    setFileName,
-    setClauses,
-    setRiskSummary,
-    setDocumentId,
-  } = useAnalysis();
-  const apiCall = useApiCall();
+  const { analyzeDocument, isLoading: analysisLoading } = useAnalysis();
 
   const handleFileChange = (selectedFile: File | null) => {
     if (!selectedFile) return;
@@ -70,94 +59,14 @@ export default function Home() {
 
   const handleProcessDocument = async () => {
     if (!file) return;
-    setLoading(true);
 
     try {
-      const toast = (await import("react-hot-toast")).toast;
-      const loadingToast = toast.loading("Processing document...");
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      // Use the new unified endpoint for complete document analysis
-      const analysisRes = await apiCall(`/analyze-document/`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!analysisRes.ok) {
-        const errorData = await analysisRes
-          .json()
-          .catch(() => ({ detail: analysisRes.statusText }));
-        toast.dismiss(loadingToast);
-        toast.error(
-          `Error: ${analysisRes.status} ${
-            errorData.detail || "Failed to analyze document"
-          }`
-        );
-        throw new Error(
-          `HTTP error! status: ${analysisRes.status}, details: ${errorData.detail}`
-        );
-      }
-
-      interface AnalyzeDocumentResponse {
-        id: string;
-        filename: string;
-        full_text: string;
-        summary: string;
-        clauses: Array<{
-          id: string;
-          heading: string;
-          text: string;
-          clause_type:
-            | "compensation"
-            | "termination"
-            | "non_compete"
-            | "confidentiality"
-            | "benefits"
-            | "working_conditions"
-            | "intellectual_property"
-            | "dispute_resolution"
-            | "probation"
-            | "general";
-          risk_level: "low" | "medium" | "high";
-          summary?: string;
-          risk_assessment?: string;
-          recommendations?: string[];
-          key_points?: string[];
-          position_start?: number;
-          position_end?: number;
-        }>;
-        total_clauses: number;
-        risk_summary: {
-          high: number;
-          medium: number;
-          low: number;
-        };
-      }
-
-      const analysisData =
-        (await analysisRes.json()) as AnalyzeDocumentResponse;
-
-      // Store all results in context from the unified response
-      setFileName(analysisData.filename);
-      setFullText(analysisData.full_text);
-      setSummary(analysisData.summary);
-      setDocumentId(analysisData.id);
-      setSections([]); // Keep empty for compatibility
-      setClauses(analysisData.clauses);
-      setRiskSummary(analysisData.risk_summary);
-
-      toast.dismiss(loadingToast);
-      toast.success("Document analysis complete!");
-
+      await analyzeDocument(file);
       router.push("/review");
     } catch (error) {
       console.error("Error during document processing:", error);
       const toast = (await import("react-hot-toast")).toast;
       toast.error("Failed to process document. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -224,7 +133,7 @@ export default function Home() {
                   accept=".pdf"
                   onChange={handleInputChange}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  disabled={loading}
+                  disabled={analysisLoading}
                 />
 
                 <div className="space-y-4">
@@ -285,16 +194,16 @@ export default function Home() {
                 <div className="mt-8 flex flex-col sm:flex-row gap-4">
                   <Button
                     onClick={handleProcessDocument}
-                    loading={loading}
+                    loading={analysisLoading}
                     size="lg"
                     className="flex-1"
                   >
-                    {loading ? "Processing..." : "Analyze Contract"}
+                    {analysisLoading ? "Processing..." : "Analyze Contract"}
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={() => setFile(null)}
-                    disabled={loading}
+                    disabled={analysisLoading}
                     size="lg"
                   >
                     Remove

@@ -7,7 +7,8 @@ import inspect
 import sys
 import re
 from pathlib import Path
-from typing import Dict, List, Any, Optional, get_origin, get_args
+from typing import Dict, List, Any, Optional, get_origin, get_args, Union
+from enum import Enum
 import importlib.util
 
 # Type mapping from Python to TypeScript

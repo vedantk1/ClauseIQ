@@ -9,8 +9,8 @@ from pathlib import Path
 import sys
 
 # Constants
-TS_TYPE_FILE = Path(__file__).parent.parent / "shared" / "types" / "common.ts"
-PY_TYPE_FILE = Path(__file__).parent.parent / "shared" / "types" / "common.py"
+TS_TYPE_FILE = Path(__file__).parent.parent / "shared" / "clauseiq_types" / "common_generated.ts"
+PY_TYPE_FILE = Path(__file__).parent.parent / "shared" / "clauseiq_types" / "common.py"
 
 def extract_python_enums():
     """Extract enum definitions from the Python file."""
