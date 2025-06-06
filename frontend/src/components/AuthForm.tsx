@@ -1,7 +1,8 @@
 "use client";
 import React, { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
-import Button from "@/components/Button";
+import { useAuth } from "@/context/AuthContext.v2";
+import { Button, Input, Card } from "@/components/ui";
+import { Mail, Lock, User } from "lucide-react";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -22,25 +23,57 @@ export default function AuthForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Generate unique ID for tracking this auth attempt
+    const authAttemptId = Math.random().toString(36).substr(2, 9);
+    console.log(`🔑 [AuthForm-${authAttemptId}] Submit clicked:`, {
+      mode,
+      email,
+      hasPassword: !!password,
+      hasFullName: !!fullName,
+      timestamp: new Date().toISOString(),
+    });
+
     setIsLoading(true);
+    console.log(`⏳ [AuthForm-${authAttemptId}] Setting loading state to true`);
 
     try {
+      console.log(`🔄 [AuthForm-${authAttemptId}] Attempting ${mode}...`);
       if (mode === "login") {
+        console.log(`📤 [AuthForm-${authAttemptId}] Calling login function`);
         await login(email, password);
+        console.log(
+          `✅ [AuthForm-${authAttemptId}] Login function returned successfully`
+        );
       } else {
+        console.log(`📤 [AuthForm-${authAttemptId}] Calling register function`);
         await register(email, password, fullName);
+        console.log(
+          `✅ [AuthForm-${authAttemptId}] Register function returned successfully`
+        );
       }
+      console.log(
+        `🎯 [AuthForm-${authAttemptId}] Auth successful, calling onSuccess callback`
+      );
       onSuccess?.();
-    } catch {
+    } catch (error) {
+      console.error(`❌ [AuthForm-${authAttemptId}] Auth attempt failed:`, {
+        error,
+        message: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       // Error handling is done in the context with toast
     } finally {
+      console.log(
+        `🔄 [AuthForm-${authAttemptId}] Setting loading state to false`
+      );
       setIsLoading(false);
     }
   };
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="bg-bg-surface rounded-lg border border-border-muted p-8 shadow-lg">
+      <Card className="p-8">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-heading font-bold text-text-primary mb-2">
             {mode === "login" ? "Welcome Back" : "Create Account"}
@@ -54,66 +87,48 @@ export default function AuthForm({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {mode === "register" && (
-            <div>
-              <label
-                htmlFor="fullName"
-                className="block text-sm font-medium text-text-primary mb-2"
-              >
-                Full Name
-              </label>
-              <input
-                id="fullName"
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-bg-primary border border-border-muted rounded-lg focus:ring-2 focus:ring-accent-purple focus:border-accent-purple outline-none transition-colors text-text-primary placeholder-text-muted"
-                placeholder="Enter your full name"
-              />
-            </div>
+            <Input
+              id="fullName"
+              type="text"
+              value={fullName}
+              onChange={(value) => setFullName(value)}
+              required
+              label="Full Name"
+              placeholder="Enter your full name"
+              leftIcon={<User className="h-4 w-4" />}
+              size="lg"
+            />
           )}
 
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-text-primary mb-2"
-            >
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3 bg-bg-primary border border-border-muted rounded-lg focus:ring-2 focus:ring-accent-purple focus:border-accent-purple outline-none transition-colors text-text-primary placeholder-text-muted"
-              placeholder="Enter your email"
-            />
-          </div>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(value) => setEmail(value)}
+            required
+            label="Email Address"
+            placeholder="Enter your email"
+            leftIcon={<Mail className="h-4 w-4" />}
+            size="lg"
+          />
 
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-text-primary mb-2"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full px-4 py-3 bg-bg-primary border border-border-muted rounded-lg focus:ring-2 focus:ring-accent-purple focus:border-accent-purple outline-none transition-colors text-text-primary placeholder-text-muted"
-              placeholder="Enter your password"
-            />
-            {mode === "register" && (
-              <p className="text-xs text-text-muted mt-1">
-                Password must be at least 6 characters long
-              </p>
-            )}
-          </div>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(value) => setPassword(value)}
+            required
+            minLength={6}
+            label="Password"
+            placeholder="Enter your password"
+            leftIcon={<Lock className="h-4 w-4" />}
+            size="lg"
+            helpText={
+              mode === "register"
+                ? "Password must be at least 6 characters long"
+                : undefined
+            }
+          />
 
           {mode === "login" && (
             <div className="text-right">
@@ -131,13 +146,10 @@ export default function AuthForm({
             variant="primary"
             size="lg"
             disabled={isLoading}
+            isLoading={isLoading}
             className="w-full"
           >
-            {isLoading
-              ? "Please wait..."
-              : mode === "login"
-              ? "Sign In"
-              : "Create Account"}
+            {mode === "login" ? "Sign In" : "Create Account"}
           </Button>
         </form>
 
@@ -155,7 +167,7 @@ export default function AuthForm({
             </button>
           </p>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
