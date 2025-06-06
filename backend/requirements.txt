@@ -22,7 +22,7 @@ pycparser==2.22
 pydantic==2.11.5
 pydantic-settings==2.9.1
 pydantic_core==2.33.2
-pymongo==4.13.0
+pymongo==4.6.0
 motor==3.3.2
 pypdfium2==4.30.1
 python-dotenv==1.1.0

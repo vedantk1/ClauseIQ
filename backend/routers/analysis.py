@@ -34,7 +34,7 @@ async def analyze_document(
     
     try:
         validate_file(file)
-        service = await get_document_service()
+        service = get_document_service()
         
         temp_file_path = None
         
@@ -135,7 +135,7 @@ async def analyze_clauses_only(
     
     try:
         validate_file(file)
-        service = await get_document_service()
+        service = get_document_service()
         
         temp_file_path = None
         
@@ -222,7 +222,7 @@ async def get_document_clauses(
     correlation_id = getattr(request.state, 'correlation_id', None)
     
     try:
-        service = await get_document_service()
+        service = get_document_service()
         
         # Get the document
         document = await service.get_document_for_user(document_id, current_user["id"])
@@ -286,7 +286,7 @@ async def analyze_document_unified(
     
     try:
         validate_file(file)
-        service = await get_document_service()
+        service = get_document_service()
         
         temp_file_path = None
         

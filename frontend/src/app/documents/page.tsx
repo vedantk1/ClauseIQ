@@ -85,7 +85,10 @@ export default function Documents() {
           );
         }
 
-        const data = await res.json();
+        const data = (await res.json()) as {
+          error?: string;
+          documents?: DocumentItem[];
+        };
 
         if (data.error) {
           throw new Error(data.error);
@@ -183,18 +186,45 @@ export default function Documents() {
     }
   };
 
-  const retryFetch = () => {
+  const retryFetch = async () => {
     setError(null);
     setLoading(true);
-    // Re-trigger the fetch
-    window.location.reload();
+    try {
+      const res = await apiCall(`/documents/`);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(
+          `Error retrieving documents: ${res.status} - ${errorText}`
+        );
+      }
+
+      const data = (await res.json()) as {
+        error?: string;
+        documents?: DocumentItem[];
+      };
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      const docs = data.documents || [];
+      setDocuments(docs);
+    } catch (err) {
+      console.error("Failed to fetch documents:", err);
+      setError(err instanceof Error ? err.message : "Failed to load documents");
+      toast.error("Failed to load documents");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDeleteDocument = async (
     documentId: string,
     documentName: string
   ) => {
-    // Confirm deletion
+    // Using window.confirm is okay for individual document deletion
+    // A modal dialog would be better UX but that's beyond the scope of this fix
     if (
       !window.confirm(
         `Are you sure you want to delete "${documentName}"? This action cannot be undone.`
@@ -233,14 +263,8 @@ export default function Documents() {
   };
 
   const handleDeleteAllDocuments = async () => {
-    // Confirm deletion
-    if (
-      !window.confirm(
-        `Are you sure you want to delete ALL ${documents.length} documents? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
+    // Close the dialog
+    setIsDeleteAllDialogOpen(false);
 
     try {
       const res = await apiCall(`/documents`, {
@@ -254,7 +278,7 @@ export default function Documents() {
         );
       }
 
-      const result = await res.json();
+      const result = (await res.json()) as { message?: string };
 
       // Clear all documents from the local state
       setDocuments([]);
@@ -340,7 +364,7 @@ export default function Documents() {
               <AlertTriangle className="w-8 h-8 text-status-error" />
             </div>
             <h3 className="text-lg font-medium text-text-primary mb-2">
-              Error Loading History
+              Error Loading Documents
             </h3>
             <p className="text-text-secondary text-sm mb-6">{error}</p>
             <Button onClick={retryFetch} className="w-full">
@@ -394,7 +418,10 @@ export default function Documents() {
         </div>
         <div className="flex gap-2">
           {documents.length > 0 && (
-            <Button variant="danger" onClick={handleDeleteAllDocuments}>
+            <Button
+              variant="danger"
+              onClick={() => setIsDeleteAllDialogOpen(true)}
+            >
               <Trash2 className="w-4 h-4 mr-2" />
               Delete All
             </Button>

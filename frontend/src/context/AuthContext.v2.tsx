@@ -3,7 +3,7 @@
  */
 
 "use client";
-import React, { createContext, useContext, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, ReactNode } from "react";
 import { toast } from "react-hot-toast";
 import { User, UserPreferences, AvailableModel } from "@clauseiq/shared-types";
 import { useAppState } from "../store/appState";
@@ -24,7 +24,7 @@ interface AuthContextType {
     password: string,
     fullName: string
   ) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
   updatePreferences: (preferences: UserPreferences) => Promise<void>;
   updateProfile: (fullName: string) => Promise<void>;
@@ -40,73 +40,160 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const { state, dispatch } = useAppState();
   const authState = state.auth;
 
-  // Configure API client with auth providers
-  React.useEffect(() => {
-    apiClient.setAuthTokenProvider(() => authState.tokens.accessToken);
-    apiClient.setRefreshTokenProvider(refreshToken);
-  }, [authState.tokens.accessToken]);
+  // Token management (define only once)
+  const clearTokens = React.useCallback(() => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    dispatch({ type: "AUTH_LOGOUT" });
+  }, [dispatch]);
 
-  // Initialize auth state from localStorage
+  const refreshToken = React.useCallback(async (): Promise<void> => {
+    console.log("[AUTH REFRESH] Starting token refresh");
+    const refreshTokenValue = localStorage.getItem("refresh_token");
+    if (!refreshTokenValue) {
+      console.log("[AUTH REFRESH] No refresh token available");
+      throw new Error("No refresh token available");
+    }
+    try {
+      const response = await apiClient.post<{
+        access_token: string;
+        refresh_token: string;
+      }>("/auth/refresh", { refresh_token: refreshTokenValue });
+
+      if (response.success && response.data) {
+        const { access_token, refresh_token } = response.data;
+        console.log(
+          "[AUTH REFRESH] Token refresh successful, updating storage"
+        );
+        localStorage.setItem("access_token", access_token);
+        localStorage.setItem("refresh_token", refresh_token);
+        dispatch({ type: "AUTH_REFRESH_TOKEN", payload: access_token });
+      } else {
+        console.log("[AUTH REFRESH] Token refresh failed:", response.error);
+        throw new Error("Token refresh failed");
+      }
+    } catch (error) {
+      console.error("[AUTH REFRESH] Token refresh error:", error);
+      clearTokens();
+      throw error;
+    }
+  }, [dispatch, clearTokens]);
+
+  // Configure API client with auth providers - run only once
+  React.useEffect(() => {
+    console.log("[AUTH CONFIG] Setting up API client auth providers");
+
+    apiClient.setAuthTokenProvider(() => {
+      // Always prioritize localStorage for consistency
+      const localStorageToken = localStorage.getItem("access_token");
+      return localStorageToken;
+    });
+
+    apiClient.setRefreshTokenProvider(refreshToken);
+  }, [refreshToken]); // Only depend on refreshToken function
+
+  const loadPreferences = React.useCallback(async (): Promise<void> => {
+    try {
+      const response = await apiClient.get<UserPreferences>(
+        "/auth/preferences"
+      );
+
+      if (response.success && response.data) {
+        dispatch({ type: "AUTH_SET_PREFERENCES", payload: response.data });
+      }
+    } catch (error) {
+      console.warn("Failed to load preferences:", error);
+    }
+  }, [dispatch]);
+
+  const loadAvailableModels = React.useCallback(async (): Promise<void> => {
+    try {
+      const response = await apiClient.get<{ models: AvailableModel[] }>(
+        "/auth/available-models"
+      );
+
+      if (response.success && response.data) {
+        dispatch({
+          type: "AUTH_SET_AVAILABLE_MODELS",
+          payload: response.data.models,
+        });
+      }
+    } catch (error) {
+      console.warn("Failed to load available models:", error);
+    }
+  }, [dispatch]);
+
+  // Initialize auth state from localStorage - run only once on mount
   React.useEffect(() => {
     const initializeAuth = async () => {
+      console.log("[AUTH INIT] Starting auth initialization");
       try {
         const accessToken = localStorage.getItem("access_token");
-        const refreshToken = localStorage.getItem("refresh_token");
+        const refreshTokenValue = localStorage.getItem("refresh_token");
 
         if (accessToken) {
+          console.log("[AUTH INIT] Found existing token, verifying...");
           dispatch({
             type: "AUTH_REFRESH_TOKEN",
             payload: accessToken,
           });
 
           // Verify token and load user data
-          const response = await apiClient.get<User>("/auth/profile");
+          try {
+            const response = await apiClient.get<User>("/auth/me");
 
-          if (response.success && response.data) {
-            dispatch({
-              type: "AUTH_LOGIN_SUCCESS",
-              payload: {
-                user: response.data,
-                tokens: { accessToken, refreshToken: refreshToken || "" },
-              },
-            });
+            if (response.success && response.data) {
+              console.log("[AUTH INIT] Token valid, user authenticated");
+              dispatch({
+                type: "AUTH_LOGIN_SUCCESS",
+                payload: {
+                  user: response.data,
+                  tokens: {
+                    accessToken,
+                    refreshToken: refreshTokenValue || "",
+                  },
+                },
+              });
 
-            // Load preferences and models in parallel
-            await Promise.all([loadPreferences(), loadAvailableModels()]);
-          } else {
-            // Invalid token, clear storage
-            clearTokens();
+              // Load additional data
+              try {
+                await Promise.all([loadPreferences(), loadAvailableModels()]);
+              } catch (prefError) {
+                console.warn(
+                  "[AUTH INIT] Failed to load preferences/models:",
+                  prefError
+                );
+                // Don't fail auth init if preferences fail
+              }
+            } else {
+              console.log("[AUTH INIT] Token invalid, clearing auth state");
+              clearTokens();
+            }
+          } catch (profileError) {
+            console.error(
+              "[AUTH INIT] Profile verification failed:",
+              profileError
+            );
+            // Don't immediately clear tokens - might be network issue
+            // Just set loading to false and let user try manually
+            dispatch({ type: "AUTH_SET_LOADING", payload: false });
           }
+        } else {
+          console.log("[AUTH INIT] No token found, starting unauthenticated");
+          dispatch({ type: "AUTH_SET_LOADING", payload: false });
         }
       } catch (error) {
-        console.error("Auth initialization failed:", error);
+        console.error("[AUTH INIT] Initialization failed:", error);
         clearTokens();
       } finally {
+        // Ensure loading is false
         dispatch({ type: "AUTH_SET_LOADING", payload: false });
       }
     };
 
     initializeAuth();
-  }, []);
-
-  // Token management
-  const setTokens = (accessToken: string, refreshToken: string) => {
-    localStorage.setItem("access_token", accessToken);
-    localStorage.setItem("refresh_token", refreshToken);
-    dispatch({
-      type: "AUTH_LOGIN_SUCCESS",
-      payload: {
-        user: authState.user!,
-        tokens: { accessToken, refreshToken },
-      },
-    });
-  };
-
-  const clearTokens = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    dispatch({ type: "AUTH_LOGOUT" });
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount - ignore deps warning
 
   // Auth actions
   const login = async (email: string, password: string): Promise<void> => {
@@ -117,9 +204,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       timestamp: new Date().toISOString(),
     });
 
+    let timeoutHandle: NodeJS.Timeout | null = null;
     try {
       console.log(`⏳ [AUTH-${loginId}] Setting loading state to true`);
       dispatch({ type: "AUTH_SET_LOADING", payload: true });
+
+      // Warn if API call takes too long
+      timeoutHandle = setTimeout(() => {
+        console.warn(
+          `⏰ [AUTH-${loginId}] Login API call taking longer than 5 seconds...`
+        );
+      }, 5000);
 
       console.log(`📤 [AUTH-${loginId}] Making login API call`);
       const response = await apiClient.post<{
@@ -128,25 +223,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         user: User;
       }>("/auth/login", { email, password });
 
-      console.log(`📥 [AUTH-${loginId}] Login API response:`, {
-        success: response.success,
-        hasData: !!response.data,
-        hasError: !!response.error,
-        errorCode: response.error?.code,
-        errorMessage: response.error?.message,
-      });
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+      console.log(`📥 [AUTH-${loginId}] Login API response:`, response);
 
       if (response.success && response.data) {
         const { access_token, refresh_token, user } = response.data;
-
         console.log(
           `✅ [AUTH-${loginId}] Login successful, storing tokens and user data`
         );
-
-        // Store tokens
         localStorage.setItem("access_token", access_token);
         localStorage.setItem("refresh_token", refresh_token);
-
         console.log(`📝 [AUTH-${loginId}] Dispatching login success action`);
         dispatch({
           type: "AUTH_LOGIN_SUCCESS",
@@ -155,33 +241,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             tokens: { accessToken: access_token, refreshToken: refresh_token },
           },
         });
-
         console.log(
           `🔄 [AUTH-${loginId}] Loading additional user data (preferences and models)`
         );
-        // Load additional data
         await Promise.all([loadPreferences(), loadAvailableModels()]);
-
         console.log(
           `🎉 [AUTH-${loginId}] Login process completed successfully`
         );
         handleAPISuccess("Login successful!");
       } else {
-        console.log(`❌ [AUTH-${loginId}] Login failed - API returned error`);
+        console.log(
+          `❌ [AUTH-${loginId}] Login failed - API returned error`,
+          response
+        );
         handleAPIError(response, "Login failed");
         throw new Error(response.error?.message || "Login failed");
       }
     } catch (error) {
-      console.error(`💥 [AUTH-${loginId}] Login error:`, {
-        error,
-        message: error instanceof Error ? error.message : "Unknown error",
-        stack: error instanceof Error ? error.stack : undefined,
-      });
-
-      console.log(
-        `🔄 [AUTH-${loginId}] Setting loading state to false due to error`
-      );
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+      console.error(`💥 [AUTH-${loginId}] Login error:`, error);
       dispatch({ type: "AUTH_SET_LOADING", payload: false });
+      // Optionally, show a toast for network errors
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Unknown login error");
+      }
       throw error;
     }
   };
@@ -229,68 +314,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const logout = () => {
-    clearTokens();
-    // Reset analysis state when logging out
-    dispatch({ type: "ANALYSIS_RESET" });
-    toast.success("Logged out successfully");
-  };
-
-  const refreshToken = async (): Promise<void> => {
-    const refreshTokenValue = localStorage.getItem("refresh_token");
-    if (!refreshTokenValue) {
-      throw new Error("No refresh token available");
-    }
-
+  const logout = async () => {
     try {
-      const response = await apiClient.post<{
-        access_token: string;
-        refresh_token: string;
-      }>("/auth/refresh", { refresh_token: refreshTokenValue });
-
-      if (response.success && response.data) {
-        const { access_token, refresh_token } = response.data;
-        localStorage.setItem("access_token", access_token);
-        localStorage.setItem("refresh_token", refresh_token);
-
-        dispatch({ type: "AUTH_REFRESH_TOKEN", payload: access_token });
-      } else {
-        throw new Error("Token refresh failed");
-      }
+      // Call backend logout endpoint to invalidate token
+      await apiClient.post("/auth/logout");
     } catch (error) {
+      console.warn(
+        "Backend logout failed, proceeding with local logout:",
+        error
+      );
+    } finally {
+      // Always clear local state regardless of backend call result
       clearTokens();
-      throw error;
-    }
-  };
-
-  const loadPreferences = async (): Promise<void> => {
-    try {
-      const response = await apiClient.get<UserPreferences>(
-        "/auth/preferences"
-      );
-
-      if (response.success && response.data) {
-        dispatch({ type: "AUTH_SET_PREFERENCES", payload: response.data });
-      }
-    } catch (error) {
-      console.warn("Failed to load preferences:", error);
-    }
-  };
-
-  const loadAvailableModels = async (): Promise<void> => {
-    try {
-      const response = await apiClient.get<{ models: AvailableModel[] }>(
-        "/auth/available-models"
-      );
-
-      if (response.success && response.data) {
-        dispatch({
-          type: "AUTH_SET_AVAILABLE_MODELS",
-          payload: response.data.models,
-        });
-      }
-    } catch (error) {
-      console.warn("Failed to load available models:", error);
+      // Reset analysis state when logging out
+      dispatch({ type: "ANALYSIS_RESET" });
+      toast.success("Logged out successfully");
     }
   };
 

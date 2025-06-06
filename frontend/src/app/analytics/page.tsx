@@ -103,7 +103,7 @@ export default function AnalyticsDashboard() {
         }
 
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/analytics/dashboard`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/analytics/dashboard`,
           {
             method: "GET",
             headers: {
@@ -117,8 +117,21 @@ export default function AnalyticsDashboard() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const data: AnalyticsData = await response.json();
-        setAnalyticsData(data);
+        const apiResponse = await response.json();
+
+        // Check if the response follows the standardized API format
+        if (apiResponse.success && apiResponse.data) {
+          const data: AnalyticsData = apiResponse.data;
+          setAnalyticsData(data);
+        } else if (apiResponse.error) {
+          throw new Error(
+            apiResponse.error.message || "Failed to fetch analytics data"
+          );
+        } else {
+          // Fallback for legacy format
+          const data: AnalyticsData = apiResponse;
+          setAnalyticsData(data);
+        }
       } catch (error) {
         console.error("Error fetching analytics:", error);
 

@@ -345,7 +345,7 @@ class APIClient {
 
 // Create and configure the main API client
 export const apiClient = new APIClient(
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+  `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1`
 );
 
 // Error handling utilities

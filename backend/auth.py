@@ -128,7 +128,7 @@ def verify_password_reset_token(token: str) -> Optional[str]:
 # Authentication dependency
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
     """Get current user from JWT token."""
-    from database import get_mongo_storage
+    from database.service import get_document_service
     
     token = credentials.credentials
     payload = verify_token(token)
@@ -148,9 +148,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Get user from database
-    storage = get_mongo_storage()
-    user = storage.get_user_by_id(user_id)
+    # Get user from database using the new async service
+    service = get_document_service()
+    user = await service.get_user_by_id(user_id)
     
     if user is None:
         raise HTTPException(

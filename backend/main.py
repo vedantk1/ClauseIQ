@@ -42,21 +42,24 @@ async def lifespan(app: FastAPI):
     """Application lifespan management."""
     # Startup
     logger.info("Starting ClauseIQ Legal AI Backend...")
-    
-    # Initialize database connection
     db_factory = get_database_factory()
-    await db_factory.initialize()
-    
-    # Health check
-    is_healthy = await db_factory.health_check()
+    try:
+        import asyncio
+        # Add a timeout for DB initialization (e.g., 10 seconds)
+        await asyncio.wait_for(db_factory.initialize(), timeout=10)
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
+        raise RuntimeError(f"Database initialization failed: {e}")
+    try:
+        is_healthy = await asyncio.wait_for(db_factory.health_check(), timeout=10)
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        raise RuntimeError(f"Database health check failed: {e}")
     if not is_healthy:
         logger.error("Database health check failed during startup")
         raise RuntimeError("Database connection failed")
-    
     logger.info("Database connection established successfully")
-    
     yield
-    
     # Shutdown
     logger.info("Shutting down ClauseIQ Legal AI Backend...")
     await db_factory.close()
@@ -75,6 +78,15 @@ app = FastAPI(
 # Get environment configuration
 config = get_environment_config()
 
+# --- MOVE CORS MIDDLEWARE TO THE TOP (FIRST) ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=config.server.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Add middleware in correct order (LIFO - Last In, First Out)
 # Security middleware first (outermost layer)
 app.middleware("http")(security_middleware)
@@ -91,15 +103,6 @@ app.middleware("http")(performance_monitoring_middleware)
 # Logging (innermost layer for complete request context)
 app.middleware("http")(logging_middleware)
 
-# Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=config.server.cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Include routers with versioning support
 v1_router = VersionedAPIRouter(version=APIVersion.V1)
 v1_router.include_router(auth.router)
@@ -110,12 +113,8 @@ v1_router.include_router(health.router)
 
 app.include_router(v1_router)
 
-# Also include routers without versioning for backward compatibility
-app.include_router(auth.router)
-app.include_router(documents.router)
-app.include_router(analysis.router)
-app.include_router(analytics.router)
-app.include_router(health.router)
+# NOTE: Removed duplicate router includes that were causing authentication race conditions
+# All routers are now properly versioned through v1_router above
 
 @app.get("/")
 async def root():

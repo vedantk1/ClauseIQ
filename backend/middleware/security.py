@@ -15,8 +15,23 @@ class SecurityHeaders:
     """Security headers configuration."""
     
     @staticmethod
-    def get_security_headers() -> Dict[str, str]:
-        """Get recommended security headers."""
+    def get_security_headers(is_development: bool = False) -> Dict[str, str]:
+        """Get recommended security headers with environment-aware CSP."""
+        
+        # Development CSP allows external resources needed for Swagger UI
+        if is_development:
+            csp_policy = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+                "img-src 'self' data: https://fastapi.tiangolo.com; "
+                "font-src 'self' https://fonts.gstatic.com; "
+                "frame-ancestors 'none';"
+            )
+        else:
+            # Production CSP is more restrictive
+            csp_policy = "default-src 'self'; frame-ancestors 'none';"
+        
         return {
             # Prevent clickjacking
             "X-Frame-Options": "DENY",
@@ -30,8 +45,8 @@ class SecurityHeaders:
             # Referrer policy
             "Referrer-Policy": "strict-origin-when-cross-origin",
             
-            # Content Security Policy (basic)
-            "Content-Security-Policy": "default-src 'self'; frame-ancestors 'none';",
+            # Content Security Policy (environment-aware)
+            "Content-Security-Policy": csp_policy,
             
             # HSTS (if using HTTPS)
             "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
@@ -241,8 +256,12 @@ async def security_middleware(request: Request, call_next):
         # Process request
         response = await call_next(request)
         
-        # Add security headers
-        security_headers = SecurityHeaders.get_security_headers()
+        # Add security headers with environment awareness
+        from config.environments import get_environment_config
+        config = get_environment_config()
+        is_development = config.is_development()
+        
+        security_headers = SecurityHeaders.get_security_headers(is_development=is_development)
         for header, value in security_headers.items():
             response.headers[header] = value
         

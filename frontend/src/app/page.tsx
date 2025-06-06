@@ -60,6 +60,14 @@ export default function Home() {
   const handleProcessDocument = async () => {
     if (!file) return;
 
+    // Check if user is authenticated before processing
+    if (!isAuthenticated) {
+      const toast = (await import("react-hot-toast")).toast;
+      toast.error("Please sign in to analyze documents");
+      router.push("/login");
+      return;
+    }
+
     try {
       await analyzeDocument(file);
       router.push("/review");
@@ -70,19 +78,8 @@ export default function Home() {
     }
   };
 
-  // Show loading while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-purple"></div>
-      </div>
-    );
-  }
-
-  // Don't render if not authenticated (redirect will happen via useAuthRedirect)
-  if (!isAuthenticated) {
-    return null;
-  }
+  // For the home page, we don't require authentication to view the landing page
+  // Only require auth when trying to upload/analyze documents
 
   return (
     <div className="min-h-screen bg-bg-primary">

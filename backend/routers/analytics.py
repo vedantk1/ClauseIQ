@@ -19,7 +19,7 @@ async def get_analytics_dashboard(
     correlation_id = getattr(request.state, 'correlation_id', None)
     
     try:
-        service = await get_document_service()
+        service = get_document_service()
         
         # Get all documents for the user
         documents = await service.get_documents_for_user(current_user["id"])

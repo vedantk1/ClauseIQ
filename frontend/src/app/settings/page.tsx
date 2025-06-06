@@ -43,7 +43,7 @@ export default function Settings() {
       !hasInitialized
     ) {
       // If no preference is set, default to the first available model
-      setSelectedModel(availableModels[0].id);
+      setSelectedModel(availableModels[0]?.id ?? "");
       setHasInitialized(true);
     }
   }, [preferences, availableModels, hasInitialized]);

@@ -3,7 +3,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import { AppStateProvider } from "@/store/appState";
 import { AuthProvider } from "@/context/AuthContext.v2";
 import { AnalysisProvider } from "@/context/AnalysisContext.v2";
-import NavBar from "@/components/NavBar";
+import NavBar from "@/components/NavBar.v2";
 import { Toaster } from "react-hot-toast";
 import { Toast, ErrorBoundary } from "@/components/ui";
 

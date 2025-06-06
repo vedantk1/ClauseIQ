@@ -87,7 +87,7 @@ async def extract_text(file: UploadFile = File(...), current_user: dict = Depend
 async def list_documents(current_user: dict = Depends(get_current_user)):
     """Get list of documents for the current user."""
     try:
-        service = await get_document_service()
+        service = get_document_service()
         user_docs = await service.get_documents_for_user(current_user["id"])
         
         response_data = DocumentListResponse(documents=user_docs)
@@ -109,7 +109,7 @@ async def list_documents(current_user: dict = Depends(get_current_user)):
 async def retrieve_document(document_id: str, current_user: dict = Depends(get_current_user)):
     """Get a specific document by ID."""
     try:
-        service = await get_document_service()
+        service = get_document_service()
         document = await service.get_document_for_user(document_id, current_user["id"])
         
         if not document:
@@ -138,7 +138,7 @@ async def retrieve_document(document_id: str, current_user: dict = Depends(get_c
 async def delete_document(document_id: str, current_user: dict = Depends(get_current_user)):
     """Delete a specific document."""
     try:
-        service = await get_document_service()
+        service = get_document_service()
         
         # First check if the document exists and belongs to the user
         document = await service.get_document_for_user(document_id, current_user["id"])
@@ -176,7 +176,7 @@ async def delete_document(document_id: str, current_user: dict = Depends(get_cur
 async def delete_all_documents(current_user: dict = Depends(get_current_user)):
     """Delete all documents for the current user."""
     try:
-        service = await get_document_service()
+        service = get_document_service()
         
         success = await service.delete_all_documents_for_user(current_user["id"])
         if not success:

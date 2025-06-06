@@ -443,3 +443,27 @@ async def get_available_models():
             code="MODELS_FETCH_FAILED",
             message=f"Failed to get available models: {str(e)}"
         )
+
+
+@router.post("/logout", response_model=APIResponse[dict])
+async def logout(current_user: dict = Depends(get_current_user)):
+    """Logout user and invalidate token."""
+    try:
+        # For now, we'll just return success since we're using stateless JWT tokens
+        # In a production system, you'd want to add the token to a blacklist
+        # or use shorter-lived tokens with server-side session management
+        
+        logger = logging.getLogger("auth")
+        logger.info(f"User {current_user['email']} logged out successfully")
+        
+        return APIResponse(
+            success=True,
+            data={"message": "Logged out successfully"},
+            message="Logout successful"
+        )
+        
+    except Exception as e:
+        return create_error_response(
+            code="LOGOUT_FAILED",
+            message=f"Logout failed: {str(e)}"
+        )
