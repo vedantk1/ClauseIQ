@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext.v2";
+import { useAuth } from "@/context/AuthContext";
 import clsx from "clsx";
 
 const links = [

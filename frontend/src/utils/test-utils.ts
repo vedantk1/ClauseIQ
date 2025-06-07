@@ -4,20 +4,31 @@
 import { render, RenderOptions } from "@testing-library/react";
 import { ReactElement } from "react";
 import { AppStateProvider } from "@/store/appState";
-import { AuthProvider } from "@/context/AuthContext.v2";
+import { AuthProvider } from "@/context/AuthContext";
 import { AnalysisProvider } from "@/context/AnalysisContext";
 
 // Custom render function with all providers
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   initialState?: {
     auth?: {
-      user?: any;
+      user?: {
+        id: string;
+        email: string;
+        full_name?: string;
+      };
       isAuthenticated?: boolean;
       isLoading?: boolean;
     };
     analysis?: {
-      documents?: any[];
-      currentDocument?: any;
+      documents?: Array<{
+        id: string;
+        filename: string;
+        upload_date: string;
+      }>;
+      currentDocument?: {
+        id: string;
+        filename: string;
+      } | null;
       isLoading?: boolean;
       error?: string | null;
     };
@@ -28,7 +39,7 @@ export function renderWithProviders(
   ui: ReactElement,
   options: CustomRenderOptions = {}
 ) {
-  const { initialState, ...renderOptions } = options;
+  const { ...renderOptions } = options;
 
   function Wrapper({ children }: { children: React.ReactNode }) {
     return (
@@ -45,7 +56,7 @@ export function renderWithProviders(
 
 // Mock API responses
 export const mockApiResponses = {
-  successResponse: (data: any) => ({
+  successResponse: <T>(data: T) => ({
     success: true,
     data,
     error: null,
@@ -64,7 +75,7 @@ export const mockApiResponses = {
     correlation_id: "test-correlation-id",
   }),
 
-  paginatedResponse: (items: any[], page = 1, pageSize = 10) => ({
+  paginatedResponse: <T>(items: T[], page = 1, pageSize = 10) => ({
     success: true,
     data: items,
     meta: {
@@ -82,7 +93,7 @@ export const mockApiResponses = {
 };
 
 // Mock fetch implementation
-export function mockFetch(response: any, status = 200) {
+export function mockFetch(response: unknown, status = 200) {
   return jest.fn().mockResolvedValue({
     ok: status >= 200 && status < 300,
     status,

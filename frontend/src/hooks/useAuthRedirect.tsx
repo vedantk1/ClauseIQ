@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuth } from "@/context/AuthContext.v2";
+import { useAuth } from "@/context/AuthContext";
 
 export function useAuthRedirect() {
   const { isAuthenticated, isLoading } = useAuth();

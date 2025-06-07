@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { useAuth } from "@/context/AuthContext.v2";
+import { useAuth } from "@/context/AuthContext";
 import AuthForm from "@/components/AuthForm";
 
 interface ProtectedRouteProps {

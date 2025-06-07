@@ -1,5 +1,5 @@
 "use client";
-import { useAuth } from "@/context/AuthContext.v2";
+import { useAuth } from "@/context/AuthContext";
 import { useApiCall } from "@/lib/apiUtils";
 import { useEffect, useState } from "react";
 

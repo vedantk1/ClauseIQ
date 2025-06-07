@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext.v2";
+import { useAuth } from "@/context/AuthContext";
 import AuthForm from "@/components/AuthForm";
 
 export default function LoginPage() {

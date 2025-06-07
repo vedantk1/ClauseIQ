@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuth } from "@/context/AuthContext.v2";
+import { useAuth } from "@/context/AuthContext";
 import { LoadingSpinner } from "./ui/LoadingStates";
 
 const publicRoutes = ["/login", "/register"];

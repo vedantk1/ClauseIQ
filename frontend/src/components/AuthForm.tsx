@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { useAuth } from "@/context/AuthContext.v2";
+import { useAuth } from "@/context/AuthContext";
 import { Button, Input, Card } from "@/components/ui";
 import { Mail, Lock, User } from "lucide-react";
 
