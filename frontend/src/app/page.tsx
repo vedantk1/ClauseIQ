@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAnalysis } from "@/context/AnalysisContext.v2";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
@@ -10,36 +10,210 @@ import Card from "@/components/Card";
 import clsx from "clsx";
 
 export default function Home() {
-  const { isAuthenticated, isLoading } = useAuthRedirect();
+  const { isAuthenticated } = useAuthRedirect();
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const { analyzeDocument, isLoading: analysisLoading } = useAnalysis();
+  const {
+    analyzeDocument,
+    resetAnalysis,
+    currentDocument,
+    isLoading: analysisLoading,
+  } = useAnalysis();
+
+  // Monitor state changes for debugging
+  useEffect(() => {
+    console.log("🔄 [DEBUG] State change detected:", {
+      hasLocalFile: !!file,
+      localFileName: file?.name || null,
+      hasAnalysisDocument: !!currentDocument.id,
+      analysisFileName: currentDocument.filename || null,
+      inputValue: fileInputRef.current?.value || null,
+      inputDisabled: fileInputRef.current?.disabled || false,
+      timestamp: new Date().toISOString(),
+    });
+  }, [file, currentDocument.id, currentDocument.filename]);
+
+  // Monitor file input element specifically
+  useEffect(() => {
+    const inputElement = fileInputRef.current;
+    if (inputElement) {
+      const handleFocus = () => console.log("🎯 [DEBUG] File input focused");
+      const handleClick = () =>
+        console.log("🖱️ [DEBUG] File input clicked (event listener)");
+
+      inputElement.addEventListener("focus", handleFocus);
+      inputElement.addEventListener("click", handleClick);
+
+      return () => {
+        inputElement.removeEventListener("focus", handleFocus);
+        inputElement.removeEventListener("click", handleClick);
+      };
+    }
+  }, []);
+
+  // Add effect to monitor when the component re-renders after remove
+  useEffect(() => {
+    if (!file && fileInputRef.current) {
+      console.log("🔍 [DEBUG] No file state, checking input element:", {
+        inputValue: fileInputRef.current.value,
+        inputDisabled: fileInputRef.current.disabled,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }, [file]);
+
+  // Helper function to test file input functionality
+  const testFileInputState = () => {
+    console.log("🧪 [DEBUG] File input state test:", {
+      hasFileInputRef: !!fileInputRef.current,
+      inputValue: fileInputRef.current?.value || "undefined",
+      inputDisabled: fileInputRef.current?.disabled || false,
+      inputAccept: fileInputRef.current?.accept || "undefined",
+      inputType: fileInputRef.current?.type || "undefined",
+      localFileState: file?.name || null,
+      analysisState: currentDocument.filename || null,
+      timestamp: new Date().toISOString(),
+    });
+  };
+
+  // Expose test function to window for manual debugging
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).testFileInputState = testFileInputState;
+      console.log(
+        "🔧 [DEBUG] testFileInputState() exposed to window for debugging"
+      );
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (window as any).testFileInputState;
+      }
+    };
+  }, [testFileInputState]);
+
+  // State consistency check utility
+  const checkStateConsistency = () => {
+    const hasLocalFile = !!file;
+    const hasAnalysisDocument = !!currentDocument.id;
+    const hasAnalysisFilename = !!currentDocument.filename;
+
+    console.log("🔍 [DEBUG] State consistency check:", {
+      hasLocalFile,
+      localFileName: file?.name || null,
+      hasAnalysisDocument,
+      hasAnalysisFilename,
+      analysisFileName: currentDocument.filename || null,
+      analysisDocumentId: currentDocument.id || null,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Only warn about problematic inconsistencies, not transitional states
+    if (
+      hasLocalFile &&
+      hasAnalysisDocument &&
+      hasAnalysisFilename &&
+      file.name !== currentDocument.filename
+    ) {
+      console.warn("⚠️ [DEBUG] State inconsistency: File names don't match:", {
+        localFileName: file.name,
+        analysisFileName: currentDocument.filename,
+      });
+    }
+
+    // This is only concerning if both states persist for a while
+    if (hasLocalFile && hasAnalysisDocument && !hasAnalysisFilename) {
+      console.warn(
+        "⚠️ [DEBUG] Potential issue: Analysis document exists but has no filename"
+      );
+    }
+  };
 
   const handleFileChange = (selectedFile: File | null) => {
     if (!selectedFile) return;
 
+    console.log("🔍 [DEBUG] File selection started:", {
+      fileName: selectedFile.name,
+      fileSize: selectedFile.size,
+      fileType: selectedFile.type,
+      timestamp: new Date().toISOString(),
+    });
+
     // Basic frontend validation
     if (selectedFile.size > config.maxFileSizeMB * 1024 * 1024) {
+      console.error("❌ [DEBUG] File size validation failed:", {
+        fileSize: selectedFile.size,
+        maxSize: config.maxFileSizeMB * 1024 * 1024,
+        fileName: selectedFile.name,
+      });
       alert(`File is too large. Max size: ${config.maxFileSizeMB}MB`);
       return;
     }
     if (!selectedFile.name.toLowerCase().endsWith(".pdf")) {
+      console.error("❌ [DEBUG] File type validation failed:", {
+        fileName: selectedFile.name,
+        fileType: selectedFile.type,
+      });
       alert("Please upload a PDF file.");
       return;
     }
+
+    console.log("✅ [DEBUG] File validation passed, setting file state");
     setFile(selectedFile);
   };
 
+  const handleRemoveFile = () => {
+    console.log("🗑️ [DEBUG] Remove file initiated:", {
+      currentFile: file?.name,
+      inputValue: fileInputRef.current?.value,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Check state before removal
+    checkStateConsistency();
+
+    // Reset global analysis state first
+    resetAnalysis();
+
+    // Clear local file state
+    setFile(null);
+
+    // CRITICAL: Reset the file input element value
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      console.log("🔄 [DEBUG] File input element reset");
+    }
+
+    console.log("✅ [DEBUG] File and analysis state cleared, input reset");
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("📎 [DEBUG] File input change event:", {
+      filesLength: e.target.files?.length || 0,
+      firstFileName: e.target.files?.[0]?.name || null,
+      inputDisabled: e.target.disabled,
+      timestamp: new Date().toISOString(),
+    });
+
     if (e.target.files && e.target.files.length > 0) {
       handleFileChange(e.target.files[0]);
+    } else {
+      console.warn("⚠️ [DEBUG] File input change event but no files selected");
     }
   };
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log("📌 [DEBUG] Drag event:", {
+      type: e.type,
+      dragActive,
+      timestamp: new Date().toISOString(),
+    });
+
     if (e.type === "dragenter" || e.type === "dragover") {
       setDragActive(true);
     } else if (e.type === "dragleave") {
@@ -52,16 +226,37 @@ export default function Home() {
     e.stopPropagation();
     setDragActive(false);
 
+    console.log("📁 [DEBUG] Drop event:", {
+      filesLength: e.dataTransfer.files?.length || 0,
+      firstFileName: e.dataTransfer.files?.[0]?.name || null,
+      timestamp: new Date().toISOString(),
+    });
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFileChange(e.dataTransfer.files[0]);
+    } else {
+      console.warn("⚠️ [DEBUG] Drop event but no files found");
     }
   };
 
   const handleProcessDocument = async () => {
-    if (!file) return;
+    if (!file) {
+      console.error("❌ [DEBUG] Process document called without file");
+      return;
+    }
+
+    console.log("🚀 [DEBUG] Document processing started:", {
+      fileName: file.name,
+      fileSize: file.size,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Check state consistency before processing
+    checkStateConsistency();
 
     // Check if user is authenticated before processing
     if (!isAuthenticated) {
+      console.log("🔒 [DEBUG] User not authenticated, redirecting to login");
       const toast = (await import("react-hot-toast")).toast;
       toast.error("Please sign in to analyze documents");
       router.push("/login");
@@ -69,10 +264,18 @@ export default function Home() {
     }
 
     try {
+      console.log("📄 [DEBUG] Starting document analysis");
       await analyzeDocument(file);
+      console.log(
+        "✅ [DEBUG] Document analysis completed successfully, navigating to review"
+      );
       router.push("/review");
     } catch (error) {
-      console.error("Error during document processing:", error);
+      console.error("❌ [DEBUG] Document analysis failed:", {
+        error: error instanceof Error ? error.message : error,
+        fileName: file.name,
+        timestamp: new Date().toISOString(),
+      });
       const toast = (await import("react-hot-toast")).toast;
       toast.error("Failed to process document. Please try again.");
     }
@@ -124,13 +327,43 @@ export default function Home() {
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
+                onClick={() => {
+                  console.log("🖱️ [DEBUG] Upload area clicked:", {
+                    hasFile: !!file,
+                    analysisLoading,
+                    inputRef: !!fileInputRef.current,
+                    inputValue: fileInputRef.current?.value || null,
+                    inputDisabled: fileInputRef.current?.disabled || false,
+                    timestamp: new Date().toISOString(),
+                  });
+
+                  // Manually trigger file input click if needed
+                  if (fileInputRef.current && !analysisLoading) {
+                    console.log(
+                      "🎯 [DEBUG] Manually triggering file input click"
+                    );
+                    fileInputRef.current.click();
+                  }
+                }}
               >
                 <input
+                  ref={fileInputRef}
                   type="file"
                   accept=".pdf"
                   onChange={handleInputChange}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   disabled={analysisLoading}
+                  onClick={(e) => {
+                    console.log("📎 [DEBUG] File input clicked:", {
+                      disabled: e.currentTarget.disabled,
+                      value: e.currentTarget.value,
+                      files: e.currentTarget.files?.length || 0,
+                      timestamp: new Date().toISOString(),
+                    });
+
+                    // Stop propagation to prevent duplicate clicks
+                    e.stopPropagation();
+                  }}
                 />
 
                 <div className="space-y-4">
@@ -199,7 +432,7 @@ export default function Home() {
                   </Button>
                   <Button
                     variant="secondary"
-                    onClick={() => setFile(null)}
+                    onClick={handleRemoveFile}
                     disabled={analysisLoading}
                     size="lg"
                   >

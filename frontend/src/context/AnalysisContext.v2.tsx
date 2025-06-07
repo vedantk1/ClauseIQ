@@ -47,6 +47,12 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
   // Action implementations
   const analyzeDocument = async (file: File): Promise<void> => {
     try {
+      console.log("🔄 [DEBUG] Analysis started:", {
+        fileName: file.name,
+        fileSize: file.size,
+        timestamp: new Date().toISOString(),
+      });
+
       dispatch({ type: "ANALYSIS_SET_LOADING", payload: true });
       dispatch({ type: "ANALYSIS_SET_ERROR", payload: null });
 
@@ -94,10 +100,23 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
           },
         });
 
+        console.log("✅ [DEBUG] Document analysis completed successfully:", {
+          documentId: id,
+          fileName: filename,
+          clausesCount: clauses.length,
+          riskSummary: risk_summary,
+          timestamp: new Date().toISOString(),
+        });
+
         handleAPISuccess("Document analyzed successfully!");
       } else {
         const errorMessage =
           response.error?.message || "Failed to analyze document";
+        console.error("❌ [DEBUG] Document analysis API error:", {
+          error: errorMessage,
+          response: response.error,
+          timestamp: new Date().toISOString(),
+        });
         dispatch({ type: "ANALYSIS_SET_ERROR", payload: errorMessage });
         handleAPIError(response, "Document analysis failed");
         throw new Error(errorMessage);
@@ -105,9 +124,14 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
+      console.error("❌ [DEBUG] Document analysis exception:", {
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
       dispatch({ type: "ANALYSIS_SET_ERROR", payload: errorMessage });
       throw error;
     } finally {
+      console.log("🔄 [DEBUG] Document analysis loading state cleared");
       dispatch({ type: "ANALYSIS_SET_LOADING", payload: false });
     }
   };
@@ -237,7 +261,11 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const resetAnalysis = () => {
+    console.log("🔄 [DEBUG] Analysis state reset initiated:", {
+      timestamp: new Date().toISOString(),
+    });
     dispatch({ type: "ANALYSIS_RESET" });
+    console.log("✅ [DEBUG] Analysis state reset completed");
   };
 
   const contextValue: AnalysisContextType = {

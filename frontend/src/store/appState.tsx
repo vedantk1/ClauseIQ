@@ -185,6 +185,28 @@ const analysisReducer = (
   state: AnalysisState,
   action: AnalysisAction
 ): AnalysisState => {
+  console.log("🔄 [DEBUG] Analysis reducer action:", {
+    type: action.type,
+    payload: action.type.includes("DOCUMENT")
+      ? "payload" in action &&
+        typeof action.payload === "object" &&
+        action.payload !== null &&
+        "filename" in action.payload
+        ? action.payload.filename
+        : "payload" in action &&
+          typeof action.payload === "object" &&
+          action.payload !== null &&
+          "id" in action.payload
+        ? action.payload.id
+        : "N/A"
+      : action.type === "ANALYSIS_RESET"
+      ? "RESET"
+      : "payload" in action
+      ? action.payload
+      : "N/A",
+    timestamp: new Date().toISOString(),
+  });
+
   switch (action.type) {
     case "ANALYSIS_SET_LOADING":
       return { ...state, isLoading: action.payload };
@@ -223,6 +245,7 @@ const analysisReducer = (
       };
 
     case "ANALYSIS_RESET":
+      console.log("🔄 [DEBUG] Analysis state being reset to initial state");
       return initialAnalysisState;
 
     default:
