@@ -5,7 +5,7 @@ import { render, RenderOptions } from "@testing-library/react";
 import { ReactElement } from "react";
 import { AppStateProvider } from "@/store/appState";
 import { AuthProvider } from "@/context/AuthContext.v2";
-import { AnalysisProvider } from "@/context/AnalysisContext.v2";
+import { AnalysisProvider } from "@/context/AnalysisContext";
 
 // Custom render function with all providers
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {

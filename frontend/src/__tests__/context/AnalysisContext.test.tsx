@@ -5,7 +5,7 @@ import {
   mockFetch,
   createMockFile,
 } from "../../utils/test-utils";
-import { useAnalysis } from "../../context/AnalysisContext.v2";
+import { useAnalysis } from "../../context/AnalysisContext";
 import { act } from "react";
 
 // Test component to interact with AnalysisContext
@@ -69,7 +69,7 @@ function TestComponent() {
   );
 }
 
-describe("AnalysisContext.v2", () => {
+describe("AnalysisContext", () => {
   beforeEach(() => {
     global.fetch = jest.fn();
   });

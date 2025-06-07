@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { useAnalysis } from "@/context/AnalysisContext.v2";
+import { useAnalysis } from "@/context/AnalysisContext";
 import { useApiCall } from "@/lib/apiUtils";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import toast from "react-hot-toast";
@@ -174,7 +174,7 @@ export default function Documents() {
 
   const handleViewDocument = async (documentId: string) => {
     try {
-      // Use the v2 AnalysisContext loadDocument method
+      // Use the AnalysisContext loadDocument method
       await loadDocument(documentId);
       router.push("/review");
       toast.success("Document loaded successfully!");

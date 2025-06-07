@@ -1,6 +1,5 @@
-import { render } from "@testing-library/react";
 import Home from "@/app/page";
-import { AnalysisProvider } from "@/context/AnalysisContext";
+import { renderWithProviders } from "@/utils/test-utils";
 
 // Mock the router
 jest.mock("next/navigation", () => ({
@@ -33,22 +32,12 @@ describe("Home Page", () => {
   });
 
   test("renders home page without crashing", () => {
-    const { container } = render(
-      <AnalysisProvider>
-        <Home />
-      </AnalysisProvider>
-    );
-
+    const { container } = renderWithProviders(<Home />);
     expect(container).toBeTruthy();
   });
 
   test("component has the proper structure", () => {
-    const { container } = render(
-      <AnalysisProvider>
-        <Home />
-      </AnalysisProvider>
-    );
-
+    const { container } = renderWithProviders(<Home />);
     // Check that the container has content
     expect(container.firstChild).toBeTruthy();
   });
