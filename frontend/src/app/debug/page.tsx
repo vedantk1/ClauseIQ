@@ -3,11 +3,26 @@ import { useAuth } from "@/context/AuthContext";
 import { useApiCall } from "@/lib/apiUtils";
 import { useEffect, useState } from "react";
 
+// Define proper interface for documents response
+interface DocumentsResponse {
+  documents?: Array<{
+    id: string;
+    filename: string;
+    upload_date: string;
+    sections?: Array<{
+      heading: string;
+      text: string;
+      summary?: string;
+    }>;
+  }>;
+  error?: string;
+}
+
 export default function AuthDebugPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const apiCall = useApiCall();
   const [debugInfo, setDebugInfo] = useState<string[]>([]);
-  const [documents, setDocuments] = useState<any>(null);
+  const [documents, setDocuments] = useState<DocumentsResponse | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -52,10 +67,12 @@ export default function AuthDebugPage() {
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem("access_token", data.access_token);
-        localStorage.setItem("refresh_token", data.refresh_token);
-        addDebugInfo("✅ Direct login successful, tokens stored");
-        window.location.reload(); // Reload to trigger auth context
+        if (typeof window !== "undefined") {
+          localStorage.setItem("access_token", data.access_token);
+          localStorage.setItem("refresh_token", data.refresh_token);
+          addDebugInfo("✅ Direct login successful, tokens stored");
+          window.location.reload(); // Reload to trigger auth context
+        }
       } else {
         addDebugInfo("❌ Direct login failed");
       }
@@ -71,7 +88,7 @@ export default function AuthDebugPage() {
       addDebugInfo(`Documents API response status: ${response.status}`);
 
       if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as DocumentsResponse;
         setDocuments(data);
         addDebugInfo(`✅ Documents loaded: ${JSON.stringify(data)}`);
       } else {
@@ -84,9 +101,19 @@ export default function AuthDebugPage() {
   };
 
   const clearTokens = () => {
-    localStorage.clear();
-    addDebugInfo("🧹 Cleared localStorage");
-    window.location.reload();
+    if (typeof window !== "undefined") {
+      localStorage.clear();
+      addDebugInfo("🧹 Cleared localStorage");
+      window.location.reload();
+    }
+  };
+
+  // Helper function to safely access localStorage
+  const getStorageItem = (key: string): string | null => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(key);
+    }
+    return null;
   };
 
   return (
@@ -99,8 +126,7 @@ export default function AuthDebugPage() {
         <p>Authenticated: {isAuthenticated ? "Yes" : "No"}</p>
         <p>User: {user ? `${user.full_name} (${user.email})` : "None"}</p>
         <p>
-          Access Token:{" "}
-          {localStorage.getItem("access_token") ? "Present" : "Missing"}
+          Access Token: {getStorageItem("access_token") ? "Present" : "Missing"}
         </p>
       </div>
 
