@@ -5,24 +5,28 @@ This directory contains the Next.js interface for ClauseIQ, the employment contr
 ## Getting Started
 
 1. Install dependencies:
+
    ```bash
    npm install
    ```
 
 2. Copy the example environment file and adjust values for your setup:
+
    ```bash
    cp .env.example .env.local
    ```
-   
+
    Important variables:
+
    - `NEXT_PUBLIC_API_URL` – URL of the FastAPI backend. Defaults to `http://localhost:8000` for local development.
    - `NEXT_PUBLIC_MAX_FILE_SIZE_MB` – maximum allowed file upload size in megabytes.
 
 3. Run the development server:
+
    ```bash
    npm run dev
    ```
-   
+
    The app will be available at [http://localhost:3000](http://localhost:3000).
 
 ## Common Commands
