@@ -91,6 +91,210 @@ class LegalReportPDF(FPDF):
         
         self.ln(35)
         
+    def add_document_insights_section(self):
+        """Add document insights with metrics."""
+        self.add_page()
+        self.add_section('Document Insights', '', True)
+        
+        # Calculate metrics
+        full_text = self.document_data.get('text', '') or ''
+        word_count = len(full_text.split()) if full_text else 0
+        clauses = self.document_data.get('clauses', [])
+        clause_count = len(clauses)
+        
+        # Calculate complexity score
+        complexity_score = self.calculate_complexity_score(full_text, clauses)
+        
+        # Get risk summary
+        risk_summary = self.document_data.get('risk_summary', {})
+        
+        # Create metrics content
+        metrics_content = f"""
+Document Metrics and Analysis Overview:
+
+DOCUMENT STATISTICS:
+- Word Count: {word_count:,} words
+- Clause Count: {clause_count} clauses identified
+- Document Complexity: {complexity_score} (on a scale of 1-10)
+- Contract Type: {self.document_data.get('contract_type', 'Unknown').replace('_', ' ').title()}
+
+RISK ASSESSMENT SUMMARY:
+- High Risk Items: {risk_summary.get('high', 0)} clauses
+- Medium Risk Items: {risk_summary.get('medium', 0)} clauses  
+- Low Risk Items: {risk_summary.get('low', 0)} clauses
+- Total Risk Items: {sum(risk_summary.values()) if risk_summary else 0} clauses analyzed
+
+ANALYSIS OVERVIEW:
+This document has been comprehensively analyzed using ClauseIQ's AI-powered legal analysis system. The following sections provide detailed insights into the document's structure, key provisions, and potential risk areas.
+        """.strip()
+        
+        self.add_section('', metrics_content)
+        
+    def calculate_complexity_score(self, full_text: str, clauses: List[Dict[str, Any]]) -> str:
+        """Calculate document complexity score (1-10 scale)."""
+        if not full_text:
+            return "N/A"
+            
+        try:
+            word_count = len(full_text.split())
+            clause_count = len(clauses)
+            
+            # Base score from word count
+            score = 0
+            if word_count > 0:
+                # Length complexity (0-3 points)
+                if word_count > 5000:
+                    score += 3
+                elif word_count > 2000:
+                    score += 2
+                elif word_count > 1000:
+                    score += 1
+                
+                # Clause density (0-3 points)
+                if word_count > 0:
+                    clauses_per_thousand_words = (clause_count * 1000) / word_count
+                    if clauses_per_thousand_words > 20:
+                        score += 3
+                    elif clauses_per_thousand_words > 15:
+                        score += 2
+                    elif clauses_per_thousand_words > 10:
+                        score += 1
+            
+            # Risk complexity (0-4 points)
+            risk_summary = self.document_data.get('risk_summary', {})
+            score += (risk_summary.get('high', 0) * 1.5)
+            score += (risk_summary.get('medium', 0) * 0.5)
+            
+            # Cap at 10
+            score = min(10, max(1, int(score)))
+            return str(score)
+            
+        except Exception:
+            return "N/A"
+    
+    def format_list_section(self, items: List[str], description: str) -> str:
+        """Format a list of items into a well-structured section."""
+        if not items:
+            return "No items identified in this category."
+            
+        formatted_text = f"{description}:\n\n"
+        
+        for i, item in enumerate(items, 1):
+            # Clean up the item text
+            clean_item = item.strip()
+            if clean_item:
+                formatted_text += f"{i}. {clean_item}\n\n"
+        
+        return formatted_text.strip()
+    
+    def add_clause_overview_section(self, clauses: List[Dict[str, Any]]):
+        """Add a clause overview section with risk breakdown."""
+        self.add_page()
+        self.add_section('Clause Analysis Overview', '', True)
+        
+        # Analyze clause distribution by type and risk
+        clause_types = {}
+        risk_distribution = {'high': 0, 'medium': 0, 'low': 0}
+        
+        for clause in clauses:
+            clause_type = clause.get('clause_type', 'unknown')
+            risk_level = clause.get('risk_level', 'unknown')
+            
+            # Count clause types
+            clause_types[clause_type] = clause_types.get(clause_type, 0) + 1
+            
+            # Count risk levels
+            if risk_level in risk_distribution:
+                risk_distribution[risk_level] += 1
+        
+        # Create overview content
+        total_clauses = len(clauses)
+        overview_content = f"""
+CLAUSE ANALYSIS SUMMARY:
+
+Total Clauses Identified: {total_clauses}
+
+RISK BREAKDOWN:
+- High Risk: {risk_distribution['high']} clauses ({(risk_distribution['high']/total_clauses*100):.1f}%)
+- Medium Risk: {risk_distribution['medium']} clauses ({(risk_distribution['medium']/total_clauses*100):.1f}%)  
+- Low Risk: {risk_distribution['low']} clauses ({(risk_distribution['low']/total_clauses*100):.1f}%)
+
+CLAUSE TYPES IDENTIFIED:"""
+        
+        # Add clause type distribution
+        for clause_type, count in sorted(clause_types.items(), key=lambda x: x[1], reverse=True):
+            formatted_type = clause_type.replace('_', ' ').title()
+            percentage = (count / total_clauses * 100)
+            overview_content += f"\n- {formatted_type}: {count} clauses ({percentage:.1f}%)"
+        
+        overview_content += f"""
+
+ANALYSIS METHODOLOGY:
+Each clause has been analyzed using ClauseIQ's AI system to determine:
+- Clause type and legal category
+- Risk level (High/Medium/Low)
+- Key legal implications
+- Recommendations for review
+
+The detailed analysis for each clause follows in the next section.
+        """
+        
+        self.add_section('', overview_content.strip())
+    
+    def add_document_summary_section(self):
+        """Add a final document summary section."""
+        self.add_page()
+        self.add_section('Document Analysis Summary', '', True)
+        
+        # Get document data
+        filename = self.document_data.get('filename', 'Document')
+        contract_type = self.document_data.get('contract_type', 'unknown')
+        full_text = self.document_data.get('text', '') or ''
+        clauses = self.document_data.get('clauses', [])
+        risk_summary = self.document_data.get('risk_summary', {})
+        
+        # Calculate key metrics
+        word_count = len(full_text.split()) if full_text else 0
+        clause_count = len(clauses)
+        total_risks = sum(risk_summary.values()) if risk_summary else 0
+        
+        # Create summary content
+        summary_content = f"""
+COMPREHENSIVE ANALYSIS SUMMARY
+
+DOCUMENT OVERVIEW:
+- Document Name: {filename}
+- Contract Type: {contract_type.replace('_', ' ').title()}
+- Total Word Count: {word_count:,} words
+- Analysis Date: {datetime.now().strftime("%B %d, %Y")}
+
+ANALYSIS RESULTS:
+- Total Clauses Analyzed: {clause_count}
+- Total Risk Items Identified: {total_risks}
+- High Priority Risks: {risk_summary.get('high', 0)}
+- Medium Priority Risks: {risk_summary.get('medium', 0)}
+- Low Priority Risks: {risk_summary.get('low', 0)}
+
+COMPLETION STATUS:
+This document has been thoroughly analyzed using ClauseIQ's AI-powered legal analysis system. The analysis includes:
+- Comprehensive clause identification and categorization
+- Risk assessment for each identified clause
+- Structured summary of key provisions
+- Identification of important dates and obligations
+- Analysis of key parties and stakeholders
+
+NEXT STEPS:
+1. Review each high-risk item identified in the analysis
+2. Consult with legal counsel on matters requiring professional judgment
+3. Verify all dates, deadlines, and obligations identified
+4. Consider the recommendations provided for each clause
+5. Keep this analysis for your records and future reference
+
+This completes the comprehensive analysis of your legal document.
+        """.strip()
+        
+        self.add_section('', summary_content)
+        
     def add_section(self, title: str, content: str, is_heading: bool = False):
         """Add a section with title and content."""
         if is_heading:
@@ -193,7 +397,7 @@ class LegalReportPDF(FPDF):
                 self.set_font('Arial', '', 10)
                 self.set_text_color(70, 70, 70)
                 for rec in recommendations[:3]:  # Limit to first 3
-                    self.cell(5, 5, '•', 0, 0)
+                    self.cell(5, 5, '-', 0, 0)
                     self.add_wrapped_text(rec, indent=10)
                     
             self.ln(8)
@@ -250,8 +454,11 @@ async def generate_pdf_report(document_data: Dict[str, Any]) -> bytes:
         # Add title page
         pdf.add_title_page()
         
+        # Add document insights section
+        pdf.add_document_insights_section()
+        
         # Add executive summary
-        summary = document_data.get('summary', '') or document_data.get('ai_structured_summary', {}).get('overview', '')
+        summary = document_data.get('summary', '') or document_data.get('ai_structured_summary', {}).get('overview', '') or document_data.get('ai_full_summary', '')
         if summary:
             pdf.add_page()
             pdf.add_section('Executive Summary', summary, True)
@@ -262,49 +469,76 @@ async def generate_pdf_report(document_data: Dict[str, Any]) -> bytes:
             # Key parties
             key_parties = structured_summary.get('key_parties', [])
             if key_parties:
-                parties_text = '\n'.join([f"• {party}" for party in key_parties])
+                parties_text = pdf.format_list_section(key_parties, "Key Parties and Stakeholders")
                 pdf.add_section('Key Parties', parties_text)
             
             # Important dates
             important_dates = structured_summary.get('important_dates', [])
             if important_dates:
-                dates_text = '\n'.join([f"• {date}" for date in important_dates])
+                dates_text = pdf.format_list_section(important_dates, "Critical Dates and Deadlines")
                 pdf.add_section('Important Dates', dates_text)
             
             # Major obligations
             major_obligations = structured_summary.get('major_obligations', [])
             if major_obligations:
-                obligations_text = '\n'.join([f"• {obligation}" for obligation in major_obligations])
+                obligations_text = pdf.format_list_section(major_obligations, "Key Obligations and Responsibilities")
                 pdf.add_section('Major Obligations', obligations_text)
             
             # Risk highlights
             risk_highlights = structured_summary.get('risk_highlights', [])
             if risk_highlights:
-                risks_text = '\n'.join([f"• {risk}" for risk in risk_highlights])
+                risks_text = pdf.format_list_section(risk_highlights, "Risk Areas Requiring Attention")
                 pdf.add_section('Risk Highlights', risks_text)
             
             # Key insights
             key_insights = structured_summary.get('key_insights', [])
             if key_insights:
-                insights_text = '\n'.join([f"• {insight}" for insight in key_insights])
+                insights_text = pdf.format_list_section(key_insights, "Key Legal Insights and Analysis")
                 pdf.add_section('Key Insights', insights_text)
         
         # Add clause analysis
         clauses = document_data.get('clauses', [])
         if clauses:
+            pdf.add_clause_overview_section(clauses)
             pdf.add_clause_analysis(clauses)
+        else:
+            pdf.add_page()
+            pdf.add_section('Clause Analysis', 'No detailed clause analysis available for this document. This may be due to the document format or content structure.', True)
+        
+        # Add document summary section
+        pdf.add_document_summary_section()
         
         # Add disclaimer
         pdf.add_page()
         disclaimer = """
-This report is generated by ClauseIQ's AI-powered legal document analysis system. 
-While our AI provides valuable insights and analysis, this report should not be 
-considered as legal advice. Please consult with qualified legal professionals 
-for specific legal guidance and decision-making.
+LEGAL DISCLAIMER AND IMPORTANT NOTICE
 
-The analysis is based on automated processing and may not capture all nuances 
-of legal language. Always review the original document and seek professional 
-legal counsel when making important decisions.
+NOT LEGAL ADVICE:
+This report is generated by ClauseIQ's AI-powered legal document analysis system and is provided for informational purposes only. The analysis, insights, and recommendations contained in this report do NOT constitute legal advice and should not be relied upon as such.
+
+PROFESSIONAL CONSULTATION REQUIRED:
+Always consult with qualified legal professionals before making any decisions based on the analysis in this report. Legal documents often contain nuances, jurisdiction-specific provisions, and complex interdependencies that require human legal expertise to properly interpret.
+
+AI LIMITATIONS:
+While ClauseIQ's AI system is trained on extensive legal data, it has limitations:
+- May not capture all legal nuances or context
+- Cannot account for jurisdiction-specific variations
+- May miss subtle legal implications
+- Cannot replace human legal judgment
+
+RECOMMENDED ACTIONS:
+1. Review this analysis with a qualified attorney
+2. Verify all identified dates, obligations, and risks
+3. Consider jurisdiction-specific legal requirements
+4. Obtain professional legal advice before acting on any provisions
+
+CONFIDENTIALITY:
+This report contains analysis of your confidential legal document. Ensure proper security measures when sharing or storing this analysis.
+
+Generated by ClauseIQ AI Legal Analysis System
+Report Generation Date: """ + datetime.now().strftime("%B %d, %Y at %I:%M %p") + """
+
+For support or questions about this analysis, please contact ClauseIQ support.
         """.strip()
         pdf.add_section('Legal Disclaimer', disclaimer, True)
         
