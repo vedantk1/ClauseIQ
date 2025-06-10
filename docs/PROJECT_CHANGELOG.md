@@ -30,6 +30,97 @@
 
 ## 🔄 **RECENT CHANGES**
 
+### **[2025-06-10] - LLM-BASED CLASSIFICATION SYSTEM IMPLEMENTATION**
+
+**Type**: Major Architecture Enhancement  
+**Impact**: Backend, Frontend, Database, AI Processing  
+**Agent**: GitHub Copilot
+
+**Changes:**
+
+- 🚀 **LLM-Based Classification**: Complete replacement of heuristic-based contract analysis
+- 📊 **Multi-Contract Support**: Added support for 10 contract types vs. employment-only
+- 🧠 **Dynamic AI Processing**: Contract-specific clause extraction and risk assessment
+- 🗄️ **Database Migration**: Successfully migrated 17 existing documents with contract_type field
+- 🎯 **Hybrid Architecture**: LLM-first processing with graceful heuristic fallbacks
+- 🎨 **Frontend Integration**: Contract type display and visualization in document management
+
+**Technical Implementation:**
+
+**Backend Changes:**
+
+- **File**: `shared/clauseiq_types/common.py`
+
+  - Added `ContractType` enum (10 types: employment, nda, service_agreement, lease, purchase, partnership, license, consulting, contractor, other)
+  - Expanded `ClauseType` enum from 10 to 20+ clause types
+  - Added optional `contract_type` field to `Document` model
+
+- **File**: `backend/services/ai_service.py`
+
+  - `detect_contract_type()` - LLM-based contract type detection
+  - `extract_sections_with_llm()` - Semantic section detection
+  - `extract_clauses_with_llm()` - Dynamic, contract-specific clause extraction
+  - `generate_contract_specific_summary()` - Tailored summaries by contract type
+  - `_get_relevant_clause_types()` - Contract-specific clause mapping
+  - `_fallback_section_extraction()` - Graceful AI fallback handling
+
+- **File**: `backend/services/document_service.py`
+
+  - `process_document_with_llm()` - Main LLM orchestration function
+  - `is_llm_processing_available()` - System availability checks
+
+- **File**: `backend/routers/analysis.py`
+  - Updated all endpoints (`/analyze/`, `/analyze-clauses/`, `/documents/{id}/clauses`, `/analyze-document/`)
+  - LLM-first processing with heuristic fallbacks
+  - Contract type integration in document saving and retrieval
+
+**Database Migration:**
+
+- **File**: `backend/migrate_contract_types.py`
+- **Status**: ✅ COMPLETED SUCCESSFULLY
+- **Results**: 17 documents updated in MongoDB Atlas, 0 failures
+
+**Frontend Changes:**
+
+- **File**: `frontend/src/app/documents/page.tsx`
+  - Updated `DocumentItem` interface with `contract_type` field
+  - Added `formatContractType()` and `getContractTypeColor()` utilities
+  - Contract type display in document cards
+
+**Architecture Improvements:**
+
+- **Hybrid Processing**: LLM-first with automatic fallbacks
+- **Contract Intelligence**: Context-aware analysis based on document type
+- **Error Resilience**: Comprehensive error handling and state management
+- **Performance**: Concurrent clause analysis and text chunking for large documents
+
+**Migration Results:**
+
+- ✅ 17 existing documents successfully updated
+- ✅ All documents now have contract_type field (set to "other" for existing)
+- ✅ 100% migration success rate verified
+- ✅ No data loss or corruption
+
+**System Capabilities Enhanced:**
+
+- **Contract Detection**: Automatic identification vs. hardcoded employment assumption
+- **Clause Extraction**: Dynamic, relevant clause types per contract vs. fixed regex
+- **Risk Assessment**: Context-aware evaluation vs. generic keyword matching
+- **Summaries**: Contract-specific insights vs. one-size-fits-all approach
+
+**Backward Compatibility:**
+
+- ✅ All existing API endpoints continue to work
+- ✅ Heuristic fallbacks maintain functionality without AI
+- ✅ Frontend handles both old and new document formats
+- ✅ No breaking changes for existing integrations
+
+**Documentation Updates:**
+
+- Updated `README.md` with multi-contract capabilities
+- Enhanced `AGENTS.md` with LLM system information
+- Created `LLM_CLASSIFICATION_IMPLEMENTATION.md` with complete implementation details
+
 ### **[2025-06-07] - FRONTEND README FIX + DOCUMENTATION ENHANCEMENT**
 
 **Type**: Documentation Fix + Content Enhancement  

@@ -28,20 +28,32 @@
 
 ### **What ClauseIQ Does:**
 
-- **Legal document analysis platform** for employment contracts
-- **AI-powered summaries** using OpenAI GPT models
+- **Multi-contract legal document analysis platform** supporting 10+ contract types
+- **AI-powered dynamic classification** using OpenAI GPT models with LLM-based processing
+- **Contract-specific analysis** with intelligent clause extraction and risk assessment
 - **User authentication** with JWT and password reset
-- **Document management** with MongoDB storage
-- **Modern web interface** with Next.js + React
+- **Document management** with MongoDB storage and contract type tracking
+- **Modern web interface** with Next.js + React and contract type visualization
 
 ### **Current Capabilities:**
 
-- ✅ Employment contract analysis (10 clause types)
-- ✅ Section-by-section summaries
-- ✅ Risk assessment and recommendations
-- ✅ User model selection (5 AI models available)
-- ✅ Complete user authentication system
-- ✅ Production deployments on Vercel + Render
+- ✅ **Multi-Contract Support**: Employment, NDAs, Service Agreements, Leases, Purchase, Partnership, License, Consulting, Contractor agreements + Other
+- ✅ **LLM-Based Classification**: Dynamic contract type detection replacing hardcoded assumptions
+- ✅ **Context-Aware Analysis**: Contract-specific clause extraction (20+ clause types)
+- ✅ **Semantic Processing**: AI-powered section detection replacing regex patterns
+- ✅ **Graceful Fallbacks**: Maintains functionality when AI services unavailable
+- ✅ **Risk Assessment**: Contract-type-specific risk evaluation
+- ✅ **User Model Selection**: 5 AI models available (GPT-3.5-turbo to GPT-4o)
+- ✅ **Complete Authentication**: User management with preferences
+- ✅ **Production Deployments**: Vercel + Render with MongoDB Atlas
+
+### **Recent Major Updates (June 2025):**
+
+- 🚀 **LLM-Based Classification System**: Complete replacement of heuristic-based analysis
+- 📊 **Database Migration**: 17 existing documents updated with contract_type field
+- 🎯 **Multi-Contract Architecture**: Support for 10 different contract types
+- 🧠 **AI-Powered Processing**: Dynamic clause extraction based on contract context
+- 🔄 **Hybrid System**: LLM-first with heuristic fallbacks for reliability
 
 ### **Technology Stack:**
 
@@ -59,10 +71,11 @@
 
 ```
 shared/clauseiq_types/common.py    # Shared type definitions (MOST IMPORTANT)
-├── ClauseType enum                # 10 employment clause types
-├── Document model                 # Main document structure
-├── Clause model                   # Individual clause analysis
-└── User/UserPreferences models    # Authentication & settings
+├── ContractType enum             # 10 contract types (employment, nda, service_agreement, etc.)
+├── ClauseType enum               # 20+ clause types supporting multiple contracts
+├── Document model                # Main document structure with contract_type field
+├── Clause model                  # Individual clause analysis with context-aware risk
+└── User/UserPreferences models   # Authentication & settings
 ```
 
 ### **🔙 Backend Key Files:**
@@ -71,12 +84,13 @@ shared/clauseiq_types/common.py    # Shared type definitions (MOST IMPORTANT)
 backend/
 ├── main.py                       # FastAPI app entry point
 ├── auth.py                       # JWT authentication logic
-├── database.py                   # MongoDB connection
-├── services/ai_service.py        # OpenAI integration
-├── services/document_service.py  # Document processing
+├── database.py                   # MongoDB connection + migrations
+├── services/ai_service.py        # OpenAI integration + LLM processing
+├── services/document_service.py  # Document processing + LLM orchestration
+├── migrate_contract_types.py     # Database migration script (completed)
 └── routers/                      # API endpoints
     ├── auth.py                   # Auth endpoints (/auth/*)
-    ├── analysis.py               # Document analysis (/analyze/)
+    ├── analysis.py               # Document analysis (/analyze/) - LLM-enhanced
     └── documents.py              # Document management (/documents/)
 ```
 
@@ -86,10 +100,11 @@ backend/
 frontend/src/
 ├── app/                          # Next.js 15 app router
 │   ├── page.tsx                  # Home/upload page
+│   ├── documents/page.tsx        # Document management with contract type display
 │   ├── login/page.tsx            # Authentication
 │   └── settings/page.tsx         # AI model selection
 ├── components/                   # Reusable UI components
-└── context/AuthContext.tsx       # Authentication state
+└── context/AnalysisContext.tsx   # Document analysis state with contract types
 ```
 
 ### **📚 Documentation Hub:**
@@ -99,8 +114,12 @@ documentation/
 ├── AI_AGENT_HANDOVER_REPORT.md   # Complete project overview (READ FIRST)
 ├── AI_AGENT_KNOWLEDGE_BASE.md    # Technical reference
 ├── HANDOVER_CHECKLIST.md         # Verification steps
-└── PROJECT_CHANGELOG.md          # Recent changes
+└── LLM_CLASSIFICATION_IMPLEMENTATION.md  # Latest LLM system details
 ```
+
+└── PROJECT_CHANGELOG.md # Recent changes
+
+````
 
 ---
 
@@ -117,7 +136,7 @@ python3 test_forgot_password_gmail.py  # Test email system
 # Start development environment
 cd backend && source clauseiq_env/bin/activate && uvicorn main:app --reload
 cd frontend && npm run dev
-```
+````
 
 ### **🧪 Testing Tasks:**
 

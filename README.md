@@ -1,6 +1,6 @@
-# ClauseIQ - Employment Contract Analyzer (Dev Branch)
+# ClauseIQ - AI-Powered Legal Document Analyzer
 
-An intelligent legal document analysis tool that uses AI to help non-lawyers understand employment contracts by providing clear, plain-language summaries of complex legal text.
+An intelligent legal document analysis tool that uses AI to help non-lawyers understand contracts by providing clear, plain-language summaries of complex legal text. Now supports multiple contract types with dynamic AI-powered classification.
 
 ![ClauseIQ Demo](https://img.shields.io/badge/Status-Production%20Ready-green)
 ![Python](https://img.shields.io/badge/Python-3.13-blue)
@@ -9,16 +9,33 @@ An intelligent legal document analysis tool that uses AI to help non-lawyers und
 
 ## Features
 
-- **AI-Powered Summaries**: Uses OpenAI GPT models to generate clear, concise summaries
-- **AI Model Selection**: Users can choose their preferred AI model (GPT-3.5-turbo, GPT-4.1-mini, GPT-4.1-nano, GPT-4O-mini, GPT-4O)
-- **PDF Text Extraction**: Robust PDF processing with `pdfplumber`
-- **Section Analysis**: Intelligent document segmentation and section-by-section analysis
-- **User Authentication**: Secure JWT-based authentication with password reset functionality
-- **Document Storage**: MongoDB integration for document history and retrieval
-- **Document Management**: Upload, view, search, sort, and delete documents with confirmation dialogs
-- **Modern UI**: Clean, responsive Next.js interface with Tailwind CSS and grid/list view modes
-- **Security**: File validation, secure temporary file handling, and input sanitization
-- **Real-time Processing**: Asynchronous processing with progress feedback
+### 🤖 **AI-Powered Analysis**
+
+- **Dynamic Contract Type Detection**: Automatically identifies 10+ contract types (Employment, NDAs, Service Agreements, Leases, etc.)
+- **LLM-Based Classification**: Uses OpenAI GPT models for intelligent contract analysis
+- **Context-Aware Processing**: Contract-specific clause extraction and risk assessment
+- **Graceful Fallbacks**: Maintains functionality when AI services are unavailable
+
+### 📋 **Multi-Contract Support**
+
+- **Employment Contracts**: Salary, benefits, termination clauses
+- **Non-Disclosure Agreements (NDAs)**: Confidentiality and disclosure restrictions
+- **Service Agreements**: Deliverables, payment terms, SLAs
+- **Lease Agreements**: Rent, maintenance, property terms
+- **Purchase Agreements**: Price, delivery, warranties
+- **Partnership Agreements**: Profit sharing, responsibilities
+- **License Agreements**: Usage rights, restrictions
+- **Consulting Agreements**: Scope, rates, deliverables
+- **Contractor Agreements**: Work terms, payment conditions
+- **And More**: Extensible system for additional contract types
+
+### 💡 **Intelligent Features**
+
+- **AI Model Selection**: Users can choose their preferred AI model (GPT-3.5-turbo, GPT-4o-mini, etc.)
+- **Semantic Section Detection**: AI-powered document segmentation replacing regex patterns
+- **Dynamic Clause Extraction**: Contract-specific clause identification
+- **Contract-Specific Summaries**: Tailored analysis based on document type
+- **Risk Assessment**: Context-aware risk evaluation for different contract types
 
 ## Architecture
 

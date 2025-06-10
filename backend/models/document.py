@@ -17,6 +17,7 @@ class DocumentListItem(BaseModel):
     id: str
     filename: str
     upload_date: str
+    contract_type: Optional[str] = None
     sections: List[Section]
 
 

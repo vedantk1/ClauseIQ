@@ -4,10 +4,10 @@ Document processing utilities.
 import os
 import re
 import pdfplumber
-from typing import List
+from typing import List, Tuple
 from fastapi import UploadFile, HTTPException
 from settings import get_settings
-from models.common import Section, Clause, ClauseType, RiskLevel
+from models.common import Section, Clause, ClauseType, RiskLevel, ContractType
 
 
 # Get settings instance
@@ -290,3 +290,52 @@ def _generate_clause_heading(clause_type: ClauseType, text: str) -> str:
             return "At-Will Employment"
     
     return base_heading
+
+
+async def process_document_with_llm(document_text: str, filename: str = "", model: str = "gpt-3.5-turbo") -> Tuple[ContractType, List[Section], List[Clause]]:
+    """
+    Process a document using LLM-based analysis instead of heuristic patterns.
+    
+    Returns:
+        Tuple of (contract_type, sections, clauses)
+    """
+    from services.ai_service import (
+        detect_contract_type, 
+        extract_sections_with_llm, 
+        extract_clauses_with_llm,
+        is_ai_available
+    )
+    
+    if not is_ai_available():
+        # Fallback to heuristic methods if AI is not available
+        print("AI not available, falling back to heuristic analysis")
+        return ContractType.OTHER, extract_sections(document_text), extract_clauses(document_text)
+    
+    try:
+        # Step 1: Detect contract type
+        print(f"Detecting contract type for document: {filename}")
+        contract_type = await detect_contract_type(document_text, filename, model)
+        print(f"Detected contract type: {contract_type}")
+        
+        # Step 2: Extract sections using LLM
+        print("Extracting sections with LLM")
+        sections = await extract_sections_with_llm(document_text, contract_type, model)
+        print(f"Extracted {len(sections)} sections")
+        
+        # Step 3: Extract clauses using LLM
+        print("Extracting clauses with LLM")
+        clauses = await extract_clauses_with_llm(document_text, contract_type, model)
+        print(f"Extracted {len(clauses)} clauses")
+        
+        return contract_type, sections, clauses
+        
+    except Exception as e:
+        print(f"Error in LLM document processing: {str(e)}")
+        # Fallback to heuristic methods on error
+        return ContractType.OTHER, extract_sections(document_text), extract_clauses(document_text)
+
+
+def is_llm_processing_available() -> bool:
+    """Check if LLM-based document processing is available."""
+    from services.ai_service import is_ai_available
+    return is_ai_available()

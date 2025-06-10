@@ -4,7 +4,6 @@ Document analysis routes.
 import os
 import tempfile
 import uuid
-import asyncio
 from datetime import datetime
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Request
 import pdfplumber
@@ -12,11 +11,11 @@ from auth import get_current_user
 from database.service import get_document_service
 from middleware.api_standardization import APIResponse, create_success_response, create_error_response
 from middleware.versioning import versioned_response, deprecated_endpoint
-from services.document_service import validate_file, extract_clauses
-from services.ai_service import generate_document_summary, analyze_clause, is_ai_available
+from services.document_service import validate_file, process_document_with_llm, is_llm_processing_available
+from services.ai_service import generate_contract_specific_summary
 from models.analysis import ClauseAnalysisResponse
 from models.document import AnalyzeDocumentResponse
-from clauseiq_types.common import RiskLevel, Clause, RiskSummary
+from clauseiq_types.common import RiskLevel, Clause, RiskSummary, ContractType
 
 
 router = APIRouter(tags=["analysis"])
@@ -61,24 +60,30 @@ async def analyze_document(
             # Get user's preferred model
             user_model = await service.get_user_preferred_model(current_user["id"])
             
-            # Extract sections
-            from services.document_service import extract_sections
-            sections = extract_sections(extracted_text)
+            # Check if LLM processing is available
+            if not is_llm_processing_available():
+                return create_error_response(
+                    code="LLM_NOT_AVAILABLE",
+                    message="AI processing is not available. Please check OpenAI API configuration.",
+                    correlation_id=correlation_id
+                )
             
-            # Generate AI summaries for sections if available
-            if is_ai_available():
-                from services.ai_service import generate_summary
-                for section in sections:
-                    section.summary = await generate_summary(section.text, section.heading, user_model)
+            print("Using LLM-based document processing")
+            contract_type, sections, _ = await process_document_with_llm(
+                extracted_text, file.filename, user_model
+            )
             
-            # Generate document-level summary
-            ai_summary = "Summary not generated."
-            if is_ai_available():
-                ai_summary = await generate_document_summary(extracted_text, file.filename, user_model)
-            else:
-                ai_summary = "OpenAI client not configured. Summary not generated."
+            # Generate AI summaries for sections
+            from services.ai_service import generate_summary
+            for section in sections:
+                section.summary = await generate_summary(section.text, section.heading, user_model)
             
-            # Create document entry with sections
+            # Generate contract-specific document summary
+            ai_summary = await generate_contract_specific_summary(
+                extracted_text, contract_type, file.filename, user_model
+            )
+            
+            # Create document entry with sections and contract type
             doc_id = str(uuid.uuid4())
             document_data = {
                 "id": doc_id,
@@ -87,6 +92,7 @@ async def analyze_document(
                 "text": extracted_text,
                 "ai_full_summary": ai_summary,
                 "sections": [section.dict() for section in sections],
+                "contract_type": contract_type.value if contract_type else None,
                 "user_id": current_user["id"]
             }
             
@@ -159,19 +165,22 @@ async def analyze_clauses_only(
                     correlation_id=correlation_id
                 )
 
-            # Extract clauses
-            clauses = extract_clauses(extracted_text)
-            
             # Get user's preferred model for AI analysis
             user_model = await service.get_user_preferred_model(current_user["id"])
             
-            # Analyze clauses with AI if available
-            if is_ai_available():
-                # Analyze clauses concurrently for better performance
-                analysis_tasks = [analyze_clause(clause, user_model) for clause in clauses]
-                analyzed_clauses = await asyncio.gather(*analysis_tasks)
-            else:
-                analyzed_clauses = clauses
+            # Check if LLM processing is available
+            if not is_llm_processing_available():
+                return create_error_response(
+                    code="LLM_NOT_AVAILABLE",
+                    message="AI processing is not available. Please check OpenAI API configuration.",
+                    correlation_id=correlation_id
+                )
+            
+            print("Using LLM-based clause extraction")
+            # First detect contract type to get relevant clause types
+            from services.ai_service import detect_contract_type, extract_clauses_with_llm
+            contract_type = await detect_contract_type(extracted_text, file.filename, user_model)
+            analyzed_clauses = await extract_clauses_with_llm(extracted_text, contract_type, user_model)
             
             # Calculate risk summary
             risk_summary = {
@@ -233,18 +242,30 @@ async def get_document_clauses(
                 correlation_id=correlation_id
             )
         
-        # Extract clauses from the document text
-        clauses = extract_clauses(document.get("text", ""))
-        
         # Get user's preferred model
         user_model = await service.get_user_preferred_model(current_user["id"])
         
-        # Analyze clauses if AI is available
-        if is_ai_available() and clauses:
-            analysis_tasks = [analyze_clause(clause, user_model) for clause in clauses]
-            analyzed_clauses = await asyncio.gather(*analysis_tasks)
+        # Check if LLM processing is available
+        if not is_llm_processing_available():
+            return create_error_response(
+                code="LLM_NOT_AVAILABLE",
+                message="AI processing is not available. Please check OpenAI API configuration.",
+                correlation_id=correlation_id
+            )
+        
+        # Use LLM-based clause extraction
+        from services.ai_service import extract_clauses_with_llm, detect_contract_type
+        
+        # Detect contract type first (or use saved one if available)
+        contract_type = document.get("contract_type")
+        if not contract_type:
+            contract_type = await detect_contract_type(document.get("text", ""), document.get("filename", ""), user_model)
         else:
-            analyzed_clauses = clauses
+            # Convert string back to ContractType enum
+            from clauseiq_types.common import ContractType
+            contract_type = ContractType(contract_type)
+        
+        analyzed_clauses = await extract_clauses_with_llm(document.get("text", ""), contract_type, user_model)
         
         # Calculate risk summary
         risk_summary = {
@@ -313,23 +334,24 @@ async def analyze_document_unified(
             # Get user's preferred model
             user_model = await service.get_user_preferred_model(current_user["id"])
             
-            # Generate document-level summary
-            ai_summary = "Summary not generated."
-            if is_ai_available():
-                ai_summary = await generate_document_summary(extracted_text, file.filename, user_model)
-            else:
-                ai_summary = "OpenAI client not configured. Summary not generated."
+            # Check if LLM processing is available
+            if not is_llm_processing_available():
+                return create_error_response(
+                    code="LLM_NOT_AVAILABLE",
+                    message="AI processing is not available. Please check OpenAI API configuration.",
+                    correlation_id=correlation_id
+                )
             
-            # Extract and analyze clauses
-            clauses = extract_clauses(extracted_text)
+            print("Using LLM-based document processing")
+            # Process document with full LLM pipeline
+            contract_type, sections, analyzed_clauses = await process_document_with_llm(
+                extracted_text, file.filename, user_model
+            )
             
-            # Analyze clauses with AI if OpenAI API is configured
-            if is_ai_available():
-                # Analyze clauses concurrently for better performance
-                analysis_tasks = [analyze_clause(clause, user_model) for clause in clauses]
-                analyzed_clauses = await asyncio.gather(*analysis_tasks)
-            else:
-                analyzed_clauses = clauses
+            # Generate contract-specific summary
+            ai_summary = await generate_contract_specific_summary(
+                extracted_text, contract_type, file.filename, user_model
+            )
             
             # Calculate risk summary
             risk_summary = {
@@ -349,6 +371,7 @@ async def analyze_document_unified(
                 "sections": [],  # Keeping for compatibility
                 "clauses": [clause.dict() for clause in analyzed_clauses],
                 "risk_summary": risk_summary,
+                "contract_type": contract_type.value if contract_type else None,
                 "user_id": current_user["id"]
             }
             

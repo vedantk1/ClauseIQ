@@ -16,6 +16,7 @@ sys.path.insert(0, str(shared_path))
 from clauseiq_types.common import (
     ClauseType,
     RiskLevel,
+    ContractType,
     Section as SharedSection,
     Clause as SharedClause,
     RiskSummary,
@@ -28,6 +29,7 @@ from clauseiq_types.common import (
 __all__ = [
     "ClauseType",
     "RiskLevel", 
+    "ContractType",
     "Section", 
     "Clause", 
     "RiskSummary",
