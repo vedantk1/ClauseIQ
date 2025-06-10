@@ -8,6 +8,17 @@ import { useAppState } from "../store/appState";
 import { apiClient, handleAPIError, handleAPISuccess } from "../lib/api";
 import { Section, Clause, RiskSummary, Document } from "@clauseiq/shared-types";
 
+// Type for AI structured summary data
+export interface StructuredSummary {
+  overview?: string;
+  key_parties?: string[];
+  important_dates?: string[];
+  major_obligations?: string[];
+  risk_highlights?: string[];
+  key_insights?: string[];
+  [key: string]: string | string[] | undefined; // Allow additional fields
+}
+
 interface AnalysisContextType {
   // State from store
   documents: Document[];
@@ -17,6 +28,7 @@ interface AnalysisContextType {
     sections: Section[];
     clauses: Clause[];
     summary: string;
+    structuredSummary: StructuredSummary | null;
     fullText: string;
     riskSummary: RiskSummary;
     selectedClause: Clause | null;
@@ -60,6 +72,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
         id: string;
         filename: string;
         summary: string;
+        ai_structured_summary?: StructuredSummary;
         clauses: Clause[];
         total_clauses: number;
         risk_summary: RiskSummary;
@@ -67,16 +80,25 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
       }>("/analyze-document/", file);
 
       if (response.success && response.data) {
-        const { id, filename, summary, clauses, risk_summary, full_text } =
-          response.data;
+        const {
+          id,
+          filename,
+          summary,
+          ai_structured_summary,
+          clauses,
+          risk_summary,
+          full_text,
+        } = response.data;
 
         // Add to documents list
         const newDocument: Document = {
           id,
           filename,
           upload_date: new Date().toISOString(),
+          contract_type: null, // Will be set by backend analysis
           text: full_text || "",
           ai_full_summary: summary,
+          ai_structured_summary: ai_structured_summary || null,
           sections: [],
           clauses,
           risk_summary: risk_summary,
@@ -92,6 +114,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
             id,
             filename,
             summary,
+            structuredSummary: ai_structured_summary || null,
             clauses,
             riskSummary: risk_summary,
             fullText: full_text || "",
@@ -208,6 +231,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
         filename: string;
         text: string;
         ai_full_summary: string;
+        ai_structured_summary?: StructuredSummary;
         sections: Section[];
         clauses: Clause[];
         risk_summary: RiskSummary;
@@ -219,6 +243,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
           filename,
           text,
           ai_full_summary,
+          ai_structured_summary,
           sections,
           clauses,
           risk_summary,
@@ -231,6 +256,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
             filename,
             fullText: text,
             summary: ai_full_summary,
+            structuredSummary: ai_structured_summary || null,
             sections: sections || [],
             clauses: clauses || [],
             riskSummary: risk_summary || { high: 0, medium: 0, low: 0 },

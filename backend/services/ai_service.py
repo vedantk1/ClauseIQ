@@ -108,6 +108,112 @@ async def generate_document_summary(document_text: str, filename: str = "", mode
         return "Document summary generation failed due to an unexpected error."
 
 
+async def generate_structured_document_summary(document_text: str, filename: str = "", model: str = "gpt-3.5-turbo") -> Dict[str, Any]:
+    """Generate a structured document summary with categorized insights"""
+    if not openai_client:
+        return {
+            "overview": "AI summary not available - OpenAI client not configured.",
+            "key_parties": [],
+            "important_dates": [],
+            "major_obligations": [],
+            "risk_highlights": [],
+            "key_insights": []
+        }
+    
+    try:
+        # Truncate text if too long
+        truncated_text = document_text[:8000]
+        if len(document_text) > 8000:
+            truncated_text += "\n\n[Document truncated for analysis...]"
+        
+        prompt = f"""
+        Analyze this legal document and provide a structured summary in the exact JSON format below.
+        Be thorough but concise in each section.
+        
+        Document: {filename}
+        Content: {truncated_text}
+        
+        Respond with ONLY valid JSON in this exact format:
+        {{
+            "overview": "Brief 2-3 sentence overview of the document's purpose and significance",
+            "key_parties": ["Party 1: Role/description", "Party 2: Role/description"],
+            "important_dates": ["Date type: Specific date or timeframe", "Another date: Description"],
+            "major_obligations": ["Obligation 1: Who does what", "Obligation 2: Description"],
+            "risk_highlights": ["Risk 1: Description and impact", "Risk 2: Potential issue"],
+            "key_insights": ["Insight 1: Important detail", "Insight 2: Notable provision"]
+        }}
+        """
+        
+        response = await openai_client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "You are a legal AI assistant that provides structured analysis of legal documents. Always respond with valid JSON in the requested format."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=1000,
+            temperature=0.2
+        )
+        
+        content = response.choices[0].message.content.strip()
+        
+        # Parse JSON response
+        try:
+            structured_summary = json.loads(content)
+            
+            # Validate required fields
+            required_fields = ["overview", "key_parties", "important_dates", "major_obligations", "risk_highlights", "key_insights"]
+            for field in required_fields:
+                if field not in structured_summary:
+                    structured_summary[field] = [] if field != "overview" else "Summary not available"
+                    
+            return structured_summary
+            
+        except json.JSONDecodeError as e:
+            print(f"Failed to parse structured summary JSON: {e}")
+            print(f"Raw response: {content[:500]}...")
+            
+            # Try to extract JSON from response if it's wrapped
+            import re
+            json_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if json_match:
+                try:
+                    structured_summary = json.loads(json_match.group())
+                    return structured_summary
+                except json.JSONDecodeError:
+                    pass
+            
+            # Fallback to basic structure
+            return {
+                "overview": "Document analysis completed, but structured data could not be parsed.",
+                "key_parties": ["Analysis available in clauses section"],
+                "important_dates": ["Review document for specific dates"],
+                "major_obligations": ["Detailed obligations listed in clauses"],
+                "risk_highlights": ["Risk assessment available in risk analysis"],
+                "key_insights": ["Full insights available in document text"]
+            }
+        
+    except OpenAIError as e:
+        print(f"OpenAI API error in generate_structured_document_summary: {str(e)}")
+        return {
+            "overview": f"Document summary generation failed: {str(e)}",
+            "key_parties": [],
+            "important_dates": [],
+            "major_obligations": [],
+            "risk_highlights": [],
+            "key_insights": []
+        }
+    except Exception as e:
+        print(f"Unexpected error in generate_structured_document_summary: {str(e)}")
+        return {
+            "overview": "Document summary generation failed due to an unexpected error.",
+            "key_parties": [],
+            "important_dates": [],
+            "major_obligations": [],
+            "risk_highlights": [],
+            "key_insights": []
+        }
+
+
 async def analyze_clause(clause: Clause, model: str = "gpt-3.5-turbo") -> Clause:
     """Analyze a clause for risk assessment and generate recommendations."""
     if not openai_client:

@@ -6,6 +6,8 @@ import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/Tabs";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
+import StructuredSummary from "@/components/StructuredSummary";
+import DocumentInsights from "@/components/DocumentInsights";
 
 export default function ReviewWorkspace() {
   const { isAuthenticated, isLoading } = useAuthRedirect();
@@ -18,6 +20,7 @@ export default function ReviewWorkspace() {
     sections,
     clauses,
     summary,
+    structuredSummary,
     fullText,
     riskSummary,
     selectedClause,
@@ -160,66 +163,29 @@ export default function ReviewWorkspace() {
           <TabsContent value="summary">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
-                <Card>
-                  <div className="mb-6">
-                    <h2 className="font-heading text-heading-sm text-text-primary mb-3">
-                      AI Summary
-                    </h2>
-                    <div className="prose prose-invert max-w-none">
-                      <p className="text-text-secondary leading-relaxed">
-                        {summary ||
-                          "No summary available. The document analysis may still be processing."}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-
-                {fullText && (
-                  <Card>
-                    <div className="mb-4">
-                      <h3 className="font-heading text-lg text-text-primary mb-3">
-                        Document Preview
-                      </h3>
-                      <div className="bg-bg-elevated rounded-lg p-4 max-h-96 overflow-y-auto">
-                        <pre className="text-sm text-text-secondary whitespace-pre-wrap font-sans">
-                          {fullText.substring(0, 1000)}
-                          {fullText.length > 1000 && "..."}
-                        </pre>
-                      </div>
-                    </div>
-                  </Card>
-                )}
+                {/* New Structured Summary Component */}
+                <StructuredSummary
+                  structuredSummary={structuredSummary}
+                  fallbackSummary={summary}
+                />
               </div>
 
-              {/* Metrics Sidebar */}
+              {/* Enhanced Sidebar */}
               <div className="space-y-6">
+                {/* Enhanced Document Insights Component */}
+                <DocumentInsights
+                  structuredSummary={structuredSummary}
+                  fileName={fileName}
+                  fullText={fullText}
+                  clauseCount={clauses?.length || 0}
+                />
+
+                {/* Keep existing Key Metrics for backward compatibility */}
                 <Card density="compact">
                   <h3 className="font-heading text-lg text-text-primary mb-4">
-                    Key Metrics
+                    Risk Overview
                   </h3>
                   <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-text-secondary">
-                        Document Length
-                      </span>
-                      <span className="text-text-primary font-medium">
-                        {fullText
-                          ? `${Math.ceil(fullText.length / 1000)}k chars`
-                          : "N/A"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-text-secondary">Clauses Found</span>
-                      <span className="text-text-primary font-medium">
-                        {clauses?.length || 0}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-text-secondary">Contract Type</span>
-                      <span className="text-text-primary font-medium">
-                        Employment
-                      </span>
-                    </div>
                     <div className="flex justify-between">
                       <span className="text-text-secondary">Overall Risk</span>
                       <span

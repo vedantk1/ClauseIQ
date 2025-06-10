@@ -2,8 +2,8 @@
 Document-related models.
 """
 from pydantic import BaseModel
-from typing import List, Optional, Dict
-from .common import Section, Clause
+from typing import List, Optional, Dict, Any
+from .common import Section, Clause, RiskSummary
 
 
 class ProcessDocumentResponse(BaseModel):
@@ -31,8 +31,11 @@ class DocumentDetailResponse(BaseModel):
     upload_date: str
     text: str
     ai_full_summary: Optional[str] = None
+    ai_structured_summary: Optional[Dict[str, Any]] = None
     summary: Optional[str] = None
     sections: List[Section]
+    clauses: Optional[List[Clause]] = None
+    risk_summary: Optional[RiskSummary] = None
     user_id: str
 
 
@@ -41,6 +44,7 @@ class AnalyzeDocumentResponse(BaseModel):
     filename: str
     full_text: str
     summary: str
+    ai_structured_summary: Optional[Dict[str, Any]] = None
     clauses: List[Clause]
     total_clauses: int
-    risk_summary: Dict[str, int]
+    risk_summary: RiskSummary

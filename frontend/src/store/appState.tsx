@@ -13,6 +13,7 @@ import {
   Clause,
   RiskSummary,
 } from "@clauseiq/shared-types";
+import { StructuredSummary } from "../context/AnalysisContext";
 
 // State interfaces
 export interface AuthState {
@@ -35,6 +36,7 @@ export interface AnalysisState {
     sections: Section[];
     clauses: Clause[];
     summary: string;
+    structuredSummary: StructuredSummary | null;
     fullText: string;
     riskSummary: RiskSummary;
     selectedClause: Clause | null;
@@ -119,6 +121,7 @@ const initialAnalysisState: AnalysisState = {
     sections: [],
     clauses: [],
     summary: "",
+    structuredSummary: null,
     fullText: "",
     riskSummary: { high: 0, medium: 0, low: 0 },
     selectedClause: null,

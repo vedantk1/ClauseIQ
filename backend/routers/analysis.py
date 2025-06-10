@@ -12,7 +12,7 @@ from database.service import get_document_service
 from middleware.api_standardization import APIResponse, create_success_response, create_error_response
 from middleware.versioning import versioned_response, deprecated_endpoint
 from services.document_service import validate_file, process_document_with_llm, is_llm_processing_available
-from services.ai_service import generate_contract_specific_summary
+from services.ai_service import generate_contract_specific_summary, generate_structured_document_summary
 from models.analysis import ClauseAnalysisResponse
 from models.document import AnalyzeDocumentResponse
 from clauseiq_types.common import RiskLevel, Clause, RiskSummary, ContractType
@@ -83,6 +83,11 @@ async def analyze_document(
                 extracted_text, contract_type, file.filename, user_model
             )
             
+            # Generate structured summary for improved UI display
+            ai_structured_summary = await generate_structured_document_summary(
+                extracted_text, file.filename, user_model
+            )
+            
             # Create document entry with sections and contract type
             doc_id = str(uuid.uuid4())
             document_data = {
@@ -91,6 +96,7 @@ async def analyze_document(
                 "upload_date": datetime.now().isoformat(),
                 "text": extracted_text,
                 "ai_full_summary": ai_summary,
+                "ai_structured_summary": ai_structured_summary,
                 "sections": [section.dict() for section in sections],
                 "contract_type": contract_type.value if contract_type else None,
                 "user_id": current_user["id"]
@@ -353,6 +359,11 @@ async def analyze_document_unified(
                 extracted_text, contract_type, file.filename, user_model
             )
             
+            # Generate structured summary for improved UI display
+            ai_structured_summary = await generate_structured_document_summary(
+                extracted_text, file.filename, user_model
+            )
+            
             # Calculate risk summary
             risk_summary = {
                 "high": sum(1 for clause in analyzed_clauses if clause.risk_level == RiskLevel.HIGH),
@@ -368,6 +379,7 @@ async def analyze_document_unified(
                 "upload_date": datetime.now().isoformat(),
                 "text": extracted_text,
                 "ai_full_summary": ai_summary,
+                "ai_structured_summary": ai_structured_summary,
                 "sections": [],  # Keeping for compatibility
                 "clauses": [clause.dict() for clause in analyzed_clauses],
                 "risk_summary": risk_summary,
@@ -383,6 +395,7 @@ async def analyze_document_unified(
                 filename=file.filename,
                 full_text=extracted_text[:500] + "..." if len(extracted_text) > 500 else extracted_text,
                 summary=ai_summary,
+                ai_structured_summary=ai_structured_summary,
                 clauses=analyzed_clauses,
                 total_clauses=len(analyzed_clauses),
                 risk_summary=risk_summary

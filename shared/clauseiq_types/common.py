@@ -118,6 +118,7 @@ class Document(BaseModel):
     contract_type: Optional[ContractType] = None
     text: Optional[str] = None
     ai_full_summary: Optional[str] = None
+    ai_structured_summary: Optional[Dict[str, Any]] = None
     sections: Optional[List[Section]] = None
     clauses: Optional[List[Clause]] = None
     risk_summary: Optional[RiskSummary] = None
