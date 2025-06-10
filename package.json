@@ -4,7 +4,7 @@
   "description": "ClauseIQ - AI-powered contract analysis platform",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "cd backend && uvicorn main:app --reload --host 0.0.0.0 --port 8000",
+    "dev:backend": "cd backend && source venv/bin/activate && uvicorn main:app --reload --host 0.0.0.0 --port 8000",
     "dev:frontend": "cd frontend && npm run dev",
     "build": "npm run build:backend && npm run build:frontend",
     "build:backend": "cd backend && python -m build",

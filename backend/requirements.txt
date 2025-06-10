@@ -11,8 +11,8 @@ pydantic_core==2.33.2
 annotated-types==0.7.0
 
 # Database dependencies
-pymongo==4.13.0
-motor==3.3.2
+pymongo==4.10.1
+motor==3.7.1
 
 # Authentication and security
 python-jose[cryptography]==3.5.0
@@ -26,7 +26,7 @@ email-validator==2.2.0
 
 # PDF processing
 pdfplumber==0.11.6
-pdfminer.six==20250506
+pdfminer.six==20250327
 pypdfium2==4.30.1
 pillow==11.2.1
 
