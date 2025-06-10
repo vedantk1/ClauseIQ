@@ -88,7 +88,7 @@ export default function StructuredSummary({
                 {structuredSummary.key_parties.map((party, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent-purple/10 text-accent-purple border border-accent-purple/20"
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-bg-elevated text-text-primary border border-border-muted"
                   >
                     {party}
                   </span>

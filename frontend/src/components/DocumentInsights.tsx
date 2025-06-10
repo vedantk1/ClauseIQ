@@ -1,37 +1,89 @@
-import React, { useState } from "react";
+import React from "react";
 import Card from "./Card";
-import { StructuredSummary as StructuredSummaryType } from "../context/AnalysisContext";
+
+interface RiskSummary {
+  high?: number;
+  medium?: number;
+  low?: number;
+}
+
+interface Clause {
+  clause_type?: string;
+}
 
 interface DocumentInsightsProps {
-  structuredSummary: StructuredSummaryType | null;
+  structuredSummary?: unknown; // Keep for compatibility but not used
   fileName?: string;
   fullText?: string;
   clauseCount?: number;
+  riskSummary?: RiskSummary;
+  clauses?: Clause[];
 }
 
 export default function DocumentInsights({
-  structuredSummary,
   fullText,
   clauseCount = 0,
+  riskSummary = { high: 0, medium: 0, low: 0 },
+  clauses = [],
 }: DocumentInsightsProps) {
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  // Document statistics
+  const wordCount = fullText
+    ? fullText.split(/\s+/).filter((word) => word.length > 0).length
+    : 0;
 
-  const toggleSection = (section: string) => {
-    setExpandedSection(expandedSection === section ? null : section);
+  // Calculate complexity score
+  const calculateComplexity = () => {
+    let score = 0;
+
+    // Document length factor (0-4 points)
+    if (wordCount > 8000) score += 4;
+    else if (wordCount > 5000) score += 3;
+    else if (wordCount > 2500) score += 2;
+    else if (wordCount > 1000) score += 1;
+
+    // Clause density factor (0-3 points)
+    if (wordCount > 0) {
+      const clausesPerThousandWords = clauseCount / (wordCount / 1000);
+      if (clausesPerThousandWords > 20) score += 3;
+      else if (clausesPerThousandWords > 15) score += 2;
+      else if (clausesPerThousandWords > 10) score += 1;
+    }
+
+    // Risk complexity (0-4 points)
+    score += (riskSummary.high || 0) * 1.5;
+    score += (riskSummary.medium || 0) * 0.5;
+
+    // Clause type diversity (0-2 points)
+    const uniqueClauseTypes = new Set(clauses?.map((c) => c.clause_type)).size;
+    if (uniqueClauseTypes > 10) score += 2;
+    else if (uniqueClauseTypes > 6) score += 1;
+
+    // Convert to human-readable scale
+    if (score <= 3) return "Low";
+    if (score <= 8) return "Medium";
+    return "High";
   };
 
-  // Document statistics
-  const wordCount = fullText ? fullText.split(/\s+/).length : 0;
-  const charCount = fullText ? fullText.length : 0;
+  const complexity = calculateComplexity();
 
-  // Check if we have structured data to show
-  const hasStructuredData =
-    structuredSummary &&
-    (structuredSummary.key_parties?.length ||
-      structuredSummary.important_dates?.length ||
-      structuredSummary.major_obligations?.length ||
-      structuredSummary.risk_highlights?.length ||
-      structuredSummary.key_insights?.length);
+  // Format last viewed (placeholder for now - would need backend support)
+  const getLastViewed = () => {
+    // For now, return a placeholder. In real implementation, this would come from backend
+    const now = new Date();
+    const mockLastViewed = new Date(
+      now.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000
+    ); // Random time in last week
+
+    const diffMs = now.getTime() - mockLastViewed.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return mockLastViewed.toLocaleDateString();
+  };
 
   return (
     <Card>
@@ -56,9 +108,9 @@ export default function DocumentInsights({
         </div>
 
         {/* Document Statistics */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+        <div className="grid grid-cols-2 gap-3">
           <div className="p-4 bg-bg-elevated rounded-xl border border-border-muted text-center hover:border-accent-blue/30 transition-colors">
-            <div className="text-2xl font-bold text-text-primary mb-1">
+            <div className="text-xl font-bold text-text-primary mb-1">
               {clauseCount}
             </div>
             <div className="text-xs text-text-secondary font-medium">
@@ -66,411 +118,28 @@ export default function DocumentInsights({
             </div>
           </div>
           <div className="p-4 bg-bg-elevated rounded-xl border border-border-muted text-center hover:border-accent-green/30 transition-colors">
-            <div className="text-2xl font-bold text-text-primary mb-1">
-              {Math.ceil(wordCount / 100) / 10}k
+            <div className="text-xl font-bold text-text-primary mb-1">
+              {wordCount.toLocaleString()}
             </div>
             <div className="text-xs text-text-secondary font-medium">Words</div>
           </div>
           <div className="p-4 bg-bg-elevated rounded-xl border border-border-muted text-center hover:border-accent-amber/30 transition-colors">
-            <div className="text-2xl font-bold text-text-primary mb-1">
-              {Math.ceil(charCount / 1000)}k
+            <div className="text-xl font-bold text-text-primary mb-1">
+              {complexity}
             </div>
             <div className="text-xs text-text-secondary font-medium">
-              Characters
+              Complexity
             </div>
           </div>
           <div className="p-4 bg-bg-elevated rounded-xl border border-border-muted text-center hover:border-accent-purple/30 transition-colors">
-            <div className="text-2xl font-bold text-text-primary mb-1">
-              {Math.ceil(wordCount / 250)}
+            <div className="text-xl font-bold text-text-primary mb-1">
+              {getLastViewed()}
             </div>
             <div className="text-xs text-text-secondary font-medium">
-              Est. Pages
+              Last Viewed
             </div>
           </div>
         </div>
-
-        {hasStructuredData ? (
-          <div className="space-y-6">
-            {/* Quick Summary Cards */}
-            <div className="grid grid-cols-1 gap-4">
-              {/* Key Parties Summary */}
-              {structuredSummary?.key_parties?.length && (
-                <div
-                  className="group p-5 bg-gradient-to-r from-accent-purple/5 to-accent-purple/3 border border-accent-purple/20 rounded-xl cursor-pointer hover:border-accent-purple/40 hover:shadow-lg hover:shadow-accent-purple/10 transition-all duration-200"
-                  onClick={() => toggleSection("parties")}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-accent-purple/10 rounded-lg group-hover:bg-accent-purple/20 transition-colors">
-                        <svg
-                          className="w-5 h-5 text-accent-purple"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <span className="font-semibold text-text-primary text-base">
-                          Key Parties
-                        </span>
-                        <p className="text-sm text-text-secondary mt-0.5">
-                          Contract participants and stakeholders
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="px-3 py-1 bg-accent-purple/20 text-accent-purple font-semibold rounded-full text-sm">
-                        {structuredSummary.key_parties.length}
-                      </span>
-                      <svg
-                        className={`w-5 h-5 text-text-secondary transition-transform ${
-                          expandedSection === "parties" ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  {expandedSection === "parties" && (
-                    <div className="mt-4 pt-4 border-t border-accent-purple/20">
-                      <div className="flex flex-wrap gap-2">
-                        {structuredSummary.key_parties.map((party, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-accent-purple/20 text-accent-purple border border-accent-purple/30"
-                          >
-                            {party}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Risk Highlights Summary */}
-              {structuredSummary?.risk_highlights?.length && (
-                <div
-                  className="group p-5 bg-gradient-to-r from-accent-rose/5 to-accent-rose/3 border border-accent-rose/20 rounded-xl cursor-pointer hover:border-accent-rose/40 hover:shadow-lg hover:shadow-accent-rose/10 transition-all duration-200"
-                  onClick={() => toggleSection("risks")}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-accent-rose/10 rounded-lg group-hover:bg-accent-rose/20 transition-colors">
-                        <svg
-                          className="w-5 h-5 text-accent-rose"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <span className="font-semibold text-text-primary text-base">
-                          Risk Areas
-                        </span>
-                        <p className="text-sm text-text-secondary mt-0.5">
-                          Potential concerns and risk factors
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="px-3 py-1 bg-accent-rose/20 text-accent-rose font-semibold rounded-full text-sm">
-                        {structuredSummary.risk_highlights.length}
-                      </span>
-                      <svg
-                        className={`w-5 h-5 text-text-secondary transition-transform ${
-                          expandedSection === "risks" ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  {expandedSection === "risks" && (
-                    <div className="mt-4 pt-4 border-t border-accent-rose/20">
-                      <div className="space-y-3">
-                        {structuredSummary.risk_highlights
-                          .slice(0, 3)
-                          .map((risk, index) => (
-                            <div
-                              key={index}
-                              className="flex items-start gap-3 p-3 bg-accent-rose/10 rounded-lg"
-                            >
-                              <svg
-                                className="w-4 h-4 text-accent-rose mt-0.5 flex-shrink-0"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 9v2m0 4h.01"
-                                />
-                              </svg>
-                              <span className="text-sm text-text-secondary leading-relaxed">
-                                {risk.length > 100
-                                  ? `${risk.slice(0, 100)}...`
-                                  : risk}
-                              </span>
-                            </div>
-                          ))}
-                        {structuredSummary.risk_highlights.length > 3 && (
-                          <div className="text-sm text-accent-rose font-medium text-center py-2">
-                            +{structuredSummary.risk_highlights.length - 3} more
-                            risks
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Secondary Cards Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {structuredSummary?.important_dates?.length && (
-                <div
-                  className="group p-5 bg-gradient-to-r from-accent-amber/5 to-accent-amber/3 border border-accent-amber/20 rounded-xl cursor-pointer hover:border-accent-amber/40 hover:shadow-lg hover:shadow-accent-amber/10 transition-all duration-200"
-                  onClick={() => toggleSection("dates")}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-accent-amber/10 rounded-lg group-hover:bg-accent-amber/20 transition-colors">
-                        <svg
-                          className="w-5 h-5 text-accent-amber"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <span className="font-semibold text-text-primary text-base">
-                          Important Dates
-                        </span>
-                        <p className="text-sm text-text-secondary mt-0.5">
-                          Key deadlines and milestones
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="px-3 py-1 bg-accent-amber/20 text-accent-amber font-semibold rounded-full text-sm">
-                        {structuredSummary.important_dates.length}
-                      </span>
-                      <svg
-                        className={`w-5 h-5 text-text-secondary transition-transform ${
-                          expandedSection === "dates" ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  {expandedSection === "dates" && (
-                    <div className="mt-4 pt-4 border-t border-accent-amber/20">
-                      <div className="space-y-2">
-                        {structuredSummary.important_dates.map(
-                          (date, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-3 p-2 bg-accent-amber/10 rounded-lg"
-                            >
-                              <span className="text-lg">📅</span>
-                              <span className="text-sm text-text-secondary font-medium">
-                                {date}
-                              </span>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {structuredSummary?.major_obligations?.length && (
-                <div
-                  className="group p-5 bg-gradient-to-r from-accent-green/5 to-accent-green/3 border border-accent-green/20 rounded-xl cursor-pointer hover:border-accent-green/40 hover:shadow-lg hover:shadow-accent-green/10 transition-all duration-200"
-                  onClick={() => toggleSection("obligations")}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-accent-green/10 rounded-lg group-hover:bg-accent-green/20 transition-colors">
-                        <svg
-                          className="w-5 h-5 text-accent-green"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <span className="font-semibold text-text-primary text-base">
-                          Key Obligations
-                        </span>
-                        <p className="text-sm text-text-secondary mt-0.5">
-                          Main responsibilities and duties
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="px-3 py-1 bg-accent-green/20 text-accent-green font-semibold rounded-full text-sm">
-                        {structuredSummary.major_obligations.length}
-                      </span>
-                      <svg
-                        className={`w-5 h-5 text-text-secondary transition-transform ${
-                          expandedSection === "obligations" ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  {expandedSection === "obligations" && (
-                    <div className="mt-4 pt-4 border-t border-accent-green/20">
-                      <div className="space-y-3">
-                        {structuredSummary.major_obligations
-                          .slice(0, 3)
-                          .map((obligation, index) => (
-                            <div
-                              key={index}
-                              className="flex items-start gap-3 p-3 bg-accent-green/10 rounded-lg"
-                            >
-                              <svg
-                                className="w-4 h-4 text-accent-green mt-0.5 flex-shrink-0"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              <span className="text-sm text-text-secondary leading-relaxed">
-                                {obligation.length > 100
-                                  ? `${obligation.slice(0, 100)}...`
-                                  : obligation}
-                              </span>
-                            </div>
-                          ))}
-                        {structuredSummary.major_obligations.length > 3 && (
-                          <div className="text-sm text-accent-green font-medium text-center py-2">
-                            +{structuredSummary.major_obligations.length - 3}{" "}
-                            more obligations
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          /* Fallback: Show enhanced document preview if no structured data */
-          <div className="p-6 bg-gradient-to-r from-bg-elevated to-bg-elevated/80 border border-border-muted rounded-xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-accent-blue/10 rounded-lg">
-                <svg
-                  className="w-5 h-5 text-accent-blue"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-text-primary">
-                  Document Preview
-                </h4>
-                <p className="text-sm text-text-secondary">
-                  Structured insights will appear here after processing
-                </p>
-              </div>
-            </div>
-            <div className="bg-bg-primary rounded-lg p-4 max-h-64 overflow-y-auto border border-border-muted">
-              <pre className="text-sm text-text-secondary whitespace-pre-wrap font-mono leading-relaxed">
-                {fullText?.substring(0, 1000) ||
-                  "No document content available"}
-                {fullText && fullText.length > 1000 && (
-                  <span className="text-accent-blue font-medium">
-                    ... (showing first 1000 characters)
-                  </span>
-                )}
-              </pre>
-            </div>
-          </div>
-        )}
       </div>
     </Card>
   );

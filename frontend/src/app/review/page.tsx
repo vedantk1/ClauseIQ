@@ -83,7 +83,7 @@ export default function ReviewWorkspace() {
   }
 
   // Utility functions for clause handling
-  const getRiskColor = (level: string) => {
+  const getRiskColor = (level?: string) => {
     switch (level) {
       case "high":
         return "text-accent-rose bg-accent-rose/10 border-accent-rose/20";
@@ -96,7 +96,7 @@ export default function ReviewWorkspace() {
     }
   };
 
-  const getClauseTypeLabel = (type: string) => {
+  const getClauseTypeLabel = (type?: string) => {
     const labels: Record<string, string> = {
       compensation: "Compensation",
       termination: "Termination",
@@ -109,7 +109,7 @@ export default function ReviewWorkspace() {
       probation: "Probation",
       general: "General",
     };
-    return labels[type] || type;
+    return labels[type || ""] || type || "Unknown";
   };
 
   const filteredClauses =
@@ -178,6 +178,8 @@ export default function ReviewWorkspace() {
                   fileName={fileName}
                   fullText={fullText}
                   clauseCount={clauses?.length || 0}
+                  riskSummary={safeRiskSummary}
+                  clauses={clauses}
                 />
 
                 {/* Keep existing Key Metrics for backward compatibility */}
@@ -409,8 +411,10 @@ export default function ReviewWorkspace() {
                               clause.risk_level
                             )}`}
                           >
-                            {clause.risk_level.charAt(0).toUpperCase() +
-                              clause.risk_level.slice(1)}
+                            {clause.risk_level
+                              ? clause.risk_level.charAt(0).toUpperCase() +
+                                clause.risk_level.slice(1)
+                              : "Unknown"}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 mb-2">
@@ -477,8 +481,12 @@ export default function ReviewWorkspace() {
                             selectedClause.risk_level
                           )}`}
                         >
-                          {selectedClause.risk_level.charAt(0).toUpperCase() +
-                            selectedClause.risk_level.slice(1)}{" "}
+                          {selectedClause.risk_level
+                            ? selectedClause.risk_level
+                                .charAt(0)
+                                .toUpperCase() +
+                              selectedClause.risk_level.slice(1)
+                            : "Unknown"}{" "}
                           Risk
                         </div>
                       </div>
