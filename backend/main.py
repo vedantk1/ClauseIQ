@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from config.environments import get_environment_config
-from routers import auth, documents, analysis, analytics, health
+from routers import auth, documents, analysis, analytics, health, reports
 from middleware.rate_limiter import rate_limit_middleware
 from middleware.logging import logging_middleware
 from middleware.monitoring import performance_monitoring_middleware
@@ -110,6 +110,7 @@ v1_router.include_router(documents.router)
 v1_router.include_router(analysis.router)
 v1_router.include_router(analytics.router)
 v1_router.include_router(health.router)
+v1_router.include_router(reports.router)
 
 app.include_router(v1_router)
 

@@ -5,7 +5,6 @@ import io
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from fpdf import FPDF
-from models.analysis import AnalyzeDocumentResponse
 from models.common import Clause
 
 

@@ -8,6 +8,7 @@ import Card from "@/components/Card";
 import Button from "@/components/Button";
 import StructuredSummary from "@/components/StructuredSummary";
 import DocumentInsights from "@/components/DocumentInsights";
+import toast from "react-hot-toast";
 
 export default function ReviewWorkspace() {
   const { isAuthenticated, isLoading } = useAuthRedirect();
@@ -24,6 +25,7 @@ export default function ReviewWorkspace() {
     fullText,
     riskSummary,
     selectedClause,
+    id: documentId,
   } = currentDocument;
 
   // Safe access with defaults
@@ -35,6 +37,71 @@ export default function ReviewWorkspace() {
     "all" | "high" | "medium" | "low"
   >("all");
   const [clauseTypeFilter, setClauseTypeFilter] = useState<string>("all");
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+  // PDF Download function
+  const handleDownloadPdf = async () => {
+    if (!documentId) {
+      toast.error("No document available to generate report");
+      return;
+    }
+
+    setIsDownloadingPdf(true);
+    try {
+      // Get auth token from localStorage
+      const accessToken = localStorage.getItem("access_token");
+      if (!accessToken) {
+        throw new Error("Authentication required");
+      }
+
+      // Get API base URL from config
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+      // Make direct fetch call for PDF download
+      const response = await fetch(
+        `${apiUrl}/api/v1/reports/documents/${documentId}/pdf`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate PDF: ${response.status}`);
+      }
+
+      // Get the PDF blob
+      const blob = await response.blob();
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      // Generate filename
+      const cleanFileName = (fileName || "document").replace(".pdf", "");
+      link.download = `${cleanFileName}_analysis_report.pdf`;
+
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+
+      toast.success("PDF report downloaded successfully!");
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to download PDF report"
+      );
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   // Show loading while checking authentication
   if (isLoading) {
@@ -260,6 +327,9 @@ export default function ReviewWorkspace() {
                       variant="secondary"
                       size="sm"
                       className="w-full justify-start"
+                      onClick={handleDownloadPdf}
+                      disabled={isDownloadingPdf}
+                      loading={isDownloadingPdf}
                     >
                       <svg
                         className="w-4 h-4 mr-2"
@@ -274,7 +344,9 @@ export default function ReviewWorkspace() {
                           d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                         />
                       </svg>
-                      Download PDF Report
+                      {isDownloadingPdf
+                        ? "Generating PDF..."
+                        : "Download PDF Report"}
                     </Button>
                     <Button
                       variant="secondary"
