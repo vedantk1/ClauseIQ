@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useAnalysis } from "@/context/AnalysisContext";
 import { useRouter } from "next/navigation";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
@@ -46,10 +46,16 @@ export default function ReviewWorkspace() {
   const [showFinancialCalculator, setShowFinancialCalculator] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
+  // Ref to prevent duplicate flag operations due to React StrictMode
+  const flagOperationRef = useRef<Set<string>>(new Set());
+
   // PDF Download function
   const handleDownloadPdf = async () => {
     if (!documentId) {
-      toast.error("No document available to generate report");
+      // Defer toast to avoid state update during render
+      setTimeout(() => {
+        toast.error("No document available to generate report");
+      }, 0);
       return;
     }
 
@@ -99,12 +105,20 @@ export default function ReviewWorkspace() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
 
-      toast.success("PDF report downloaded successfully!");
+      // Defer toast to avoid state update during render
+      setTimeout(() => {
+        toast.success("PDF report downloaded successfully!");
+      }, 0);
     } catch (error) {
       console.error("Error downloading PDF:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to download PDF report"
-      );
+      // Defer toast to avoid state update during render
+      setTimeout(() => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to download PDF report"
+        );
+      }, 0);
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -234,7 +248,10 @@ export default function ReviewWorkspace() {
     setShowRewriteSuggestion(true);
     // TODO: Implement AI-powered rewrite suggestion
     console.log("Generating rewrite suggestion for:", clause);
-    toast.success("Generating rewrite suggestion...");
+    // Defer toast to avoid state update during render
+    setTimeout(() => {
+      toast.success("Generating rewrite suggestion...");
+    }, 0);
   };
 
   const handleAddNote = (clause: any) => {
@@ -244,7 +261,10 @@ export default function ReviewWorkspace() {
         ...prev,
         [clause.id]: note,
       }));
-      toast.success("Note added successfully");
+      // Defer toast to avoid state update during render
+      setTimeout(() => {
+        toast.success("Note added successfully");
+      }, 0);
     }
   };
 
@@ -259,7 +279,10 @@ export default function ReviewWorkspace() {
           delete updated[clause.id];
           return updated;
         });
-        toast.success("Note deleted successfully");
+        // Defer toast to avoid state update during render
+        setTimeout(() => {
+          toast.success("Note deleted successfully");
+        }, 0);
       }
     }
   };
@@ -277,25 +300,63 @@ export default function ReviewWorkspace() {
             ...prev,
             [clause.id]: updatedNote,
           }));
-          toast.success("Note updated successfully");
+          // Defer toast to avoid state update during render
+          setTimeout(() => {
+            toast.success("Note updated successfully");
+          }, 0);
         }
       }
     }
   };
 
-  const handleFlagForReview = (clause: any) => {
+  const handleFlagForReview = (clause: any, event?: React.MouseEvent) => {
+    // Prevent event bubbling and default behavior
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
     if (clause.id) {
+      // Check if this operation is already in progress - atomic check and set
+      if (flagOperationRef.current.has(clause.id)) {
+        console.log(
+          "🚩 [DEBUG] Operation already in progress, skipping:",
+          clause.id
+        );
+        return;
+      }
+
+      // Immediately mark this operation as in progress
+      flagOperationRef.current.add(clause.id);
+
+      // Determine current state before the update
+      const wasAlreadyFlagged = flaggedClauses.has(clause.id);
+
+      // Update the state
       setFlaggedClauses((prev) => {
         const newSet = new Set(prev);
-        if (newSet.has(clause.id)) {
+        if (wasAlreadyFlagged) {
           newSet.delete(clause.id);
-          toast.success("Clause unflagged");
         } else {
           newSet.add(clause.id);
-          toast.success("Clause flagged for review");
         }
         return newSet;
       });
+
+      // Show toast and clear operation flag OUTSIDE the state updater
+      // This prevents duplicate toasts from React Strict Mode double-invocation
+      setTimeout(() => {
+        if (wasAlreadyFlagged) {
+          toast.success("Clause unflagged");
+        } else {
+          toast.success("Clause flagged for review");
+        }
+
+        // Clear the operation flag after showing toast
+        setTimeout(() => {
+          flagOperationRef.current.delete(clause.id);
+        }, 100);
+      }, 0);
     }
   };
 
@@ -330,7 +391,10 @@ export default function ReviewWorkspace() {
     a.download = `clause-analysis-${clause.clause_type || "unknown"}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Clause analysis exported successfully");
+    // Defer toast to avoid state update during render
+    setTimeout(() => {
+      toast.success("Clause analysis exported successfully");
+    }, 0);
   };
 
   const handleCopyClause = async (clause: any) => {
@@ -367,9 +431,15 @@ Generated by ClauseIQ on ${new Date().toLocaleDateString()}
 
     try {
       await navigator.clipboard.writeText(textToCopy);
-      toast.success("Clause analysis copied to clipboard");
+      // Defer toast to avoid state update during render
+      setTimeout(() => {
+        toast.success("Clause analysis copied to clipboard");
+      }, 0);
     } catch (err) {
-      toast.error("Failed to copy to clipboard");
+      // Defer toast to avoid state update during render
+      setTimeout(() => {
+        toast.error("Failed to copy to clipboard");
+      }, 0);
     }
   };
 
@@ -1446,7 +1516,9 @@ Generated by ClauseIQ on ${new Date().toLocaleDateString()}
                           size="sm"
                           variant="tertiary"
                           className="flex-1"
-                          onClick={() => handleFlagForReview(selectedClause)}
+                          onClick={(event) =>
+                            handleFlagForReview(selectedClause, event)
+                          }
                           title={
                             flaggedClauses.has(selectedClause.id || "")
                               ? "Remove flag from this clause"

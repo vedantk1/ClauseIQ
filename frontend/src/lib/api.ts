@@ -356,14 +356,20 @@ export const handleAPIError = (
   if (!response.success && response.error) {
     const message =
       customMessage || response.error.message || "An error occurred";
-    toast.error(message);
+    // Defer toast to avoid state update during render
+    setTimeout(() => {
+      toast.error(message);
+    }, 0);
     console.error("API Error:", response.error);
   }
 };
 
 export const handleAPISuccess = (message?: string) => {
   if (message) {
-    toast.success(message);
+    // Defer toast to avoid state update during render
+    setTimeout(() => {
+      toast.success(message);
+    }, 0);
   }
 };
 
