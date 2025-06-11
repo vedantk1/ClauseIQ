@@ -34,8 +34,7 @@ class TestMongoDBStorage:
             "id": "test-123",
             "filename": "test.pdf",
             "upload_date": "2024-01-01T00:00:00",
-            "text": "Sample text content",
-            "sections": []
+            "text": "Sample text content"
         }
         
         # Mock the save operation
@@ -84,15 +83,13 @@ class TestMongoDBStorage:
             "id": "doc1",
             "filename": "file1.pdf",
             "upload_date": "2024-01-01T00:00:00",
-            "text": "Content 1",
-            "sections": []
+            "text": "Content 1"
         }
         doc2 = {
             "id": "doc2",
             "filename": "file2.pdf",
             "upload_date": "2024-01-02T00:00:00",
-            "text": "Content 2",
-            "sections": []
+            "text": "Content 2"
         }
         
         # Mock save operations and get_all_documents

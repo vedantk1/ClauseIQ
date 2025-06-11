@@ -11,7 +11,7 @@ from auth import get_current_user
 from database.service import get_document_service
 from middleware.api_standardization import APIResponse, ErrorResponse
 from middleware.versioning import versioned_response
-from services.document_service import validate_file, extract_sections
+from services.document_service import validate_file
 from models.document import (
     ProcessDocumentResponse,
     DocumentListResponse,
@@ -201,7 +201,7 @@ async def delete_all_documents(current_user: dict = Depends(get_current_user)):
 
 @router.post("/process-document/", response_model=ProcessDocumentResponse)
 async def process_document(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
-    """Process and store a document with sections."""
+    """Process and store a document."""
     validate_file(file)
     
     temp_file_path = None
@@ -221,9 +221,6 @@ async def process_document(file: UploadFile = File(...), current_user: dict = De
         
         if not extracted_text.strip():
             raise HTTPException(status_code=400, detail="No text could be extracted from the PDF.")
-
-        # Extract sections from the document
-        sections = extract_sections(extracted_text)
         
         # Generate summary using AI service
         from services.ai_service import generate_document_summary, is_ai_available
@@ -244,7 +241,6 @@ async def process_document(file: UploadFile = File(...), current_user: dict = De
             "upload_date": datetime.now().isoformat(),
             "text": extracted_text,
             "ai_full_summary": ai_summary,
-            "sections": [section.dict() for section in sections],
             "user_id": current_user["id"]
         }
         

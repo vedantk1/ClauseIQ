@@ -7,7 +7,7 @@ import re
 from typing import Optional, List, Dict, Any
 from openai import AsyncOpenAI, OpenAIError
 from settings import get_settings
-from models.common import Clause, RiskLevel, ClauseType, Section
+from models.common import Clause, RiskLevel, ClauseType
 from clauseiq_types.common import ContractType
 
 
@@ -26,18 +26,18 @@ else:
     openai_client = None
 
 
-async def generate_summary(section_text: str, section_heading: str = "", model: str = "gpt-3.5-turbo") -> str:
-    """Generate a summary for a section using OpenAI's API"""
+async def generate_summary(text: str, heading: str = "", model: str = "gpt-3.5-turbo") -> str:
+    """Generate a summary for a text block using OpenAI's API"""
     if not openai_client:
         return "AI summary not available - OpenAI client not configured."
     
     try:
         prompt = f"""
-        Summarize the following legal document section in 2-3 sentences.
+        Summarize the following legal document text in 2-3 sentences.
         Focus on the key obligations, rights, and important terms.
         
-        Section: {section_heading}
-        Text: {section_text[:2000]}  # Limit text length
+        Heading: {heading}
+        Text: {text[:2000]}  # Limit text length
         
         Summary:
         """
@@ -45,7 +45,7 @@ async def generate_summary(section_text: str, section_heading: str = "", model: 
         response = await openai_client.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": "You are a legal AI assistant that provides clear, concise summaries of legal document sections."},
+                {"role": "system", "content": "You are a legal AI assistant that provides clear, concise summaries of legal document content."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=150,
@@ -369,96 +369,6 @@ async def detect_contract_type(document_text: str, filename: str = "", model: st
         return ContractType.OTHER
 
 
-async def extract_sections_with_llm(document_text: str, contract_type: ContractType, model: str = "gpt-3.5-turbo") -> List[Section]:
-    """Extract document sections using LLM semantic understanding."""
-    if not openai_client:
-        # Fallback to basic section extraction
-        return _fallback_section_extraction(document_text)
-    
-    try:
-        # For very long documents, analyze in chunks
-        max_chars = 12000
-        if len(document_text) > max_chars:
-            document_text = document_text[:max_chars] + "\n\n[Document truncated for analysis...]"
-        
-        prompt = f"""
-        Analyze this {contract_type.value} document and break it into logical sections based on content meaning, not just formatting.
-
-        For each section, provide:
-        1. A descriptive heading that captures the main topic
-        2. The exact text content of that section
-
-        Guidelines:
-        - Focus on semantic meaning over formatting
-        - Group related content together
-        - Create meaningful section names
-        - Don't split closely related content
-
-        Respond in this exact JSON format:
-        {{
-            "sections": [
-                {{
-                    "heading": "Section Title",
-                    "text": "Full section content..."
-                }}
-            ]
-        }}
-
-        Document content:
-        {document_text}
-        """
-        
-        response = await openai_client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "You are a legal document analysis expert. Break documents into meaningful sections based on content and legal structure."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=2000,
-            temperature=0.2
-        )
-        
-        # Parse JSON response
-        content = response.choices[0].message.content.strip()
-        try:
-            parsed = json.loads(content)
-            sections = []
-            for section_data in parsed.get("sections", []):
-                sections.append(Section(
-                    heading=section_data.get("heading", "Untitled Section"),
-                    text=section_data.get("text", "")
-                ))
-            return sections
-        except json.JSONDecodeError as e:
-            print(f"Failed to parse LLM section response: {e}")
-            print(f"Response content: {content[:500]}...")
-            
-            # Try to extract JSON from response if it's wrapped in other text
-            import re
-            json_match = re.search(r'\{.*\}', content, re.DOTALL)
-            if json_match:
-                json_part = json_match.group()
-                try:
-                    parsed = json.loads(json_part)
-                    sections = []
-                    for section_data in parsed.get("sections", []):
-                        sections.append(Section(
-                            heading=section_data.get("heading", "Untitled Section"),
-                            text=section_data.get("text", "")
-                        ))
-                    print("✅ Successfully recovered from wrapped JSON response")
-                    return sections
-                except json.JSONDecodeError:
-                    pass
-            
-            print("Falling back to basic extraction")
-            return _fallback_section_extraction(document_text)
-        
-    except Exception as e:
-        print(f"Error extracting sections with LLM: {str(e)}")
-        return _fallback_section_extraction(document_text)
-
-
 async def extract_clauses_with_llm(document_text: str, contract_type: ContractType, model: str = "gpt-3.5-turbo") -> List[Clause]:
     """Extract and classify clauses using LLM analysis."""
     if not openai_client:
@@ -731,63 +641,3 @@ def _get_relevant_clause_types(contract_type: ContractType) -> List[ClauseType]:
     
     specific_clauses = contract_specific.get(contract_type, [])
     return specific_clauses + universal_clauses
-
-
-def _fallback_section_extraction(document_text: str) -> List[Section]:
-    """Fallback section extraction using basic patterns."""
-    if not document_text or not document_text.strip():
-        return []
-    
-    sections = []
-    
-    # Simple pattern-based extraction as fallback
-    section_patterns = [
-        r'^(\d+\.?\s*[A-Z][^.\n]*?)(?=\n)',  # Numbered sections
-        r'^([A-Z][A-Z\s]{2,}?)(?=\n)',       # ALL CAPS headings
-        r'^([A-Z][^.\n]*?):(?=\s|\n)',       # Headings with colons
-    ]
-    
-    # Try to find sections using patterns
-    combined_pattern = '|'.join(f'({pattern})' for pattern in section_patterns)
-    parts = re.split(combined_pattern, document_text, flags=re.MULTILINE | re.IGNORECASE)
-    
-    current_heading = None
-    current_text = ""
-    
-    for part in parts:
-        if part and part.strip():
-            # Check if this looks like a heading
-            if (len(part.strip()) < 100 and 
-                (part.strip().isupper() or 
-                 re.match(r'^\d+\.?\s*[A-Z]', part.strip()) or
-                 part.strip().endswith(':'))):
-                
-                # Save previous section
-                if current_heading and current_text.strip():
-                    sections.append(Section(
-                        heading=current_heading.strip(),
-                        text=current_text.strip()
-                    ))
-                
-                # Start new section
-                current_heading = part.strip().rstrip(':')
-                current_text = ""
-            else:
-                # Add to current section content
-                current_text += part + " "
-    
-    # Add the last section
-    if current_heading and current_text.strip():
-        sections.append(Section(
-            heading=current_heading.strip(),
-            text=current_text.strip()
-        ))
-    
-    # If no sections found, create a single section
-    if not sections and document_text.strip():
-        sections.append(Section(
-            heading="Document Content",
-            text=document_text.strip()
-        ))
-    
-    return sections

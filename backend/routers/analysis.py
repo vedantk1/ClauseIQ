@@ -28,7 +28,7 @@ async def analyze_document(
     file: UploadFile = File(...), 
     current_user: dict = Depends(get_current_user)
 ):
-    """Analyze document and extract sections with AI summaries."""
+    """Analyze document and extract clauses with AI summaries."""
     correlation_id = getattr(request.state, 'correlation_id', None)
     
     try:
@@ -69,14 +69,9 @@ async def analyze_document(
                 )
             
             print("Using LLM-based document processing")
-            contract_type, sections, _ = await process_document_with_llm(
+            contract_type, clauses = await process_document_with_llm(
                 extracted_text, file.filename, user_model
             )
-            
-            # Generate AI summaries for sections
-            from services.ai_service import generate_summary
-            for section in sections:
-                section.summary = await generate_summary(section.text, section.heading, user_model)
             
             # Generate contract-specific document summary
             ai_summary = await generate_contract_specific_summary(
@@ -88,7 +83,7 @@ async def analyze_document(
                 extracted_text, file.filename, user_model
             )
             
-            # Create document entry with sections and contract type
+            # Create document entry with clauses and contract type
             doc_id = str(uuid.uuid4())
             document_data = {
                 "id": doc_id,
@@ -97,7 +92,7 @@ async def analyze_document(
                 "text": extracted_text,
                 "ai_full_summary": ai_summary,
                 "ai_structured_summary": ai_structured_summary,
-                "sections": [section.dict() for section in sections],
+                "clauses": [clause.dict() for clause in clauses],
                 "contract_type": contract_type.value if contract_type else None,
                 "user_id": current_user["id"]
             }
@@ -105,11 +100,11 @@ async def analyze_document(
             # Save to storage
             await service.save_document_for_user(document_data, current_user["id"])
             
-            # Return response with sections and summary
+            # Return response with clauses and summary
             response_data = {
                 "id": doc_id,
                 "filename": file.filename,
-                "sections": sections,
+                "clauses": clauses,
                 "summary": ai_summary,
                 "message": "Document analyzed successfully"
             }
@@ -350,7 +345,7 @@ async def analyze_document_unified(
             
             print("Using LLM-based document processing")
             # Process document with full LLM pipeline
-            contract_type, sections, analyzed_clauses = await process_document_with_llm(
+            contract_type, analyzed_clauses = await process_document_with_llm(
                 extracted_text, file.filename, user_model
             )
             
@@ -371,7 +366,7 @@ async def analyze_document_unified(
                 "low": sum(1 for clause in analyzed_clauses if clause.risk_level == RiskLevel.LOW)
             }
             
-            # Create unified document entry with both summary and clauses
+            # Create unified document entry with clauses
             doc_id = str(uuid.uuid4())
             document_data = {
                 "id": doc_id,
@@ -380,7 +375,6 @@ async def analyze_document_unified(
                 "text": extracted_text,
                 "ai_full_summary": ai_summary,
                 "ai_structured_summary": ai_structured_summary,
-                "sections": [],  # Keeping for compatibility
                 "clauses": [clause.dict() for clause in analyzed_clauses],
                 "risk_summary": risk_summary,
                 "contract_type": contract_type.value if contract_type else None,

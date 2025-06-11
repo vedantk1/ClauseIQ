@@ -161,10 +161,6 @@ class MongoDocumentStorage:
             # Ensure the user_id is set in the document
             document_dict['user_id'] = user_id
             
-            # Safeguard: Ensure sections field is properly initialized
-            if 'sections' not in document_dict or document_dict['sections'] is None:
-                document_dict['sections'] = []
-            
             # Add timestamp if not present
             if 'upload_date' not in document_dict:
                 document_dict['upload_date'] = datetime.utcnow().isoformat()

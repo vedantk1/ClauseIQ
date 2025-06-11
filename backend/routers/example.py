@@ -14,7 +14,7 @@ from pathlib import Path
 shared_path = Path(__file__).parent.parent.parent / "shared"
 sys.path.insert(0, str(shared_path))
 
-from clauseiq_types.common import Clause, Section, ClauseType, RiskLevel
+from clauseiq_types.common import Clause, ClauseType, RiskLevel
 
 # Import the API schema utilities
 from utils.api_schema import ApiSchema, CrudRouter
@@ -75,9 +75,9 @@ async def list_clauses(
     return clauses
 
 # Example of using the CrudRouter with shared types
-sections_router = CrudRouter(
-    model=Section,
+clauses_router = CrudRouter(
+    model=Clause,
     router=router,
-    prefix="/sections",
-    tags=["Sections"]
+    prefix="/clauses",
+    tags=["Clauses"]
 )

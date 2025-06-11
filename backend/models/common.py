@@ -17,7 +17,6 @@ from clauseiq_types.common import (
     ClauseType,
     RiskLevel,
     ContractType,
-    Section as SharedSection,
     Clause as SharedClause,
     RiskSummary,
     User as SharedUser,
@@ -30,7 +29,6 @@ __all__ = [
     "ClauseType",
     "RiskLevel", 
     "ContractType",
-    "Section", 
     "Clause", 
     "RiskSummary",
     "User",
@@ -42,10 +40,6 @@ __all__ = [
 from pydantic import BaseModel, Field
 
 # We subclass the shared models to add any backend-specific functionality
-class Section(SharedSection):
-    """Extends the shared Section model for backend-specific functionality."""
-    pass
-
 class Clause(SharedClause):
     """Extends the shared Clause model for backend-specific functionality."""
     # Override the id field to use UUID generation if not provided

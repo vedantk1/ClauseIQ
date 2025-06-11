@@ -80,7 +80,6 @@ export interface Document {
   text: string | null;
   ai_full_summary: string | null;
   ai_structured_summary: Record<string, any> | null;
-  sections: Section[] | null;
   clauses: Clause[] | null;
   risk_summary: RiskSummary | null;
   user_id?: string;
@@ -90,12 +89,6 @@ export interface RiskSummary {
   high?: number;
   medium?: number;
   low?: number;
-}
-
-export interface Section {
-  heading?: string;
-  text?: string;
-  summary: string | null;
 }
 
 export interface User {

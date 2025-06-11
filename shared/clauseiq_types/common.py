@@ -68,13 +68,6 @@ class RiskLevel(str, Enum):
     HIGH = "high"
 
 
-class Section(BaseModel):
-    """A section of a document."""
-    heading: str
-    text: str
-    summary: Optional[str] = None
-
-
 class Clause(BaseModel):
     """A clause extracted from a document with analysis."""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -119,7 +112,6 @@ class Document(BaseModel):
     text: Optional[str] = None
     ai_full_summary: Optional[str] = None
     ai_structured_summary: Optional[Dict[str, Any]] = None
-    sections: Optional[List[Section]] = None
     clauses: Optional[List[Clause]] = None
     risk_summary: Optional[RiskSummary] = None
     user_id: str

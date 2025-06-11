@@ -7,7 +7,7 @@ import pdfplumber
 from typing import List, Tuple
 from fastapi import UploadFile, HTTPException
 from settings import get_settings
-from models.common import Section, Clause, ClauseType, RiskLevel, ContractType
+from models.common import Clause, ClauseType, RiskLevel, ContractType
 
 
 # Get settings instance
@@ -39,72 +39,6 @@ def validate_file(file: UploadFile):
                 status_code=400,
                 detail=f"File type not supported. Allowed types: {', '.join(settings.file_upload.allowed_file_types)}"
             )
-
-
-def extract_sections(text: str) -> List[Section]:
-    """Split document into sections based on common patterns in legal documents."""
-    if not text or not text.strip():
-        return []
-    
-    sections = []
-    
-    # Common section patterns in legal documents
-    section_patterns = [
-        r'^(\d+\.?\s*[A-Z][^.\n]*?)(?=\n)',  # Numbered sections like "1. Introduction"
-        r'^([A-Z][A-Z\s]{2,}?)(?=\n)',       # ALL CAPS headings
-        r'^([A-Z][^.\n]*?):(?=\s|\n)',       # Headings with colons
-        r'^(Article\s+[IVXLC]+[^.\n]*?)(?=\n)',  # Article headings
-        r'^(Section\s+\d+[^.\n]*?)(?=\n)',   # Section headings
-    ]
-    
-    # Try to find sections using patterns
-    combined_pattern = '|'.join(f'({pattern})' for pattern in section_patterns)
-    
-    # Split text by potential section headers
-    parts = re.split(combined_pattern, text, flags=re.MULTILINE | re.IGNORECASE)
-    
-    current_heading = None
-    current_text = ""
-    
-    for part in parts:
-        if part and part.strip():
-            # Check if this looks like a heading (short, title-case, etc.)
-            if (len(part.strip()) < 100 and 
-                (part.strip().isupper() or 
-                 re.match(r'^\d+\.?\s*[A-Z]', part.strip()) or
-                 part.strip().endswith(':') or
-                 'article' in part.lower() or
-                 'section' in part.lower())):
-                
-                # Save previous section if we have one
-                if current_heading and current_text.strip():
-                    sections.append(Section(
-                        heading=current_heading.strip(),
-                        text=current_text.strip()
-                    ))
-                
-                # Start new section
-                current_heading = part.strip().rstrip(':')
-                current_text = ""
-            else:
-                # This is content, add to current section
-                current_text += part + " "
-    
-    # Add the last section
-    if current_heading and current_text.strip():
-        sections.append(Section(
-            heading=current_heading.strip(),
-            text=current_text.strip()
-        ))
-    
-    # If no clear sections found, create a single section with the entire text
-    if not sections and text.strip():
-        sections.append(Section(
-            heading="Document Content",
-            text=text.strip()
-        ))
-    
-    return sections
 
 
 def extract_clauses(text: str) -> List[Clause]:
@@ -292,16 +226,15 @@ def _generate_clause_heading(clause_type: ClauseType, text: str) -> str:
     return base_heading
 
 
-async def process_document_with_llm(document_text: str, filename: str = "", model: str = "gpt-3.5-turbo") -> Tuple[ContractType, List[Section], List[Clause]]:
+async def process_document_with_llm(document_text: str, filename: str = "", model: str = "gpt-3.5-turbo") -> Tuple[ContractType, List[Clause]]:
     """
     Process a document using LLM-based analysis instead of heuristic patterns.
     
     Returns:
-        Tuple of (contract_type, sections, clauses)
+        Tuple of (contract_type, clauses)
     """
     from services.ai_service import (
         detect_contract_type, 
-        extract_sections_with_llm, 
         extract_clauses_with_llm,
         is_ai_available
     )
@@ -309,7 +242,7 @@ async def process_document_with_llm(document_text: str, filename: str = "", mode
     if not is_ai_available():
         # Fallback to heuristic methods if AI is not available
         print("AI not available, falling back to heuristic analysis")
-        return ContractType.OTHER, extract_sections(document_text), extract_clauses(document_text)
+        return ContractType.OTHER, extract_clauses(document_text)
     
     try:
         # Step 1: Detect contract type
@@ -317,22 +250,17 @@ async def process_document_with_llm(document_text: str, filename: str = "", mode
         contract_type = await detect_contract_type(document_text, filename, model)
         print(f"Detected contract type: {contract_type}")
         
-        # Step 2: Extract sections using LLM
-        print("Extracting sections with LLM")
-        sections = await extract_sections_with_llm(document_text, contract_type, model)
-        print(f"Extracted {len(sections)} sections")
-        
-        # Step 3: Extract clauses using LLM
+        # Step 2: Extract clauses using LLM
         print("Extracting clauses with LLM")
         clauses = await extract_clauses_with_llm(document_text, contract_type, model)
         print(f"Extracted {len(clauses)} clauses")
         
-        return contract_type, sections, clauses
+        return contract_type, clauses
         
     except Exception as e:
         print(f"Error in LLM document processing: {str(e)}")
         # Fallback to heuristic methods on error
-        return ContractType.OTHER, extract_sections(document_text), extract_clauses(document_text)
+        return ContractType.OTHER, extract_clauses(document_text)
 
 
 def is_llm_processing_available() -> bool:
