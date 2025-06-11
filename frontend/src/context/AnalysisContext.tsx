@@ -6,7 +6,7 @@
 import React, { createContext, useContext, ReactNode } from "react";
 import { useAppState } from "../store/appState";
 import { apiClient, handleAPIError, handleAPISuccess } from "../lib/api";
-import { Section, Clause, RiskSummary, Document } from "@clauseiq/shared-types";
+import { Clause, RiskSummary, Document } from "@clauseiq/shared-types";
 
 // Type for AI structured summary data
 export interface StructuredSummary {
@@ -25,7 +25,6 @@ interface AnalysisContextType {
   currentDocument: {
     id: string | null;
     filename: string;
-    sections: Section[];
     clauses: Clause[];
     summary: string;
     structuredSummary: StructuredSummary | null;
@@ -118,7 +117,6 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
             clauses,
             riskSummary: risk_summary,
             fullText: full_text || "",
-            sections: [], // Legacy support
             selectedClause: null,
           },
         });
@@ -232,7 +230,6 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
         text: string;
         ai_full_summary: string;
         ai_structured_summary?: StructuredSummary;
-        sections: Section[];
         clauses: Clause[];
         risk_summary: RiskSummary;
       }>(`/documents/${documentId}`);
@@ -244,7 +241,6 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
           text,
           ai_full_summary,
           ai_structured_summary,
-          sections,
           clauses,
           risk_summary,
         } = response.data;
@@ -257,7 +253,6 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
             fullText: text,
             summary: ai_full_summary,
             structuredSummary: ai_structured_summary || null,
-            sections: sections || [],
             clauses: clauses || [],
             riskSummary: risk_summary || { high: 0, medium: 0, low: 0 },
             selectedClause: null,

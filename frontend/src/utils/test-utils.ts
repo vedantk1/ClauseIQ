@@ -183,7 +183,6 @@ export const testDataFactory = {
     upload_date: new Date().toISOString(),
     text: "Sample document text",
     ai_full_summary: "This is a test document summary",
-    sections: [],
     clauses: [],
     risk_summary: { high: 1, medium: 2, low: 3 },
     user_id: "test-user-id",

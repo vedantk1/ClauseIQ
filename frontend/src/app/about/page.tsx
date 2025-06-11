@@ -38,7 +38,7 @@ export default function About() {
           <ol className="list-decimal list-inside space-y-2 ml-2">
             <li>Upload your employment contract PDF</li>
             <li>Our system extracts and processes the text</li>
-            <li>The document is split into logical sections</li>
+            <li>The document is analyzed for legal clauses and risks</li>
             <li>Each section is analyzed and summarized</li>
             <li>Results are presented in an easy-to-understand format</li>
           </ol>

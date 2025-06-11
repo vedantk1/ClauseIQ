@@ -11,7 +11,6 @@ import Skeleton from "@/components/Skeleton";
 import {
   FileText,
   Calendar,
-  Layers3,
   Upload,
   Grid3X3,
   List,
@@ -30,11 +29,6 @@ interface DocumentItem {
   filename: string;
   upload_date: string;
   contract_type?: string;
-  sections: Array<{
-    heading: string;
-    text: string;
-    summary?: string;
-  }>;
 }
 
 type ViewMode = "grid" | "list";
@@ -174,15 +168,65 @@ export default function Documents() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, isAuthenticated]); // Intentionally omitting apiCall to prevent infinite loop
 
+  // Simple text highlighting utility
+  const highlightSearchText = (
+    text: string,
+    searchQuery: string
+  ): React.ReactNode => {
+    if (!searchQuery.trim() || !text) return text;
+
+    const query = searchQuery.trim();
+    const regex = new RegExp(
+      `(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+      "gi"
+    );
+    const parts = text.split(regex);
+
+    return parts.map((part, index) =>
+      regex.test(part) ? (
+        <mark
+          key={index}
+          className="bg-accent-purple/20 text-accent-purple px-1 rounded"
+        >
+          {part}
+        </mark>
+      ) : (
+        part
+      )
+    );
+  };
+
   // Filter and sort documents
   useEffect(() => {
     const filtered = documents.filter((doc) => {
-      const matchesSearch = doc.filename
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      // Contract type filter
       const matchesType =
         !selectedContractType || doc.contract_type === selectedContractType;
-      return matchesSearch && matchesType;
+
+      // Enhanced search filter with partial word matching
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim();
+        const searchableFields = [
+          doc.filename || "",
+          formatContractType(doc.contract_type),
+        ];
+
+        // Create searchable text and individual words
+        const searchableText = searchableFields.join(" ").toLowerCase();
+        const searchableWords = searchableText.split(/\s+/);
+
+        // Check if query matches any part of the searchable content
+        const queryMatches =
+          searchableText.includes(query) || // Exact phrase match
+          searchableWords.some((word) => word.startsWith(query)) || // Word starts with query
+          searchableWords.some(
+            (word) => word.includes(query) && query.length >= 3
+          ); // Partial match for 3+ chars
+
+        if (!queryMatches) return false;
+      }
+
+      return matchesType;
     });
 
     // Sort documents
@@ -655,7 +699,7 @@ export default function Documents() {
           <input
             ref={searchInputRef}
             type="text"
-            placeholder="Search documents... (Press / to focus)"
+            placeholder="Search documents... (try contract type, filename, etc.)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -664,8 +708,16 @@ export default function Documents() {
                 e.currentTarget.blur();
               }
             }}
-            className="w-full pl-10 pr-4 py-2 bg-bg-elevated border border-border-muted rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-purple/20 focus:border-accent-purple transition-colors"
+            className="w-full pl-10 pr-10 py-2 bg-bg-elevated border border-border-muted rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-purple/20 focus:border-accent-purple transition-colors"
           />
+          {/* Search indicator */}
+          {searchQuery && (
+            <div className="absolute right-10 top-1/2 transform -translate-y-1/2 flex items-center">
+              <span className="text-xs text-accent-purple bg-accent-purple/10 px-2 py-0.5 rounded-full">
+                {filteredDocuments.length} found
+              </span>
+            </div>
+          )}
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
@@ -912,7 +964,7 @@ export default function Documents() {
                         className="font-medium text-text-primary truncate group-hover:text-accent-purple transition-colors"
                         title={doc.filename}
                       >
-                        {doc.filename}
+                        {highlightSearchText(doc.filename, searchQuery)}
                       </h3>
                       <div className="flex items-center gap-2 mt-1 text-xs text-text-tertiary">
                         <Clock className="w-3 h-3" />
@@ -951,15 +1003,10 @@ export default function Documents() {
                           doc.contract_type
                         )}`}
                       >
-                        {formatContractType(doc.contract_type)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-text-secondary">
-                        Sections analyzed
-                      </span>
-                      <span className="text-text-primary font-medium">
-                        {doc.sections?.length || 0}
+                        {highlightSearchText(
+                          formatContractType(doc.contract_type),
+                          searchQuery
+                        )}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
@@ -1031,18 +1078,12 @@ export default function Documents() {
                         className="font-medium text-text-primary truncate group-hover:text-accent-purple transition-colors"
                         title={doc.filename}
                       >
-                        {doc.filename}
+                        {highlightSearchText(doc.filename, searchQuery)}
                       </h3>
                       <div className="flex items-center gap-4 mt-1 text-sm text-text-secondary">
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           <span>{formatDate(doc.upload_date)}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Layers3 className="w-3 h-3" />
-                          <span>
-                            {doc.sections?.length || 0} sections analyzed
-                          </span>
                         </div>
                         <div className="flex items-center gap-1">
                           <CheckCircle className="w-3 h-3 text-status-success" />
@@ -1121,6 +1162,13 @@ export default function Documents() {
                   )}" documents found`
                 : "No documents match your current filters"}
             </p>
+            {searchQuery && (
+              <p className="text-xs text-text-secondary/70 mb-4">
+                Try searching for partial words like &quot;employ&quot; for
+                employment contracts, or &quot;non&quot; for non-compete
+                agreements
+              </p>
+            )}
             <div className="flex gap-2 justify-center">
               {searchQuery && (
                 <Button variant="secondary" onClick={() => setSearchQuery("")}>

@@ -9,11 +9,6 @@ interface DocumentsResponse {
     id: string;
     filename: string;
     upload_date: string;
-    sections?: Array<{
-      heading: string;
-      text: string;
-      summary?: string;
-    }>;
   }>;
   error?: string;
 }

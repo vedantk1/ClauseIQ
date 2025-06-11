@@ -9,7 +9,6 @@ import {
   UserPreferences,
   AvailableModel,
   Document,
-  Section,
   Clause,
   RiskSummary,
 } from "@clauseiq/shared-types";
@@ -33,7 +32,6 @@ export interface AnalysisState {
   currentDocument: {
     id: string | null;
     filename: string;
-    sections: Section[];
     clauses: Clause[];
     summary: string;
     structuredSummary: StructuredSummary | null;
@@ -118,7 +116,6 @@ const initialAnalysisState: AnalysisState = {
   currentDocument: {
     id: null,
     filename: "",
-    sections: [],
     clauses: [],
     summary: "",
     structuredSummary: null,
