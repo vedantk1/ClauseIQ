@@ -551,7 +551,6 @@ async def add_clause_note(
         
         return create_success_response(
             data={"note": new_note},
-            message="Note added successfully",
             correlation_id=correlation_id
         )
         
@@ -589,13 +588,8 @@ async def update_clause_note(
             text=note_data.text
         )
         
-        print(f"✏️ [DEBUG] Updated note returned from service: {updated_note}")
-        print(f"✏️ [DEBUG] Note has ID: {updated_note.get('id') if updated_note else 'None'}")
-        print(f"✏️ [DEBUG] Note has text: {updated_note.get('text') if updated_note else 'None'}")
-        
         return create_success_response(
             data={"note": updated_note},
-            message="Note updated successfully",
             correlation_id=correlation_id
         )
         
@@ -645,7 +639,6 @@ async def delete_clause_note(
         
         return create_success_response(
             data={"deleted": True},
-            message="Note deleted successfully",
             correlation_id=correlation_id
         )
         

@@ -187,24 +187,62 @@ class UserInteractionService {
     noteId: string,
     text: string
   ): Promise<Note> {
+    console.log("✏️ [DEBUG] updateNote service called with:", {
+      documentId,
+      clauseId,
+      noteId,
+      text,
+    });
+
     try {
-      const response = await fetch(
-        `${config.apiUrl}/api/v1/analysis/documents/${documentId}/interactions/${clauseId}/notes/${noteId}`,
-        {
-          method: "PUT",
-          headers: await this.getAuthHeaders(),
-          body: JSON.stringify({ text }),
-        }
+      const url = `${config.apiUrl}/api/v1/analysis/documents/${documentId}/interactions/${clauseId}/notes/${noteId}`;
+      const headers = await this.getAuthHeaders();
+      const body = JSON.stringify({ text });
+
+      console.log("✏️ [DEBUG] Making PUT request to:", url);
+      console.log("✏️ [DEBUG] Request headers:", headers);
+      console.log("✏️ [DEBUG] Request body:", body);
+
+      const response = await fetch(url, {
+        method: "PUT",
+        headers,
+        body,
+      });
+
+      console.log("✏️ [DEBUG] Response status:", response.status);
+      console.log("✏️ [DEBUG] Response ok:", response.ok);
+      console.log(
+        "✏️ [DEBUG] Response headers:",
+        Object.fromEntries(response.headers.entries())
       );
 
       if (!response.ok) {
-        throw new Error(`Failed to update note: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error("✏️ [ERROR] Update note failed:", errorText);
+        throw new Error(
+          `Failed to update note: ${response.status} ${response.statusText} - ${errorText}`
+        );
       }
 
       const data = await response.json();
-      return data.data?.note;
+      console.log("✏️ [DEBUG] Full response data:", data);
+      console.log("✏️ [DEBUG] data.data:", data.data);
+      console.log("✏️ [DEBUG] data.data?.note:", data.data?.note);
+
+      // Check if the API returned an error even with 200 status
+      if (!data.success) {
+        console.error("✏️ [ERROR] API returned success=false:", data.error);
+        throw new Error(
+          `API returned error: ${data.error?.message || "Unknown error"}`
+        );
+      }
+
+      const note = data.data?.note;
+      console.log("✏️ [DEBUG] Extracted note:", note);
+
+      return note;
     } catch (error) {
-      console.error("Error updating note:", error);
+      console.error("✏️ [ERROR] Error updating note:", error);
       throw error;
     }
   }
