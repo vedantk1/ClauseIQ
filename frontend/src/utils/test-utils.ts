@@ -1,6 +1,7 @@
 /**
  * Testing utilities for ClauseIQ frontend components
  */
+import React from "react";
 import { render, RenderOptions } from "@testing-library/react";
 import { ReactElement } from "react";
 import { AppStateProvider } from "@/store/appState";

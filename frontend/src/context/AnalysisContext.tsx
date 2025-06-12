@@ -6,7 +6,7 @@
 import React, { createContext, useContext, ReactNode } from "react";
 import { useAppState } from "../store/appState";
 import { apiClient, handleAPIError, handleAPISuccess } from "../lib/api";
-import { Clause, RiskSummary, Document } from "@clauseiq/shared-types";
+import type { Clause, RiskSummary, Document } from "@shared/common_generated";
 
 // Type for AI structured summary data
 export interface StructuredSummary {
@@ -98,7 +98,6 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
           text: full_text || "",
           ai_full_summary: summary,
           ai_structured_summary: ai_structured_summary || null,
-          sections: [],
           clauses,
           risk_summary: risk_summary,
           user_id: "", // Will be set by backend

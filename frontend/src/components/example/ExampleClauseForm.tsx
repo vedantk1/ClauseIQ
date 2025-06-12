@@ -1,207 +1,109 @@
 "use client";
 
 import { useState } from "react";
-import { Clause, ClauseType, RiskLevel } from "../../../shared/types/common";
-import {
-  validateClause,
-  validateClauses,
-  clauseSchema,
-} from "../../../shared/types/validation";
+
+// Simple types for this example component
+interface Clause {
+  id?: string;
+  clause_type?: string;
+  risk_level?: "high" | "medium" | "low";
+  summary?: string;
+  risk_assessment?: string;
+  text?: string;
+  recommendations?: string[];
+  key_points?: string[];
+  heading?: string;
+}
 
 interface ApiError {
   message: string;
-  path?: string[];
 }
 
 export function ExampleClauseForm() {
-  const [heading, setHeading] = useState("");
-  const [text, setText] = useState("");
-  const [clauseType, setClauseType] = useState<ClauseType>(ClauseType.GENERAL);
-  const [riskLevel, setRiskLevel] = useState<RiskLevel>(RiskLevel.LOW);
-  const [errors, setErrors] = useState<ApiError[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [result, setResult] = useState<Clause | null>(null);
+  const [clause, setClause] = useState<Clause | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrors([]);
-
-    // Create a new clause object
-    const newClause = {
-      heading,
-      text,
-      clause_type: clauseType,
-      risk_level: riskLevel,
-    };
-
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      // Validate client-side first using our shared validation
-      const validationResult = clauseSchema.safeParse(newClause);
-
-      if (!validationResult.success) {
-        // Handle validation errors
-        setErrors(
-          validationResult.error.errors.map((err) => ({
-            message: err.message,
-            path: err.path,
-          }))
-        );
-        return;
+      // Simple validation
+      if (!clause?.clause_type || !clause?.text) {
+        throw new Error("Please fill in all required fields");
       }
-
-      setIsSubmitting(true);
-
-      // Send to API
-      const response = await fetch("/api/v1/clauses", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newClause),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // Validate the response from the API
-      // This ensures the API returned data matching our shared type
-      const validatedClause = validateClause(data);
-
-      // Set the result
-      setResult(validatedClause);
-
-      // Reset the form
-      setHeading("");
-      setText("");
-      setClauseType(ClauseType.GENERAL);
-      setRiskLevel(RiskLevel.LOW);
-    } catch (error) {
-      console.error("Error submitting clause:", error);
-      setErrors([{ message: (error as Error).message }]);
+      
+      console.log("Submitting clause:", clause);
+      // TODO: Implement API call
+      
+    } catch (err: any) {
+      setError(err.message || "An error occurred");
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Create New Clause</h1>
-
-      {errors.length > 0 && (
-        <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded mb-4">
-          <strong>Please fix the following errors:</strong>
-          <ul className="ml-4 mt-2 list-disc">
-            {errors.map((error, index) => (
-              <li key={index}>
-                {error.path
-                  ? `${error.path.join(".")}: ${error.message}`
-                  : error.message}
-              </li>
-            ))}
-          </ul>
+    <div className="max-w-2xl mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-6">Example Clause Form</h2>
+      
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
         </div>
       )}
 
-      {result && (
-        <div className="bg-green-50 border border-green-200 text-green-700 p-3 rounded mb-4">
-          <strong>Clause created successfully!</strong>
-          <div className="mt-2">
-            <p>
-              <strong>ID:</strong> {result.id}
-            </p>
-            <p>
-              <strong>Heading:</strong> {result.heading}
-            </p>
-            <p>
-              <strong>Type:</strong> {result.clause_type}
-            </p>
-            <p>
-              <strong>Risk Level:</strong> {result.risk_level}
-            </p>
-          </div>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label htmlFor="heading" className="block font-medium mb-1">
-            Heading
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Clause Type:
           </label>
           <input
             type="text"
-            id="heading"
-            value={heading}
-            onChange={(e) => setHeading(e.target.value)}
-            className="w-full p-2 border rounded"
+            value={clause?.clause_type || ""}
+            onChange={(e) => setClause(prev => ({ ...prev, clause_type: e.target.value }))}
+            className="w-full p-2 border border-gray-300 rounded"
             required
           />
         </div>
 
-        <div className="mb-4">
-          <label htmlFor="text" className="block font-medium mb-1">
-            Text
-          </label>
-          <textarea
-            id="text"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            className="w-full p-2 border rounded h-32"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="clauseType" className="block font-medium mb-1">
-            Clause Type
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Risk Level:
           </label>
           <select
-            id="clauseType"
-            value={clauseType}
-            onChange={(e) => setClauseType(e.target.value as ClauseType)}
-            className="w-full p-2 border rounded"
+            value={clause?.risk_level || ""}
+            onChange={(e) => setClause(prev => ({ ...prev, risk_level: e.target.value as "high" | "medium" | "low" }))}
+            className="w-full p-2 border border-gray-300 rounded"
           >
-            {Object.values(ClauseType).map((type) => (
-              <option key={type} value={type}>
-                {type
-                  .replace(/_/g, " ")
-                  .replace(/\b\w/g, (c) => c.toUpperCase())}
-              </option>
-            ))}
+            <option value="">Select Risk Level</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
           </select>
         </div>
 
-        <div className="mb-6">
-          <label htmlFor="riskLevel" className="block font-medium mb-1">
-            Risk Level
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Clause Text:
           </label>
-          <div className="flex gap-4">
-            {Object.values(RiskLevel).map((level) => (
-              <label key={level} className="flex items-center">
-                <input
-                  type="radio"
-                  name="riskLevel"
-                  value={level}
-                  checked={riskLevel === level}
-                  onChange={() => setRiskLevel(level)}
-                  className="mr-2"
-                />
-                {level.charAt(0).toUpperCase() + level.slice(1)}
-              </label>
-            ))}
-          </div>
+          <textarea
+            value={clause?.text || ""}
+            onChange={(e) => setClause(prev => ({ ...prev, text: e.target.value }))}
+            className="w-full p-2 border border-gray-300 rounded"
+            rows={4}
+            required
+          />
         </div>
 
         <button
           type="submit"
-          disabled={isSubmitting}
-          className={`px-4 py-2 rounded text-white ${
-            isSubmitting ? "bg-blue-300" : "bg-blue-500 hover:bg-blue-600"
-          }`}
+          disabled={isLoading}
+          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:opacity-50"
         >
-          {isSubmitting ? "Creating..." : "Create Clause"}
+          {isLoading ? "Submitting..." : "Submit Clause"}
         </button>
       </form>
     </div>

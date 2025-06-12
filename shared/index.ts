@@ -14,12 +14,10 @@ export type {
   ClauseType,
   RiskLevel,
   Clause,
-  Section,
   RiskSummary,
   User,
   UserPreferences,
   AvailableModel,
 } from "./clauseiq_types/common_generated";
 
-// Export validation utilities if they exist
-export * from "./clauseiq_types/validation";
+export type { Section } from "./clauseiq_types/common";

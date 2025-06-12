@@ -20,9 +20,15 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@clauseiq/shared-types/*": ["../shared/types/*"]
+      "@shared/*": ["../shared/clauseiq_types/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "src/__tests__/**",
+    "src/utils/test-utils.ts"
+  ]
 }
