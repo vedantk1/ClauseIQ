@@ -105,11 +105,18 @@ class UserPreferences(BaseModel):
     preferred_model: str
 
 
+class Note(BaseModel):
+    """Individual note model."""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    text: str
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
 class UserInteraction(BaseModel):
     """User interaction with a clause (notes, flags, etc.)."""
     clause_id: str
     user_id: str
-    note: Optional[str] = None
+    notes: List[Note] = []
     is_flagged: bool = False
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())

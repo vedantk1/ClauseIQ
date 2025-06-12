@@ -135,36 +135,201 @@ class DocumentService:
     
     async def save_user_interaction(self, document_id: str, clause_id: str, user_id: str, 
                                   note: Optional[str] = None, is_flagged: bool = False) -> Dict[str, Any]:
-        """Save or update user interaction for a clause."""
+        """Save or update user interaction for a clause (backward compatibility)."""
         from datetime import datetime
+        import uuid
         
         db = await self._get_db()
-        
-        interaction_data = {
-            "clause_id": clause_id,
-            "user_id": user_id,
-            "note": note,
-            "is_flagged": is_flagged,
-            "updated_at": datetime.now().isoformat()
-        }
         
         # Get existing interactions
         existing_interactions = await self.get_user_interactions(document_id, user_id) or {}
         
-        # Add created_at if this is a new interaction
+        # Initialize interaction if it doesn't exist
         if clause_id not in existing_interactions:
-            interaction_data["created_at"] = datetime.now().isoformat()
-        else:
-            # Preserve the original created_at timestamp
-            interaction_data["created_at"] = existing_interactions[clause_id].get("created_at", datetime.now().isoformat())
+            existing_interactions[clause_id] = {
+                "clause_id": clause_id,
+                "user_id": user_id,
+                "notes": [],
+                "is_flagged": False,
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat()
+            }
         
-        # Update the interactions
-        existing_interactions[clause_id] = interaction_data
+        interaction = existing_interactions[clause_id]
+        
+        # Handle note (for backward compatibility, replace first note or add new)
+        if note is not None:
+            note_obj = {
+                "id": str(uuid.uuid4()),
+                "text": note,
+                "created_at": datetime.now().isoformat()
+            }
+            
+            # Initialize notes array if it doesn't exist (migration compatibility)
+            if "notes" not in interaction:
+                interaction["notes"] = []
+            elif "note" in interaction:
+                # Migrate old single note to notes array
+                if interaction["note"]:
+                    old_note = {
+                        "id": str(uuid.uuid4()),
+                        "text": interaction["note"],
+                        "created_at": interaction.get("created_at", datetime.now().isoformat())
+                    }
+                    interaction["notes"] = [old_note]
+                else:
+                    interaction["notes"] = []
+                del interaction["note"]  # Remove old field
+            
+            # For backward compatibility, replace first note if exists, otherwise add
+            if len(interaction["notes"]) > 0:
+                interaction["notes"][0] = note_obj
+            else:
+                interaction["notes"].append(note_obj)
+        
+        # Update flag status
+        interaction["is_flagged"] = is_flagged
+        interaction["updated_at"] = datetime.now().isoformat()
         
         # Save to database
         await db.save_user_interactions(document_id, user_id, existing_interactions)
         
-        return interaction_data
+        return interaction
+    
+    async def add_note(self, document_id: str, clause_id: str, user_id: str, text: str) -> Dict[str, Any]:
+        """Add a new note to a clause."""
+        from datetime import datetime
+        import uuid
+        
+        db = await self._get_db()
+        
+        # Get existing interactions
+        existing_interactions = await self.get_user_interactions(document_id, user_id) or {}
+        
+        # Initialize interaction if it doesn't exist
+        if clause_id not in existing_interactions:
+            existing_interactions[clause_id] = {
+                "clause_id": clause_id,
+                "user_id": user_id,
+                "notes": [],
+                "is_flagged": False,
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat()
+            }
+        
+        interaction = existing_interactions[clause_id]
+        
+        # Initialize notes array if it doesn't exist (migration compatibility)
+        if "notes" not in interaction:
+            interaction["notes"] = []
+        elif "note" in interaction:
+            # Migrate old single note to notes array
+            if interaction["note"]:
+                old_note = {
+                    "id": str(uuid.uuid4()),
+                    "text": interaction["note"],
+                    "created_at": interaction.get("created_at", datetime.now().isoformat())
+                }
+                interaction["notes"] = [old_note]
+            else:
+                interaction["notes"] = []
+            del interaction["note"]  # Remove old field
+        
+        # Create new note
+        new_note = {
+            "id": str(uuid.uuid4()),
+            "text": text,
+            "created_at": datetime.now().isoformat()
+        }
+        
+        # Add note to array
+        interaction["notes"].append(new_note)
+        interaction["updated_at"] = datetime.now().isoformat()
+        
+        # Save to database
+        await db.save_user_interactions(document_id, user_id, existing_interactions)
+        
+        return new_note
+    
+    async def update_note(self, document_id: str, clause_id: str, user_id: str, note_id: str, text: str) -> Dict[str, Any]:
+        """Update an existing note."""
+        from datetime import datetime
+        
+        db = await self._get_db()
+        
+        # Get existing interactions
+        existing_interactions = await self.get_user_interactions(document_id, user_id) or {}
+        
+        if clause_id not in existing_interactions:
+            raise ValueError("Interaction not found")
+        
+        interaction = existing_interactions[clause_id]
+        
+        # Find and update the note
+        if "notes" not in interaction:
+            raise ValueError("No notes found")
+        
+        note_found = False
+        for note in interaction["notes"]:
+            if note["id"] == note_id:
+                note["text"] = text
+                note_found = True
+                break
+        
+        if not note_found:
+            raise ValueError("Note not found")
+        
+        interaction["updated_at"] = datetime.now().isoformat()
+        
+        # Save to database
+        await db.save_user_interactions(document_id, user_id, existing_interactions)
+        
+        # Find and return the updated note
+        updated_note = None
+        for note in interaction["notes"]:
+            if note["id"] == note_id:
+                updated_note = note
+                break
+        
+        if not updated_note:
+            raise ValueError("Updated note not found after save")
+        
+        return updated_note
+    
+    async def delete_note(self, document_id: str, clause_id: str, user_id: str, note_id: str) -> bool:
+        """Delete a specific note."""
+        from datetime import datetime
+        
+        db = await self._get_db()
+        
+        # Get existing interactions
+        existing_interactions = await self.get_user_interactions(document_id, user_id) or {}
+        
+        if clause_id not in existing_interactions:
+            return False
+        
+        interaction = existing_interactions[clause_id]
+        
+        # Find and remove the note
+        if "notes" not in interaction:
+            return False
+        
+        original_length = len(interaction["notes"])
+        interaction["notes"] = [note for note in interaction["notes"] if note["id"] != note_id]
+        
+        if len(interaction["notes"]) == original_length:
+            return False  # Note not found
+        
+        interaction["updated_at"] = datetime.now().isoformat()
+        
+        # If no notes left and not flagged, remove the entire interaction
+        if len(interaction["notes"]) == 0 and not interaction["is_flagged"]:
+            del existing_interactions[clause_id]
+        
+        # Save to database
+        await db.save_user_interactions(document_id, user_id, existing_interactions)
+        
+        return True
     
     async def delete_user_interaction(self, document_id: str, clause_id: str, user_id: str) -> bool:
         """Delete user interaction for a clause."""

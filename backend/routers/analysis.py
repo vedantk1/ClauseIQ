@@ -15,7 +15,7 @@ from services.document_service import validate_file, process_document_with_llm, 
 from services.ai_service import generate_contract_specific_summary, generate_structured_document_summary
 from models.analysis import ClauseAnalysisResponse
 from models.document import AnalyzeDocumentResponse
-from models.interaction import UserInteractionRequest
+from models.interaction import UserInteractionRequest, NoteRequest
 from clauseiq_types.common import RiskLevel, Clause, RiskSummary, ContractType
 
 
@@ -520,5 +520,139 @@ async def delete_clause_interaction(
         return create_error_response(
             code="INTERACTION_DELETE_FAILED",
             message=f"Failed to delete user interaction: {str(e)}",
+            correlation_id=correlation_id
+        )
+
+
+# Individual Note Management Endpoints
+
+@router.post("/documents/{document_id}/interactions/{clause_id}/notes", response_model=APIResponse[dict])
+@versioned_response
+async def add_clause_note(
+    document_id: str,
+    clause_id: str,
+    request: Request,
+    note_data: NoteRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Add a new note to a specific clause."""
+    correlation_id = getattr(request.state, 'correlation_id', None)
+    
+    try:
+        service = get_document_service()
+        
+        # Add the note
+        new_note = await service.add_note(
+            document_id=document_id,
+            clause_id=clause_id,
+            user_id=current_user["id"],
+            text=note_data.text
+        )
+        
+        return create_success_response(
+            data={"note": new_note},
+            message="Note added successfully",
+            correlation_id=correlation_id
+        )
+        
+    except Exception as e:
+        print(f"Error adding note: {str(e)}")
+        return create_error_response(
+            code="NOTE_ADD_FAILED",
+            message=f"Failed to add note: {str(e)}",
+            correlation_id=correlation_id
+        )
+
+
+@router.put("/documents/{document_id}/interactions/{clause_id}/notes/{note_id}", response_model=APIResponse[dict])
+@versioned_response
+async def update_clause_note(
+    document_id: str,
+    clause_id: str,
+    note_id: str,
+    request: Request,
+    note_data: NoteRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update an existing note."""
+    correlation_id = getattr(request.state, 'correlation_id', None)
+    
+    try:
+        service = get_document_service()
+        
+        # Update the note
+        updated_note = await service.update_note(
+            document_id=document_id,
+            clause_id=clause_id,
+            user_id=current_user["id"],
+            note_id=note_id,
+            text=note_data.text
+        )
+        
+        print(f"✏️ [DEBUG] Updated note returned from service: {updated_note}")
+        print(f"✏️ [DEBUG] Note has ID: {updated_note.get('id') if updated_note else 'None'}")
+        print(f"✏️ [DEBUG] Note has text: {updated_note.get('text') if updated_note else 'None'}")
+        
+        return create_success_response(
+            data={"note": updated_note},
+            message="Note updated successfully",
+            correlation_id=correlation_id
+        )
+        
+    except ValueError as e:
+        return create_error_response(
+            code="NOTE_NOT_FOUND",
+            message=str(e),
+            correlation_id=correlation_id
+        )
+    except Exception as e:
+        print(f"Error updating note: {str(e)}")
+        return create_error_response(
+            code="NOTE_UPDATE_FAILED",
+            message=f"Failed to update note: {str(e)}",
+            correlation_id=correlation_id
+        )
+
+
+@router.delete("/documents/{document_id}/interactions/{clause_id}/notes/{note_id}", response_model=APIResponse[dict])
+@versioned_response
+async def delete_clause_note(
+    document_id: str,
+    clause_id: str,
+    note_id: str,
+    request: Request,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete a specific note."""
+    correlation_id = getattr(request.state, 'correlation_id', None)
+    
+    try:
+        service = get_document_service()
+        
+        success = await service.delete_note(
+            document_id=document_id,
+            clause_id=clause_id,
+            user_id=current_user["id"],
+            note_id=note_id
+        )
+        
+        if not success:
+            return create_error_response(
+                code="NOTE_NOT_FOUND",
+                message="Note not found",
+                correlation_id=correlation_id
+            )
+        
+        return create_success_response(
+            data={"deleted": True},
+            message="Note deleted successfully",
+            correlation_id=correlation_id
+        )
+        
+    except Exception as e:
+        print(f"Error deleting note: {str(e)}")
+        return create_error_response(
+            code="NOTE_DELETE_FAILED",
+            message=f"Failed to delete note: {str(e)}",
             correlation_id=correlation_id
         )
