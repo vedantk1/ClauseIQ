@@ -15,6 +15,7 @@ from services.document_service import validate_file, process_document_with_llm, 
 from services.ai_service import generate_contract_specific_summary, generate_structured_document_summary
 from models.analysis import ClauseAnalysisResponse
 from models.document import AnalyzeDocumentResponse
+from models.interaction import UserInteractionRequest
 from clauseiq_types.common import RiskLevel, Clause, RiskSummary, ContractType
 
 
@@ -412,5 +413,112 @@ async def analyze_document_unified(
         return create_error_response(
             code="UNIFIED_ANALYSIS_FAILED",
             message=f"An error occurred while analyzing the document: {str(e)}",
+            correlation_id=correlation_id
+        )
+
+
+# User Interaction Endpoints for Notes and Flags
+@router.get("/documents/{document_id}/interactions", response_model=APIResponse[dict])
+@versioned_response
+async def get_document_interactions(
+    document_id: str,
+    request: Request,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all user interactions (notes and flags) for a document."""
+    correlation_id = getattr(request.state, 'correlation_id', None)
+    
+    try:
+        service = get_document_service()
+        interactions = await service.get_user_interactions(document_id, current_user["id"])
+        
+        return create_success_response(
+            data={"interactions": interactions or {}},
+            correlation_id=correlation_id
+        )
+        
+    except Exception as e:
+        print(f"Error getting user interactions: {str(e)}")
+        return create_error_response(
+            code="INTERACTION_RETRIEVAL_FAILED",
+            message=f"Failed to retrieve user interactions: {str(e)}",
+            correlation_id=correlation_id
+        )
+
+
+@router.put("/documents/{document_id}/interactions/{clause_id}", response_model=APIResponse[dict])
+@versioned_response
+async def save_clause_interaction(
+    document_id: str,
+    clause_id: str,
+    request: Request,
+    interaction_data: UserInteractionRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Save or update user interaction (note and/or flag) for a specific clause."""
+    correlation_id = getattr(request.state, 'correlation_id', None)
+    
+    try:
+        service = get_document_service()
+        
+        # Validate interaction data
+        note = interaction_data.note
+        is_flagged = interaction_data.is_flagged
+        
+        # Save the interaction
+        saved_interaction = await service.save_user_interaction(
+            document_id=document_id,
+            clause_id=clause_id,
+            user_id=current_user["id"],
+            note=note,
+            is_flagged=is_flagged
+        )
+        
+        return create_success_response(
+            data={"interaction": saved_interaction},
+            message="Interaction saved successfully",
+            correlation_id=correlation_id
+        )
+        
+    except Exception as e:
+        print(f"Error saving user interaction: {str(e)}")
+        return create_error_response(
+            code="INTERACTION_SAVE_FAILED",
+            message=f"Failed to save user interaction: {str(e)}",
+            correlation_id=correlation_id
+        )
+
+
+@router.delete("/documents/{document_id}/interactions/{clause_id}", response_model=APIResponse[dict])
+@versioned_response
+async def delete_clause_interaction(
+    document_id: str,
+    clause_id: str,
+    request: Request,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete user interaction for a specific clause."""
+    correlation_id = getattr(request.state, 'correlation_id', None)
+    
+    try:
+        service = get_document_service()
+        
+        await service.delete_user_interaction(
+            document_id=document_id,
+            clause_id=clause_id,
+            user_id=current_user["id"]
+        )
+        
+        return create_success_response(
+            data={"deleted": True},
+            message="Interaction deleted successfully",
+            correlation_id=correlation_id
+        )
+        
+    except Exception as e:
+        print(f"Error deleting user interaction: {str(e)}")
+        return create_error_response(
+            code="INTERACTION_DELETE_FAILED",
+            message=f"Failed to delete user interaction: {str(e)}",
             correlation_id=correlation_id
         )

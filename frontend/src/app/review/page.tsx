@@ -3,6 +3,7 @@ import React, { useState, useRef } from "react";
 import { useAnalysis } from "@/context/AnalysisContext";
 import { useRouter } from "next/navigation";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
+import { useUserInteractions } from "@/hooks/useUserInteractions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/Tabs";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
@@ -40,8 +41,17 @@ export default function ReviewWorkspace() {
   const [sortBy, setSortBy] = useState<string>("document_order");
   const [showRewriteSuggestion, setShowRewriteSuggestion] = useState(false);
   const [showNegotiationTips, setShowNegotiationTips] = useState(false);
-  const [userNotes, setUserNotes] = useState<Record<string, string>>({});
-  const [flaggedClauses, setFlaggedClauses] = useState<Set<string>>(new Set());
+
+  // Use persistent user interactions hook instead of local state
+  const {
+    userNotes,
+    flaggedClauses,
+    isLoading: interactionsLoading,
+    addNote,
+    editNote,
+    deleteNote,
+    toggleFlag,
+  } = useUserInteractions(documentId);
 
   const [showFinancialCalculator, setShowFinancialCalculator] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
@@ -254,62 +264,52 @@ export default function ReviewWorkspace() {
     }, 0);
   };
 
-  const handleAddNote = (clause: any) => {
+  const handleAddNote = async (clause: any) => {
     const note = prompt("Add a note for this clause:");
     if (note && clause.id) {
-      setUserNotes((prev) => ({
-        ...prev,
-        [clause.id]: note,
-      }));
-      // Defer toast to avoid state update during render
-      setTimeout(() => {
-        toast.success("Note added successfully");
-      }, 0);
+      try {
+        await addNote(clause.id, note);
+      } catch (error) {
+        // Error handling is done in the hook
+      }
     }
   };
 
-  const handleDeleteNote = (clause: any) => {
+  const handleDeleteNote = async (clause: any) => {
     if (clause.id && userNotes[clause.id]) {
       const confirmDelete = window.confirm(
         "Are you sure you want to delete this note?"
       );
       if (confirmDelete) {
-        setUserNotes((prev) => {
-          const updated = { ...prev };
-          delete updated[clause.id];
-          return updated;
-        });
-        // Defer toast to avoid state update during render
-        setTimeout(() => {
-          toast.success("Note deleted successfully");
-        }, 0);
+        try {
+          await deleteNote(clause.id);
+        } catch (error) {
+          // Error handling is done in the hook
+        }
       }
     }
   };
 
-  const handleEditNote = (clause: any) => {
+  const handleEditNote = async (clause: any) => {
     if (clause.id && userNotes[clause.id]) {
       const currentNote = userNotes[clause.id];
       const updatedNote = prompt("Edit your note:", currentNote);
       if (updatedNote !== null && updatedNote !== currentNote) {
         if (updatedNote.trim() === "") {
           // If the user clears the note, delete it
-          handleDeleteNote(clause);
+          await handleDeleteNote(clause);
         } else {
-          setUserNotes((prev) => ({
-            ...prev,
-            [clause.id]: updatedNote,
-          }));
-          // Defer toast to avoid state update during render
-          setTimeout(() => {
-            toast.success("Note updated successfully");
-          }, 0);
+          try {
+            await editNote(clause.id, updatedNote);
+          } catch (error) {
+            // Error handling is done in the hook
+          }
         }
       }
     }
   };
 
-  const handleFlagForReview = (clause: any, event?: React.MouseEvent) => {
+  const handleFlagForReview = async (clause: any, event?: React.MouseEvent) => {
     // Prevent event bubbling and default behavior
     if (event) {
       event.preventDefault();
@@ -329,34 +329,16 @@ export default function ReviewWorkspace() {
       // Immediately mark this operation as in progress
       flagOperationRef.current.add(clause.id);
 
-      // Determine current state before the update
-      const wasAlreadyFlagged = flaggedClauses.has(clause.id);
-
-      // Update the state
-      setFlaggedClauses((prev) => {
-        const newSet = new Set(prev);
-        if (wasAlreadyFlagged) {
-          newSet.delete(clause.id);
-        } else {
-          newSet.add(clause.id);
-        }
-        return newSet;
-      });
-
-      // Show toast and clear operation flag OUTSIDE the state updater
-      // This prevents duplicate toasts from React Strict Mode double-invocation
-      setTimeout(() => {
-        if (wasAlreadyFlagged) {
-          toast.success("Clause unflagged");
-        } else {
-          toast.success("Clause flagged for review");
-        }
-
-        // Clear the operation flag after showing toast
+      try {
+        await toggleFlag(clause.id);
+      } catch (error) {
+        // Error handling is done in the hook
+      } finally {
+        // Clear the operation flag after completion
         setTimeout(() => {
           flagOperationRef.current.delete(clause.id);
         }, 100);
-      }, 0);
+      }
     }
   };
 

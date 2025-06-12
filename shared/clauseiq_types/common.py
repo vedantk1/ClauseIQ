@@ -6,6 +6,8 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from enum import Enum
 import uuid
+from datetime import datetime
+from datetime import datetime
 
 
 class ContractType(str, Enum):
@@ -103,6 +105,16 @@ class UserPreferences(BaseModel):
     preferred_model: str
 
 
+class UserInteraction(BaseModel):
+    """User interaction with a clause (notes, flags, etc.)."""
+    clause_id: str
+    user_id: str
+    note: Optional[str] = None
+    is_flagged: bool = False
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
 class Document(BaseModel):
     """Document model."""
     id: str
@@ -115,6 +127,7 @@ class Document(BaseModel):
     clauses: Optional[List[Clause]] = None
     risk_summary: Optional[RiskSummary] = None
     user_id: str
+    user_interactions: Optional[Dict[str, UserInteraction]] = None  # clause_id -> UserInteraction
 
 
 class AvailableModel(BaseModel):
@@ -122,3 +135,10 @@ class AvailableModel(BaseModel):
     id: str
     name: str
     description: str
+
+
+class UserInteractions(BaseModel):
+    """Collection of user interactions for a document."""
+    document_id: str
+    user_id: str
+    interactions: Dict[str, UserInteraction] = {}  # clause_id -> UserInteraction

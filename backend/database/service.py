@@ -127,6 +127,62 @@ class DocumentService:
             return user["preferred_model"]
         return "gpt-4o-mini"  # Default model
     
+    # User interaction methods
+    async def get_user_interactions(self, document_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get user interactions for a document."""
+        db = await self._get_db()
+        return await db.get_user_interactions(document_id, user_id)
+    
+    async def save_user_interaction(self, document_id: str, clause_id: str, user_id: str, 
+                                  note: Optional[str] = None, is_flagged: bool = False) -> Dict[str, Any]:
+        """Save or update user interaction for a clause."""
+        from datetime import datetime
+        
+        db = await self._get_db()
+        
+        interaction_data = {
+            "clause_id": clause_id,
+            "user_id": user_id,
+            "note": note,
+            "is_flagged": is_flagged,
+            "updated_at": datetime.now().isoformat()
+        }
+        
+        # Get existing interactions
+        existing_interactions = await self.get_user_interactions(document_id, user_id) or {}
+        
+        # Add created_at if this is a new interaction
+        if clause_id not in existing_interactions:
+            interaction_data["created_at"] = datetime.now().isoformat()
+        else:
+            # Preserve the original created_at timestamp
+            interaction_data["created_at"] = existing_interactions[clause_id].get("created_at", datetime.now().isoformat())
+        
+        # Update the interactions
+        existing_interactions[clause_id] = interaction_data
+        
+        # Save to database
+        await db.save_user_interactions(document_id, user_id, existing_interactions)
+        
+        return interaction_data
+    
+    async def delete_user_interaction(self, document_id: str, clause_id: str, user_id: str) -> bool:
+        """Delete user interaction for a clause."""
+        db = await self._get_db()
+        
+        # Get existing interactions
+        existing_interactions = await self.get_user_interactions(document_id, user_id)
+        if not existing_interactions or clause_id not in existing_interactions:
+            return False
+        
+        # Remove the interaction
+        del existing_interactions[clause_id]
+        
+        # Save updated interactions
+        await db.save_user_interactions(document_id, user_id, existing_interactions)
+        
+        return True
+    
     # Health check
     async def get_database_info(self) -> Dict[str, Any]:
         """Get database information."""

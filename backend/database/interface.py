@@ -135,6 +135,17 @@ class DatabaseInterface(ABC):
     async def get_user_analytics(self, user_id: str) -> Dict[str, Any]:
         """Get analytics data for user."""
         pass
+
+    # User interaction operations
+    @abstractmethod
+    async def get_user_interactions(self, document_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get user interactions for a document."""
+        pass
+    
+    @abstractmethod
+    async def save_user_interactions(self, document_id: str, user_id: str, interactions: Dict[str, Any]) -> bool:
+        """Save user interactions for a document."""
+        pass
     
     # Generic operations
     @abstractmethod
