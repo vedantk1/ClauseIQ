@@ -102,7 +102,7 @@ const Modal: React.FC<ModalProps> = ({
         aria-labelledby={title ? "modal-title" : undefined}
       >
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between p-6 border-b border-border-muted">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border-muted">
             {title && (
               <h2
                 id="modal-title"
@@ -122,7 +122,12 @@ const Modal: React.FC<ModalProps> = ({
             )}
           </div>
         )}
-        <div className={cn("p-6", (title || showCloseButton) && "pt-0")}>
+        <div
+          className={cn(
+            "px-6 pb-6",
+            title || showCloseButton ? "pt-6" : "pt-6"
+          )}
+        >
           {children}
         </div>
         {footer && (

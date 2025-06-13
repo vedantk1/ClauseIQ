@@ -1202,15 +1202,15 @@ export default function Documents() {
       <Modal
         isOpen={isDeleteAllDialogOpen}
         onClose={() => setIsDeleteAllDialogOpen(false)}
-        title="Confirm Deletion"
-        size="sm"
+        title="Delete All"
+        size="md"
       >
-        <div className="space-y-4">
+        <div className="space-y-6">
           <p className="text-text-secondary">
             Are you sure you want to delete all documents? This action cannot be
             undone.
           </p>
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3">
             <Button
               onClick={() => setIsDeleteAllDialogOpen(false)}
               variant="secondary"
