@@ -16,15 +16,72 @@ export const getRiskColor = (level?: string) => {
 
 export const getClauseTypeLabel = (type?: string) => {
   const labels: Record<string, string> = {
+    // Employment-specific clauses
     compensation: "Compensation",
     termination: "Termination",
     non_compete: "Non-Compete",
-    confidentiality: "Confidentiality",
     benefits: "Benefits",
     working_conditions: "Working Conditions",
+    probation: "Probation",
+    severance: "Severance",
+    overtime_pay: "Overtime Pay",
+    vacation_policy: "Vacation Policy",
+    stock_options: "Stock Options",
+    background_check: "Background Check",
+
+    // Universal clauses (applicable to multiple contract types)
+    confidentiality: "Confidentiality",
     intellectual_property: "Intellectual Property",
     dispute_resolution: "Dispute Resolution",
-    probation: "Probation",
+    liability: "Liability",
+    indemnification: "Indemnification",
+    force_majeure: "Force Majeure",
+    governing_law: "Governing Law",
+    assignment_rights: "Assignment Rights",
+    amendment_procedures: "Amendment Procedures",
+    notices: "Notices",
+    entire_agreement: "Entire Agreement",
+    severability: "Severability",
+
+    // NDA-specific clauses
+    disclosure_obligations: "Disclosure Obligations",
+    return_of_information: "Return of Information",
+    definition_of_confidential: "Definition of Confidential Information",
+    exceptions_to_confidentiality: "Exceptions to Confidentiality",
+    duration_of_obligations: "Duration of Obligations",
+
+    // Service Agreement clauses
+    scope_of_work: "Scope of Work",
+    deliverables: "Deliverables",
+    payment_terms: "Payment Terms",
+    service_level: "Service Level Agreement",
+    warranties: "Warranties",
+    service_credits: "Service Credits",
+    data_protection: "Data Protection",
+    third_party_services: "Third Party Services",
+    change_management: "Change Management",
+
+    // Lease-specific clauses
+    rent: "Rent",
+    security_deposit: "Security Deposit",
+    maintenance: "Maintenance",
+    use_restrictions: "Use Restrictions",
+    utilities: "Utilities",
+    parking: "Parking",
+    pet_policy: "Pet Policy",
+    subletting: "Subletting",
+    early_termination: "Early Termination",
+    renewal_options: "Renewal Options",
+    property_inspection: "Property Inspection",
+
+    // Purchase/Sales Agreement clauses
+    delivery_terms: "Delivery Terms",
+    inspection_rights: "Inspection Rights",
+    title_transfer: "Title Transfer",
+    risk_of_loss: "Risk of Loss",
+    returns_refunds: "Returns & Refunds",
+
+    // Generic/fallback
     general: "General",
   };
   return labels[type || ""] || type || "Unknown";
@@ -32,15 +89,72 @@ export const getClauseTypeLabel = (type?: string) => {
 
 export const getClauseNegotiability = (clauseType?: string) => {
   const negotiabilityMap: Record<string, string> = {
+    // Employment-specific clauses
     compensation: "High",
     termination: "Medium",
     non_compete: "High",
-    confidentiality: "Low",
     benefits: "Medium",
     working_conditions: "Medium",
+    probation: "Low",
+    severance: "High",
+    overtime_pay: "Medium",
+    vacation_policy: "Medium",
+    stock_options: "High",
+    background_check: "Low",
+
+    // Universal clauses
+    confidentiality: "Low",
     intellectual_property: "Low",
     dispute_resolution: "Medium",
-    probation: "Low",
+    liability: "Medium",
+    indemnification: "Medium",
+    force_majeure: "Low",
+    governing_law: "Low",
+    assignment_rights: "Medium",
+    amendment_procedures: "Low",
+    notices: "Low",
+    entire_agreement: "Low",
+    severability: "Low",
+
+    // NDA-specific clauses
+    disclosure_obligations: "Medium",
+    return_of_information: "Medium",
+    definition_of_confidential: "Medium",
+    exceptions_to_confidentiality: "High",
+    duration_of_obligations: "Medium",
+
+    // Service Agreement clauses
+    scope_of_work: "High",
+    deliverables: "High",
+    payment_terms: "High",
+    service_level: "High",
+    warranties: "Medium",
+    service_credits: "Medium",
+    data_protection: "Medium",
+    third_party_services: "Medium",
+    change_management: "Medium",
+
+    // Lease-specific clauses
+    rent: "High",
+    security_deposit: "Medium",
+    maintenance: "Medium",
+    use_restrictions: "Medium",
+    utilities: "Medium",
+    parking: "Medium",
+    pet_policy: "Medium",
+    subletting: "Medium",
+    early_termination: "High",
+    renewal_options: "Medium",
+    property_inspection: "Medium",
+
+    // Purchase/Sales Agreement clauses
+    delivery_terms: "High",
+    inspection_rights: "Medium",
+    title_transfer: "High",
+    risk_of_loss: "High",
+    returns_refunds: "Medium",
+
+    // Generic/fallback
     general: "Medium",
   };
   return negotiabilityMap[clauseType || ""] || "Medium";

@@ -101,6 +101,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
           clauses,
           risk_summary: risk_summary,
           user_id: "", // Will be set by backend
+          user_interactions: null,
         };
 
         dispatch({ type: "ANALYSIS_ADD_DOCUMENT", payload: newDocument });

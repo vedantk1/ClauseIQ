@@ -3,21 +3,21 @@
  * This file provides a clean interface for importing shared types.
  */
 
-// Export from generated TypeScript types
-export * from "./clauseiq_types/common_generated";
-
-// Export from manually maintained TypeScript types (for compatibility)
+// Export from manually maintained TypeScript types (primary source for enums)
 export * from "./clauseiq_types/common";
 
-// Re-export commonly used types for convenience
+// Export from generated TypeScript types (interfaces only)
 export type {
-  ClauseType,
-  RiskLevel,
   Clause,
   RiskSummary,
   User,
   UserPreferences,
   AvailableModel,
+  Document,
+  Note,
+  UserInteraction,
+  UserInteractions,
 } from "./clauseiq_types/common_generated";
 
-export type { Section } from "./clauseiq_types/common";
+// Re-export commonly used types for convenience
+export type { ClauseType, RiskLevel, Section } from "./clauseiq_types/common";

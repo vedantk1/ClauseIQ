@@ -4,51 +4,7 @@
  * This file is auto-generated. Do not edit directly.
  */
 
-export enum ContractType {
-  EMPLOYMENT = "employment",
-  NDA = "nda",
-  SERVICE_AGREEMENT = "service_agreement",
-  LEASE = "lease",
-  PURCHASE = "purchase",
-  PARTNERSHIP = "partnership",
-  LICENSE = "license",
-  CONSULTING = "consulting",
-  CONTRACTOR = "contractor",
-  OTHER = "other",
-}
-
-export enum ClauseType {
-  COMPENSATION = "compensation",
-  TERMINATION = "termination",
-  NON_COMPETE = "non_compete",
-  BENEFITS = "benefits",
-  WORKING_CONDITIONS = "working_conditions",
-  PROBATION = "probation",
-  CONFIDENTIALITY = "confidentiality",
-  INTELLECTUAL_PROPERTY = "intellectual_property",
-  DISPUTE_RESOLUTION = "dispute_resolution",
-  LIABILITY = "liability",
-  INDEMNIFICATION = "indemnification",
-  FORCE_MAJEURE = "force_majeure",
-  GOVERNING_LAW = "governing_law",
-  DISCLOSURE_OBLIGATIONS = "disclosure_obligations",
-  RETURN_OF_INFORMATION = "return_of_information",
-  SCOPE_OF_WORK = "scope_of_work",
-  DELIVERABLES = "deliverables",
-  PAYMENT_TERMS = "payment_terms",
-  SERVICE_LEVEL = "service_level",
-  RENT = "rent",
-  SECURITY_DEPOSIT = "security_deposit",
-  MAINTENANCE = "maintenance",
-  USE_RESTRICTIONS = "use_restrictions",
-  GENERAL = "general",
-}
-
-export enum RiskLevel {
-  LOW = "low",
-  MEDIUM = "medium",
-  HIGH = "high",
-}
+import { ClauseType, RiskLevel, ContractType } from "./common";
 
 export interface AvailableModel {
   id?: string;
@@ -83,6 +39,13 @@ export interface Document {
   clauses: Clause[] | null;
   risk_summary: RiskSummary | null;
   user_id?: string;
+  user_interactions: Record<string, UserInteraction> | null;
+}
+
+export interface Note {
+  id?: string;
+  text?: string;
+  created_at?: string;
 }
 
 export interface RiskSummary {
@@ -96,6 +59,21 @@ export interface User {
   email?: string;
   full_name?: string;
   created_at?: string;
+}
+
+export interface UserInteraction {
+  clause_id?: string;
+  user_id?: string;
+  notes?: Note[];
+  is_flagged?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface UserInteractions {
+  document_id?: string;
+  user_id?: string;
+  interactions?: Record<string, UserInteraction>;
 }
 
 export interface UserPreferences {
