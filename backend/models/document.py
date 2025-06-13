@@ -28,6 +28,7 @@ class DocumentDetailResponse(BaseModel):
     id: str
     filename: str
     upload_date: str
+    contract_type: Optional[str] = None
     text: str
     ai_full_summary: Optional[str] = None
     ai_structured_summary: Optional[Dict[str, Any]] = None
@@ -46,3 +47,4 @@ class AnalyzeDocumentResponse(BaseModel):
     clauses: List[Clause]
     total_clauses: int
     risk_summary: RiskSummary
+    contract_type: Optional[str] = None

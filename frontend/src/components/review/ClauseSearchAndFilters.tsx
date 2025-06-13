@@ -1,6 +1,37 @@
 "use client";
 import React from "react";
 import Button from "@/components/Button";
+import { getClauseTypeDisplayName } from "./clauseTypeMapping";
+import type { Clause } from "@shared/common_generated";
+
+// Helper function to get clause type options from actual clauses in the document
+function getClauseTypeOptionsFromClauses(
+  clauses: Clause[]
+): Array<{ value: string; label: string }> {
+  // Extract unique clause types from the actual clauses
+  const uniqueClauseTypes = Array.from(
+    new Set(
+      clauses
+        .map((clause) => clause.clause_type)
+        .filter(
+          (type): type is NonNullable<typeof type> =>
+            type != null && type !== undefined
+        )
+    )
+  );
+
+  // Convert to dropdown options with display names
+  const options = uniqueClauseTypes.map((type) => ({
+    value: type,
+    label: getClauseTypeDisplayName(type),
+  }));
+
+  // Sort options alphabetically by label
+  options.sort((a, b) => a.label.localeCompare(b.label));
+
+  // Add "All Types" option at the beginning
+  return [{ value: "all", label: "All Types" }, ...options];
+}
 
 interface ClauseSearchAndFiltersProps {
   searchQuery: string;
@@ -9,6 +40,7 @@ interface ClauseSearchAndFiltersProps {
   onClauseFilterChange: (filter: "all" | "high" | "medium" | "low") => void;
   clauseTypeFilter: string;
   onClauseTypeFilterChange: (type: string) => void;
+  clauses: Clause[];
   sortBy: string;
   onSortByChange: (sort: string) => void;
   filteredClausesCount: number;
@@ -21,10 +53,14 @@ export default function ClauseSearchAndFilters({
   onClauseFilterChange,
   clauseTypeFilter,
   onClauseTypeFilterChange,
+  clauses,
   sortBy,
   onSortByChange,
   filteredClausesCount,
 }: ClauseSearchAndFiltersProps) {
+  // Get clause type options from actual clauses in the document
+  const clauseTypeOptions = getClauseTypeOptionsFromClauses(clauses || []);
+
   return (
     <div className="space-y-4 mb-4">
       {/* Search Bar */}
@@ -112,14 +148,11 @@ export default function ClauseSearchAndFilters({
                 className="w-full px-3 pb-2 text-sm bg-transparent border-none text-text-primary focus:ring-0 focus:outline-none appearance-none cursor-pointer"
                 style={{ backgroundImage: "none" }}
               >
-                <option value="all">All Types</option>
-                <option value="termination">Termination</option>
-                <option value="compensation">Compensation</option>
-                <option value="non_compete">Non-Compete</option>
-                <option value="confidentiality">Confidentiality</option>
-                <option value="intellectual_property">IP Rights</option>
-                <option value="dispute_resolution">Dispute Resolution</option>
-                <option value="other">Other</option>
+                {clauseTypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
               <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
                 <svg

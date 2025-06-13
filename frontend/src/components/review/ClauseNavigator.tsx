@@ -27,6 +27,7 @@ interface ClauseNavigatorProps {
   onSortByChange: (sort: string) => void;
   flaggedClauses: Set<string>;
   hasNotes: (clauseId: string) => boolean;
+  contractType?: string;
 }
 
 export default function ClauseNavigator({
@@ -45,6 +46,7 @@ export default function ClauseNavigator({
   onSortByChange,
   flaggedClauses,
   hasNotes,
+  contractType,
 }: ClauseNavigatorProps) {
   const safeRiskHigh = riskSummary?.high ?? 0;
   const safeRiskMedium = riskSummary?.medium ?? 0;
@@ -84,6 +86,7 @@ export default function ClauseNavigator({
         onClauseFilterChange={onClauseFilterChange}
         clauseTypeFilter={clauseTypeFilter}
         onClauseTypeFilterChange={onClauseTypeFilterChange}
+        clauses={clauses}
         sortBy={sortBy}
         onSortByChange={onSortByChange}
         filteredClausesCount={filteredClauses.length}

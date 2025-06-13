@@ -38,6 +38,7 @@ export interface AnalysisState {
     fullText: string;
     riskSummary: RiskSummary;
     selectedClause: Clause | null;
+    contract_type?: string;
   };
   isLoading: boolean;
   error: string | null;
@@ -122,6 +123,7 @@ const initialAnalysisState: AnalysisState = {
     fullText: "",
     riskSummary: { high: 0, medium: 0, low: 0 },
     selectedClause: null,
+    contract_type: undefined,
   },
   isLoading: false,
   error: null,

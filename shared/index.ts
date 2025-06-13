@@ -20,4 +20,4 @@ export type {
 } from "./clauseiq_types/common_generated";
 
 // Re-export commonly used types for convenience
-export type { ClauseType, RiskLevel, Section } from "./clauseiq_types/common";
+export type { RiskLevel, Section } from "./clauseiq_types/common";

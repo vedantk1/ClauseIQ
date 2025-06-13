@@ -393,7 +393,8 @@ async def analyze_document_unified(
                 ai_structured_summary=ai_structured_summary,
                 clauses=analyzed_clauses,
                 total_clauses=len(analyzed_clauses),
-                risk_summary=risk_summary
+                risk_summary=risk_summary,
+                contract_type=contract_type.value if contract_type else None
             )
             
             return create_success_response(

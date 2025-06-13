@@ -7,6 +7,7 @@ import React, { createContext, useContext, ReactNode } from "react";
 import { useAppState } from "../store/appState";
 import { apiClient, handleAPIError, handleAPISuccess } from "../lib/api";
 import type { Clause, RiskSummary, Document } from "@shared/common_generated";
+import { ContractType } from "@shared/common";
 
 // Type for AI structured summary data
 export interface StructuredSummary {
@@ -31,6 +32,7 @@ interface AnalysisContextType {
     fullText: string;
     riskSummary: RiskSummary;
     selectedClause: Clause | null;
+    contract_type?: string;
   };
   isLoading: boolean;
   error: string | null;
@@ -76,6 +78,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
         total_clauses: number;
         risk_summary: RiskSummary;
         full_text?: string;
+        contract_type?: string;
       }>("/analyze-document/", file);
 
       if (response.success && response.data) {
@@ -87,6 +90,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
           clauses,
           risk_summary,
           full_text,
+          contract_type,
         } = response.data;
 
         // Add to documents list
@@ -94,7 +98,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
           id,
           filename,
           upload_date: new Date().toISOString(),
-          contract_type: null, // Will be set by backend analysis
+          contract_type: contract_type as ContractType | null,
           text: full_text || "",
           ai_full_summary: summary,
           ai_structured_summary: ai_structured_summary || null,
@@ -112,6 +116,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
           payload: {
             id,
             filename,
+            contract_type,
             summary,
             structuredSummary: ai_structured_summary || null,
             clauses,
@@ -227,6 +232,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
       const response = await apiClient.get<{
         id: string;
         filename: string;
+        contract_type?: string;
         text: string;
         ai_full_summary: string;
         ai_structured_summary?: StructuredSummary;
@@ -238,6 +244,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
         const {
           id,
           filename,
+          contract_type,
           text,
           ai_full_summary,
           ai_structured_summary,
@@ -250,6 +257,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
           payload: {
             id,
             filename,
+            contract_type,
             fullText: text,
             summary: ai_full_summary,
             structuredSummary: ai_structured_summary || null,
