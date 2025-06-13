@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Skeleton from "@/components/Skeleton";
+import Modal from "@/components/ui/Modal";
 import {
   FileText,
   Calendar,
@@ -1198,44 +1199,35 @@ export default function Documents() {
       </div>
 
       {/* Delete All Confirmation Dialog */}
-      {isDeleteAllDialogOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-text-primary">
-                Confirm Deletion
-              </h3>
-              <button
-                onClick={() => setIsDeleteAllDialogOpen(false)}
-                className="p-2 rounded-full hover:bg-bg-muted transition-colors"
-                title="Close"
-              >
-                <X className="w-5 h-5 text-text-tertiary" />
-              </button>
-            </div>
-            <p className="text-text-secondary mb-4">
-              Are you sure you want to delete all documents? This action cannot
-              be undone.
-            </p>
-            <div className="flex gap-2">
-              <Button
-                onClick={handleDeleteAllDocuments}
-                className="flex-1"
-                variant="danger"
-              >
-                Delete All
-              </Button>
-              <Button
-                onClick={() => setIsDeleteAllDialogOpen(false)}
-                className="flex-1"
-                variant="secondary"
-              >
-                Cancel
-              </Button>
-            </div>
+      <Modal
+        isOpen={isDeleteAllDialogOpen}
+        onClose={() => setIsDeleteAllDialogOpen(false)}
+        title="Confirm Deletion"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-text-secondary">
+            Are you sure you want to delete all documents? This action cannot be
+            undone.
+          </p>
+          <div className="flex gap-3 pt-4">
+            <Button
+              onClick={() => setIsDeleteAllDialogOpen(false)}
+              variant="secondary"
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteAllDocuments}
+              variant="danger"
+              className="flex-1"
+            >
+              Delete All
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }
