@@ -27,7 +27,6 @@ interface ClauseDetailsPanelProps {
   onDeleteNote: (clause: Clause, noteId?: string) => void;
   onFlagForReview: (clause: Clause, event?: React.MouseEvent) => void;
   onCopyClause: (clause: Clause) => void;
-  onExportClause: (clause: Clause) => void;
 }
 
 export default function ClauseDetailsPanel({
@@ -41,7 +40,6 @@ export default function ClauseDetailsPanel({
   onDeleteNote,
   onFlagForReview,
   onCopyClause,
-  onExportClause,
 }: ClauseDetailsPanelProps) {
   const [isNotesExpanded, setIsNotesExpanded] = useState(false);
 
@@ -117,52 +115,40 @@ export default function ClauseDetailsPanel({
       </h2>
       <div className="space-y-6">
         {/* Quick Action Bar */}
-        <div className="flex items-center justify-between p-3 bg-bg-elevated rounded-lg border border-border-muted">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-text-primary">
-              Quick Actions:
-            </span>
-            <Button
-              size="sm"
-              variant="tertiary"
-              onClick={() => onAddNote(selectedClause)}
-              title="Add a personal note to this clause"
-            >
-              📝 Add Note
-            </Button>
-            <Button
-              size="sm"
-              variant="tertiary"
-              onClick={(event) => onFlagForReview(selectedClause, event)}
-              title={
-                flaggedClauses.has(selectedClause.id || "")
-                  ? "Remove flag from this clause"
-                  : "Flag this clause for legal review"
-              }
-            >
-              {flaggedClauses.has(selectedClause.id || "")
-                ? "🏳️ Unflag"
-                : "🚩 Flag"}
-            </Button>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              size="sm"
-              variant="tertiary"
-              onClick={() => onCopyClause(selectedClause)}
-              title="Copy analysis to clipboard"
-            >
-              📋
-            </Button>
-            <Button
-              size="sm"
-              variant="tertiary"
-              onClick={() => onExportClause(selectedClause)}
-              title="Export clause analysis"
-            >
-              📤
-            </Button>
-          </div>
+        <div className="flex items-center gap-2 p-3 bg-bg-elevated rounded-lg border border-border-muted">
+          <span className="text-sm font-medium text-text-primary">
+            Quick Actions:
+          </span>
+          <Button
+            size="sm"
+            variant="tertiary"
+            onClick={() => onAddNote(selectedClause)}
+            title="Add a personal note to this clause"
+          >
+            📝 Add Note
+          </Button>
+          <Button
+            size="sm"
+            variant="tertiary"
+            onClick={(event) => onFlagForReview(selectedClause, event)}
+            title={
+              flaggedClauses.has(selectedClause.id || "")
+                ? "Remove flag from this clause"
+                : "Flag this clause for legal review"
+            }
+          >
+            {flaggedClauses.has(selectedClause.id || "")
+              ? "🏳️ Unflag"
+              : "🚩 Flag"}
+          </Button>
+          <Button
+            size="sm"
+            variant="tertiary"
+            onClick={() => onCopyClause(selectedClause)}
+            title="Copy analysis to clipboard"
+          >
+            📋 Copy
+          </Button>
         </div>
 
         {/* Clause Header */}
@@ -486,28 +472,6 @@ export default function ClauseDetailsPanel({
               {selectedClause.text}
             </p>
           </div>
-        </div>
-
-        {/* Export & Share */}
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="tertiary"
-            className="flex-1"
-            onClick={() => onExportClause(selectedClause)}
-            title="Export this clause analysis as a separate document"
-          >
-            📤 Export Clause
-          </Button>
-          <Button
-            size="sm"
-            variant="tertiary"
-            className="flex-1"
-            onClick={() => onCopyClause(selectedClause)}
-            title="Copy clause text and analysis to clipboard"
-          >
-            📋 Copy
-          </Button>
         </div>
       </div>
     </Card>
