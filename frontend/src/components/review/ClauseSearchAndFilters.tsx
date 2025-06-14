@@ -1,6 +1,5 @@
 "use client";
-import React from "react";
-import Button from "@/components/Button";
+import React, { useEffect, useCallback } from "react";
 import { getClauseTypeDisplayName } from "./clauseTypeMapping";
 import type { Clause } from "@shared/common_generated";
 
@@ -60,6 +59,38 @@ export default function ClauseSearchAndFilters({
 }: ClauseSearchAndFiltersProps) {
   // Get clause type options from actual clauses in the document
   const clauseTypeOptions = getClauseTypeOptionsFromClauses(clauses || []);
+
+  // Check if any filters are active (dirty state)
+  const hasActiveFilters =
+    clauseFilter !== "all" ||
+    clauseTypeFilter !== "all" ||
+    sortBy !== "document_order" ||
+    searchQuery.length > 0;
+
+  // Function to reset all filters
+  const resetAllFilters = useCallback(() => {
+    onSearchChange("");
+    onClauseFilterChange("all");
+    onClauseTypeFilterChange("all");
+    onSortByChange("document_order");
+  }, [
+    onSearchChange,
+    onClauseFilterChange,
+    onClauseTypeFilterChange,
+    onSortByChange,
+  ]);
+
+  // Add Escape key handler to clear all filters when they're dirty
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && hasActiveFilters) {
+        resetAllFilters();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [hasActiveFilters, resetAllFilters]);
 
   return (
     <div className="space-y-4 mb-4">
@@ -234,23 +265,28 @@ export default function ClauseSearchAndFilters({
           </div>
         </div>
 
-        {/* Clear All Filters Button - only show when filters are applied */}
-        {(clauseFilter !== "all" ||
-          clauseTypeFilter !== "all" ||
-          sortBy !== "document_order") && (
-          <Button
-            size="sm"
-            variant="tertiary"
-            onClick={() => {
-              onClauseFilterChange("all");
-              onClauseTypeFilterChange("all");
-              onSortByChange("document_order");
-            }}
-            title="Clear all filters and reset sort"
-            className="text-xs whitespace-nowrap"
+        {/* Subtle Clear All Icon - only show when any filters are active */}
+        {hasActiveFilters && (
+          <button
+            onClick={resetAllFilters}
+            className="opacity-75 hover:opacity-100 transition-opacity duration-150 p-2 rounded-md hover:bg-bg-surface"
+            title="Clear all filters (Esc)"
+            aria-label="Clear all filters"
           >
-            Reset Filters
-          </Button>
+            <svg
+              className="w-4 h-4 text-text-secondary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
         )}
       </div>
     </div>
