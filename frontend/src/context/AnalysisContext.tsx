@@ -79,7 +79,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
         risk_summary: RiskSummary;
         full_text?: string;
         contract_type?: string;
-      }>("/analyze-document/", file);
+      }>("/analysis/analyze-document/", file);
 
       if (response.success && response.data) {
         const {
