@@ -60,14 +60,26 @@ export default function ClauseSearchAndFilters({
   // Get clause type options from actual clauses in the document
   const clauseTypeOptions = getClauseTypeOptionsFromClauses(clauses || []);
 
-  // Check if any filters are active (dirty state)
+  // Check if search is active (separate from filters)
+  const hasActiveSearch = searchQuery.length > 0;
+
+  // Check if any filters are active (excluding search)
   const hasActiveFilters =
     clauseFilter !== "all" ||
     clauseTypeFilter !== "all" ||
-    sortBy !== "document_order" ||
-    searchQuery.length > 0;
+    sortBy !== "document_order";
 
-  // Function to reset all filters
+  // Check if any filters OR search are active (for escape key handler)
+  const hasAnyActiveState = hasActiveFilters || hasActiveSearch;
+
+  // Function to reset only filters (not search)
+  const resetFiltersOnly = useCallback(() => {
+    onClauseFilterChange("all");
+    onClauseTypeFilterChange("all");
+    onSortByChange("document_order");
+  }, [onClauseFilterChange, onClauseTypeFilterChange, onSortByChange]);
+
+  // Function to reset everything (filters and search)
   const resetAllFilters = useCallback(() => {
     onSearchChange("");
     onClauseFilterChange("all");
@@ -83,18 +95,18 @@ export default function ClauseSearchAndFilters({
   // Add Escape key handler to clear all filters when they're dirty
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && hasActiveFilters) {
+      if (e.key === "Escape" && hasAnyActiveState) {
         resetAllFilters();
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [hasActiveFilters, resetAllFilters]);
+  }, [hasAnyActiveState, resetAllFilters]);
 
   return (
     <div className="space-y-4 mb-4">
-      {/* Search Bar */}
+      {/* Search Bar - Full Width with Focus Glow */}
       <div className="relative">
         <input
           type="text"
@@ -107,7 +119,7 @@ export default function ClauseSearchAndFilters({
               e.currentTarget.blur();
             }
           }}
-          className="w-full px-3 py-2 pl-10 pr-10 text-sm bg-bg-elevated border border-border-muted rounded-md text-text-primary placeholder-text-secondary focus:ring-2 focus:ring-accent-purple focus:border-transparent"
+          className="w-full px-3 py-2 pl-10 pr-10 text-sm bg-bg-elevated border border-border-muted rounded-md text-text-primary placeholder-text-secondary focus:ring-2 focus:ring-accent-purple focus:border-transparent focus:shadow-lg focus:shadow-accent-purple/20 transition-all duration-200"
         />
         <svg
           className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary"
@@ -134,7 +146,7 @@ export default function ClauseSearchAndFilters({
         {searchQuery && (
           <button
             onClick={() => onSearchChange("")}
-            className="absolute right-3 top-2.5 p-1 rounded-full hover:bg-bg-surface transition-colors"
+            className="absolute right-3 top-2.5 p-1 rounded-full hover:bg-bg-surface transition-colors hover:scale-110 duration-100"
             title="Clear search"
           >
             <svg
@@ -154,14 +166,14 @@ export default function ClauseSearchAndFilters({
         )}
       </div>
 
-      {/* Filters and Sort Controls - Segmented Control */}
+      {/* Filters and Sort Controls - Elevated Surface with Dimmed Labels */}
       <div className="flex flex-col sm:flex-row gap-3">
-        {/* Segmented Control Container */}
-        <div className="flex-1 bg-bg-elevated border border-border-muted rounded-lg overflow-hidden">
+        {/* Segmented Control Container - Lifted Surface */}
+        <div className="flex-1 bg-bg-surface border border-border-muted rounded-lg overflow-hidden shadow-sm">
           <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border-muted">
             {/* Risk Level Segment */}
             <div className="relative">
-              <label className="block text-xs font-medium text-text-secondary px-3 pt-2 pb-1">
+              <label className="block text-xs font-medium text-text-secondary/70 px-3 pt-2 pb-1">
                 Risk
               </label>
               <select
@@ -181,7 +193,7 @@ export default function ClauseSearchAndFilters({
               </select>
               <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
                 <svg
-                  className="w-4 h-4 text-text-secondary"
+                  className="w-4 h-4 text-text-secondary/70"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -198,7 +210,7 @@ export default function ClauseSearchAndFilters({
 
             {/* Type Segment */}
             <div className="relative">
-              <label className="block text-xs font-medium text-text-secondary px-3 pt-2 pb-1">
+              <label className="block text-xs font-medium text-text-secondary/70 px-3 pt-2 pb-1">
                 Type
               </label>
               <select
@@ -215,7 +227,7 @@ export default function ClauseSearchAndFilters({
               </select>
               <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
                 <svg
-                  className="w-4 h-4 text-text-secondary"
+                  className="w-4 h-4 text-text-secondary/70"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -232,7 +244,7 @@ export default function ClauseSearchAndFilters({
 
             {/* Sort Segment */}
             <div className="relative">
-              <label className="block text-xs font-medium text-text-secondary px-3 pt-2 pb-1">
+              <label className="block text-xs font-medium text-text-secondary/70 px-3 pt-2 pb-1">
                 Order
               </label>
               <select
@@ -248,7 +260,7 @@ export default function ClauseSearchAndFilters({
               </select>
               <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
                 <svg
-                  className="w-4 h-4 text-text-secondary"
+                  className="w-4 h-4 text-text-secondary/70"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -265,13 +277,13 @@ export default function ClauseSearchAndFilters({
           </div>
         </div>
 
-        {/* Subtle Clear All Icon - only show when any filters are active */}
+        {/* Clear Filters Button - only show when filters (not search) are active */}
         {hasActiveFilters && (
           <button
-            onClick={resetAllFilters}
-            className="opacity-75 hover:opacity-100 transition-opacity duration-150 p-2 rounded-md hover:bg-bg-surface"
-            title="Clear all filters (Esc)"
-            aria-label="Clear all filters"
+            onClick={resetFiltersOnly}
+            className="opacity-75 hover:opacity-100 transition-all duration-150 p-2 rounded-md hover:bg-bg-surface hover:scale-110"
+            title="Clear filters (Risk, Type, Order)"
+            aria-label="Clear filters"
           >
             <svg
               className="w-4 h-4 text-text-secondary"

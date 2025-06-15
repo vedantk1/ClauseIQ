@@ -17,14 +17,14 @@ export default function RiskSummaryCards({
   onFilterChange,
 }: RiskSummaryCardsProps) {
   return (
-    <div className="grid grid-cols-3 gap-2 mb-4">
-      {/* High Risk Card */}
+    <div className="grid grid-cols-3 gap-0 mb-4 bg-bg-surface border border-border-muted rounded-lg overflow-hidden shadow-sm">
+      {/* High Risk Card - Segmented Control Style */}
       <div
         onClick={() => onFilterChange(clauseFilter === "high" ? "all" : "high")}
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all hover:scale-105 ${
+        className={`flex items-center justify-center gap-2 px-3 py-3 cursor-pointer transition-all hover:scale-[1.02] border-r border-border-muted ${
           clauseFilter === "high"
-            ? "bg-accent-rose/20 border-2 border-accent-rose ring-2 ring-accent-rose/30"
-            : "bg-accent-rose/10 border border-accent-rose/20 hover:bg-accent-rose/15"
+            ? "bg-accent-rose/20 border-2 border-accent-rose ring-1 ring-accent-rose/30"
+            : "bg-accent-rose/5 hover:bg-accent-rose/10"
         }`}
         title={
           clauseFilter === "high"
@@ -32,21 +32,21 @@ export default function RiskSummaryCards({
             : "Filter to show only high risk clauses"
         }
       >
-        <div className="w-3 h-3 rounded-full bg-accent-rose"></div>
-        <span className="text-sm font-medium text-accent-rose">
+        <div className="w-3 h-3 rounded-full bg-accent-rose flex-shrink-0"></div>
+        <span className="text-sm font-medium text-accent-rose whitespace-nowrap">
           {safeRiskHigh} High
         </span>
       </div>
 
-      {/* Medium Risk Card */}
+      {/* Medium Risk Card - Segmented Control Style */}
       <div
         onClick={() =>
           onFilterChange(clauseFilter === "medium" ? "all" : "medium")
         }
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all hover:scale-105 ${
+        className={`flex items-center justify-center gap-2 px-3 py-3 cursor-pointer transition-all hover:scale-[1.02] border-r border-border-muted ${
           clauseFilter === "medium"
-            ? "bg-accent-amber/20 border-2 border-accent-amber ring-2 ring-accent-amber/30"
-            : "bg-accent-amber/10 border border-accent-amber/20 hover:bg-accent-amber/15"
+            ? "bg-accent-amber/20 border-2 border-accent-amber ring-1 ring-accent-amber/30"
+            : "bg-accent-amber/5 hover:bg-accent-amber/10"
         }`}
         title={
           clauseFilter === "medium"
@@ -54,19 +54,19 @@ export default function RiskSummaryCards({
             : "Filter to show only medium risk clauses"
         }
       >
-        <div className="w-3 h-3 rounded-full bg-accent-amber"></div>
-        <span className="text-sm font-medium text-accent-amber">
+        <div className="w-3 h-3 rounded-full bg-accent-amber flex-shrink-0"></div>
+        <span className="text-sm font-medium text-accent-amber whitespace-nowrap">
           {safeRiskMedium} Medium
         </span>
       </div>
 
-      {/* Low Risk Card */}
+      {/* Low Risk Card - Segmented Control Style */}
       <div
         onClick={() => onFilterChange(clauseFilter === "low" ? "all" : "low")}
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all hover:scale-105 ${
+        className={`flex items-center justify-center gap-2 px-3 py-3 cursor-pointer transition-all hover:scale-[1.02] ${
           clauseFilter === "low"
-            ? "bg-accent-green/20 border-2 border-accent-green ring-2 ring-accent-green/30"
-            : "bg-accent-green/10 border border-accent-green/20 hover:bg-accent-green/15"
+            ? "bg-accent-green/20 border-2 border-accent-green ring-1 ring-accent-green/30"
+            : "bg-accent-green/5 hover:bg-accent-green/10"
         }`}
         title={
           clauseFilter === "low"
@@ -74,8 +74,8 @@ export default function RiskSummaryCards({
             : "Filter to show only low risk clauses"
         }
       >
-        <div className="w-3 h-3 rounded-full bg-accent-green"></div>
-        <span className="text-sm font-medium text-accent-green">
+        <div className="w-3 h-3 rounded-full bg-accent-green flex-shrink-0"></div>
+        <span className="text-sm font-medium text-accent-green whitespace-nowrap">
           {safeRiskLow} Low
         </span>
       </div>
