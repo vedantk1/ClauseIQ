@@ -285,25 +285,36 @@ export default function ClauseDetailsPanel({
             }`}
           >
             <div className="bg-accent-blue/5 border border-accent-blue/20 rounded-lg p-4">
-              {/* Quick Add Note Field */}
+              {/* Notes Header with Add Button */}
               <div className="mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm font-medium text-accent-blue">
-                    Notes
-                  </span>
-                  <span className="text-xs text-text-secondary">
-                    • visible only to your team
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Use Quick Actions above to add notes..."
-                    className="flex-1 px-3 py-2 text-sm bg-bg-elevated border border-border-muted rounded-md focus:ring-2 focus:ring-accent-blue focus:border-transparent cursor-pointer"
-                    readOnly
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-accent-blue">
+                      Notes
+                    </span>
+                    <span className="text-xs text-text-secondary">
+                      • visible only to your team
+                    </span>
+                  </div>
+                  <button
                     onClick={handleAddNote}
-                    title="Click to add a note using the Quick Actions"
-                  />
+                    className="flex items-center justify-center w-6 h-6 text-accent-blue hover:bg-accent-blue/10 rounded-full transition-colors"
+                    title="Add note"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                  </button>
                 </div>
               </div>
 
