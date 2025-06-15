@@ -275,133 +275,124 @@ export default function ClauseDetailsPanel({
           </div>
         </div>
 
-        {/* Notes Drawer - Appears right below metadata bar when toggled */}
-        {selectedClause.id && hasNotes(selectedClause.id) && (
-          <div
-            className={`overflow-hidden transition-all duration-200 ease-in-out ${
-              isNotesDrawerOpen
-                ? "max-h-96 opacity-100 mb-4"
-                : "max-h-0 opacity-0"
-            }`}
-          >
-            <div className="bg-accent-blue/5 border border-accent-blue/20 rounded-lg p-4">
-              {/* Notes Header with Add Button */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
+        {/* Notes Drawer - Only render when actually open */}
+        {selectedClause.id &&
+          hasNotes(selectedClause.id) &&
+          isNotesDrawerOpen && (
+            <div className="mb-4 animate-in slide-in-from-top-2 duration-200">
+              <div className="bg-accent-blue/5 border border-accent-blue/20 rounded-lg p-4">
+                {/* Notes Header with Add Button */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-accent-blue">
                       Notes
                     </span>
-                    <span className="text-xs text-text-secondary">
-                      • visible only to your team
-                    </span>
-                  </div>
-                  <button
-                    onClick={handleAddNote}
-                    className="flex items-center justify-center w-6 h-6 text-accent-blue hover:bg-accent-blue/10 rounded-full transition-colors"
-                    title="Add note"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                    <button
+                      onClick={handleAddNote}
+                      className="flex items-center justify-center w-6 h-6 text-accent-blue hover:bg-accent-blue/10 rounded-full transition-colors"
+                      title="Add note"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
-                  </button>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 4v16m8-8H4"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Notes List */}
-              <div className="space-y-3 max-h-60 overflow-y-auto">
-                {getAllNotes(selectedClause.id).length > 0 ? (
-                  getAllNotes(selectedClause.id)
-                    .filter((note) => note && note.id && note.text)
-                    .map((note) => {
-                      if (!note || !note.id || !note.text) {
-                        return null;
-                      }
+                {/* Notes List */}
+                <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {getAllNotes(selectedClause.id).length > 0 ? (
+                    getAllNotes(selectedClause.id)
+                      .filter((note) => note && note.id && note.text)
+                      .map((note) => {
+                        if (!note || !note.id || !note.text) {
+                          return null;
+                        }
 
-                      // Format date - relative if today, absolute otherwise
-                      const noteDate = note.created_at
-                        ? new Date(note.created_at)
-                        : new Date();
-                      const now = new Date();
-                      const isToday =
-                        noteDate.toDateString() === now.toDateString();
-                      const formattedDate = isToday
-                        ? `Today ${noteDate.toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}`
-                        : `${noteDate.toLocaleDateString()} ${noteDate.toLocaleTimeString(
-                            [],
-                            {
+                        // Format date - relative if today, absolute otherwise
+                        const noteDate = note.created_at
+                          ? new Date(note.created_at)
+                          : new Date();
+                        const now = new Date();
+                        const isToday =
+                          noteDate.toDateString() === now.toDateString();
+                        const formattedDate = isToday
+                          ? `Today ${noteDate.toLocaleTimeString([], {
                               hour: "2-digit",
                               minute: "2-digit",
-                            }
-                          )}`;
+                            })}`
+                          : `${noteDate.toLocaleDateString()} ${noteDate.toLocaleTimeString(
+                              [],
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}`;
 
-                      return (
-                        <div
-                          key={note.id}
-                          className="border border-border-muted rounded-lg p-2.5 bg-bg-elevated hover:shadow-sm transition-shadow group"
-                        >
-                          <div className="flex items-start justify-between mb-0.5">
-                            <span className="text-xs text-text-secondary">
-                              {formattedDate}
-                            </span>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={() => handleEditNote(note)}
-                                className="p-1 hover:bg-accent-blue/10 rounded text-accent-blue transition-colors"
-                                title="Edit note"
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                onClick={() => handleDeleteNote(note.id)}
-                                className="p-1 hover:bg-accent-rose/10 rounded text-accent-rose transition-colors"
-                                title="Delete note"
-                              >
-                                🗑️
-                              </button>
+                        return (
+                          <div
+                            key={note.id}
+                            className="border border-border-muted rounded-lg p-2.5 bg-bg-elevated hover:shadow-sm transition-shadow group"
+                          >
+                            <div className="flex items-start justify-between mb-0.5">
+                              <span className="text-xs text-text-secondary">
+                                {formattedDate}
+                              </span>
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => handleEditNote(note)}
+                                  className="p-1 hover:bg-accent-blue/10 rounded text-accent-blue transition-colors"
+                                  title="Edit note"
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteNote(note.id)}
+                                  className="p-1 hover:bg-accent-rose/10 rounded text-accent-rose transition-colors"
+                                  title="Delete note"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                            <div className="text-sm text-text-primary leading-relaxed">
+                              {/* Truncate long notes to 3 lines */}
+                              <div className="line-clamp-3">{note.text}</div>
                             </div>
                           </div>
-                          <div className="text-sm text-text-primary leading-relaxed">
-                            {/* Truncate long notes to 3 lines */}
-                            <div className="line-clamp-3">{note.text}</div>
-                          </div>
-                        </div>
-                      );
-                    })
-                    .filter(Boolean)
-                ) : (
-                  <div className="text-center py-6">
-                    <div className="text-accent-blue text-2xl mb-2">✔️</div>
-                    <p className="text-sm text-text-secondary mb-2">
-                      No notes yet
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      onClick={handleAddNote}
-                      className="text-accent-blue hover:bg-accent-blue/10"
-                    >
-                      Add your first note
-                    </Button>
-                  </div>
-                )}
+                        );
+                      })
+                      .filter(Boolean)
+                  ) : (
+                    <div className="text-center py-6">
+                      <div className="text-accent-blue text-2xl mb-2">✔️</div>
+                      <p className="text-sm text-text-secondary mb-2">
+                        No notes yet
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        onClick={handleAddNote}
+                        className="text-accent-blue hover:bg-accent-blue/10"
+                      >
+                        Add your first note
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Clause Summary */}
         {selectedClause.summary && (
