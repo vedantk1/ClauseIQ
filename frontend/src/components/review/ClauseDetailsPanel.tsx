@@ -289,14 +289,20 @@ export default function ClauseDetailsPanel({
                             hour: "2-digit",
                             minute: "2-digit",
                           })}`
-                        : noteDate.toLocaleDateString();
+                        : `${noteDate.toLocaleDateString()} ${noteDate.toLocaleTimeString(
+                            [],
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}`;
 
                       return (
                         <div
                           key={note.id}
-                          className="border border-border-muted rounded-lg p-3 bg-bg-elevated hover:shadow-sm transition-shadow group"
+                          className="border border-border-muted rounded-lg p-2.5 bg-bg-elevated hover:shadow-sm transition-shadow group"
                         >
-                          <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-start justify-between mb-0.5">
                             <span className="text-xs text-text-secondary">
                               {formattedDate}
                             </span>
