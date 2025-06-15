@@ -159,20 +159,6 @@ export default function ClauseDetailsPanel({
                 {selectedClause.heading ||
                   `${getClauseTypeLabel(selectedClause.clause_type)} Clause`}
               </h3>
-              {/* User status indicators */}
-              <div className="flex items-center gap-2 mt-1">
-                {selectedClause.id && flaggedClauses.has(selectedClause.id) && (
-                  <span className="text-xs bg-accent-rose/10 text-accent-rose px-2 py-1 rounded-full">
-                    🚩 Flagged for Review
-                  </span>
-                )}
-                {selectedClause.id && hasNotes(selectedClause.id) && (
-                  <span className="text-xs bg-accent-blue/10 text-accent-blue px-2 py-1 rounded-full">
-                    📝 Has {getNotesCount(selectedClause.id)} Note
-                    {getNotesCount(selectedClause.id) !== 1 ? "s" : ""}
-                  </span>
-                )}
-              </div>
             </div>
             <div
               className={`px-3 py-1 rounded-full text-sm font-medium border ${getRiskColor(
@@ -186,10 +172,25 @@ export default function ClauseDetailsPanel({
               Risk
             </div>
           </div>
-          <div className="flex items-center gap-2 mb-3">
+          {/* Single horizontal metadata bar */}
+          <div className="flex items-center justify-between gap-2 mb-3">
             <span className="text-sm text-text-secondary bg-bg-elevated px-2 py-1 rounded">
               {getClauseTypeLabel(selectedClause.clause_type)}
             </span>
+            {/* Status indicators moved to the right */}
+            <div className="flex items-center gap-2">
+              {selectedClause.id && flaggedClauses.has(selectedClause.id) && (
+                <span className="text-xs bg-accent-rose/10 text-accent-rose px-2 py-1 rounded-full">
+                  🚩 Flagged for Review
+                </span>
+              )}
+              {selectedClause.id && hasNotes(selectedClause.id) && (
+                <span className="text-xs bg-accent-blue/10 text-accent-blue px-2 py-1 rounded-full">
+                  📝 Has {getNotesCount(selectedClause.id)} Note
+                  {getNotesCount(selectedClause.id) !== 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
