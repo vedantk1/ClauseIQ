@@ -203,14 +203,23 @@ export default function ReviewWorkspace() {
     }
   };
 
-  const handleEditNote = async (clause: { id?: string }, noteId?: string) => {
+  const handleEditNote = async (
+    clause: { id?: string },
+    noteId?: string,
+    editedText?: string
+  ) => {
     if (clause.id && hasNotes(clause.id)) {
       const notes = getAllNotes(clause.id);
       const targetNote = noteId ? notes.find((n) => n.id === noteId) : notes[0];
 
       if (targetNote) {
-        const updatedNote = prompt("Edit your note:", targetNote.text);
-        if (updatedNote !== null && updatedNote !== targetNote.text) {
+        let updatedNote = editedText;
+        if (!updatedNote) {
+          // Fallback to prompt for backward compatibility (though we'll always pass editedText now)
+          const promptResult = prompt("Edit your note:", targetNote.text);
+          updatedNote = promptResult || undefined;
+        }
+        if (updatedNote && updatedNote !== targetNote.text) {
           if (updatedNote.trim() === "") {
             await handleDeleteNote(clause, targetNote.id);
           } else {

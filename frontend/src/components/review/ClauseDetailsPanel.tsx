@@ -24,7 +24,7 @@ interface ClauseDetailsPanelProps {
   getAllNotes: (clauseId: string) => Note[];
   getNotesCount: (clauseId: string) => number;
   onAddNote: (clause: Clause, noteText?: string) => void;
-  onEditNote: (clause: Clause, noteId?: string) => void;
+  onEditNote: (clause: Clause, noteId?: string, editedText?: string) => void;
   onDeleteNote: (clause: Clause, noteId?: string) => void;
   onFlagForReview: (clause: Clause, event?: React.MouseEvent) => void;
   onCopyClause: (clause: Clause) => void;
@@ -49,6 +49,7 @@ export default function ClauseDetailsPanel({
 
   // State for custom note input modal
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
 
   // Helper to get/set drawer state for current clause
   const isNotesDrawerOpen = selectedClause?.id
@@ -65,14 +66,29 @@ export default function ClauseDetailsPanel({
 
   // Custom note addition handler
   const handleAddNote = () => {
+    setEditingNote(null); // Clear any editing state
+    setIsNoteModalOpen(true);
+  };
+
+  // Custom note editing handler
+  const handleEditNote = (note: Note) => {
+    setEditingNote(note);
     setIsNoteModalOpen(true);
   };
 
   const handleNoteSubmit = (noteText: string) => {
     if (selectedClause && noteText.trim()) {
-      // Now we can pass the note text directly to the parent component
-      onAddNote(selectedClause, noteText.trim());
+      if (editingNote) {
+        // Edit mode: pass the edited text to parent
+        onEditNote(selectedClause, editingNote.id, noteText.trim());
+      } else {
+        // Add mode: pass the note text directly to the parent component
+        onAddNote(selectedClause, noteText.trim());
+      }
     }
+    // Close modal and clear editing state
+    setIsNoteModalOpen(false);
+    setEditingNote(null);
   };
 
   // Get fairness score based on risk level
@@ -308,9 +324,7 @@ export default function ClauseDetailsPanel({
                             </span>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button
-                                onClick={() =>
-                                  onEditNote(selectedClause, note.id)
-                                }
+                                onClick={() => handleEditNote(note)}
                                 className="p-1 hover:bg-accent-blue/10 rounded text-accent-blue transition-colors"
                                 title="Edit note"
                               >
@@ -508,12 +522,16 @@ export default function ClauseDetailsPanel({
       {/* Custom Note Input Modal */}
       <TextInputModal
         isOpen={isNoteModalOpen}
-        onClose={() => setIsNoteModalOpen(false)}
+        onClose={() => {
+          setIsNoteModalOpen(false);
+          setEditingNote(null);
+        }}
         onSubmit={handleNoteSubmit}
-        title="Add a note for this clause"
-        placeholder="Enter your note..."
-        submitButtonText="Add Note"
+        title={editingNote ? "Edit note" : "Add a note for this clause"}
+        placeholder={editingNote ? "Edit your note..." : "Enter your note..."}
+        submitButtonText={editingNote ? "Save Changes" : "Add Note"}
         cancelButtonText="Cancel"
+        initialValue={editingNote?.text || ""}
       />
     </Card>
   );
