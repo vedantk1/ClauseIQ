@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
+import TextInputModal from "@/components/TextInputModal";
 import {
   getRiskColor,
   getClauseTypeLabel,
@@ -22,7 +23,7 @@ interface ClauseDetailsPanelProps {
   hasNotes: (clauseId: string) => boolean;
   getAllNotes: (clauseId: string) => Note[];
   getNotesCount: (clauseId: string) => number;
-  onAddNote: (clause: Clause) => void;
+  onAddNote: (clause: Clause, noteText?: string) => void;
   onEditNote: (clause: Clause, noteId?: string) => void;
   onDeleteNote: (clause: Clause, noteId?: string) => void;
   onFlagForReview: (clause: Clause, event?: React.MouseEvent) => void;
@@ -41,7 +42,38 @@ export default function ClauseDetailsPanel({
   onFlagForReview,
   onCopyClause,
 }: ClauseDetailsPanelProps) {
-  const [isNotesExpanded, setIsNotesExpanded] = useState(false);
+  // New state for notes drawer - keyed by clause ID to preserve context
+  const [notesDrawerState, setNotesDrawerState] = useState<
+    Record<string, boolean>
+  >({});
+
+  // State for custom note input modal
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+
+  // Helper to get/set drawer state for current clause
+  const isNotesDrawerOpen = selectedClause?.id
+    ? notesDrawerState[selectedClause.id] || false
+    : false;
+  const toggleNotesDrawer = () => {
+    if (selectedClause?.id) {
+      setNotesDrawerState((prev) => ({
+        ...prev,
+        [selectedClause.id!]: !prev[selectedClause.id!],
+      }));
+    }
+  };
+
+  // Custom note addition handler
+  const handleAddNote = () => {
+    setIsNoteModalOpen(true);
+  };
+
+  const handleNoteSubmit = (noteText: string) => {
+    if (selectedClause && noteText.trim()) {
+      // Now we can pass the note text directly to the parent component
+      onAddNote(selectedClause, noteText.trim());
+    }
+  };
 
   // Get fairness score based on risk level
   const getFairnessScore = (riskLevel?: string) => {
@@ -122,7 +154,7 @@ export default function ClauseDetailsPanel({
           <Button
             size="sm"
             variant="tertiary"
-            onClick={() => onAddNote(selectedClause)}
+            onClick={handleAddNote}
             title="Add a personal note to this clause"
           >
             📝 Add Note
@@ -185,14 +217,138 @@ export default function ClauseDetailsPanel({
                 </span>
               )}
               {selectedClause.id && hasNotes(selectedClause.id) && (
-                <span className="text-xs bg-accent-blue/10 text-accent-blue px-2 py-1 rounded-full">
+                <button
+                  onClick={toggleNotesDrawer}
+                  className="text-xs bg-accent-blue/10 text-accent-blue px-2 py-1 rounded-full border border-accent-blue/20 hover:bg-accent-blue/15 transition-colors cursor-pointer"
+                  title="Click to view/edit notes"
+                  aria-expanded={isNotesDrawerOpen}
+                  aria-label={`${getNotesCount(selectedClause.id)} note${
+                    getNotesCount(selectedClause.id) !== 1 ? "s" : ""
+                  }, click to ${isNotesDrawerOpen ? "close" : "open"}`}
+                >
                   📝 Has {getNotesCount(selectedClause.id)} Note
-                  {getNotesCount(selectedClause.id) !== 1 ? "s" : ""}
-                </span>
+                  {getNotesCount(selectedClause.id) !== 1 ? "s" : ""}{" "}
+                  {isNotesDrawerOpen ? "▲" : "▼"}
+                </button>
               )}
             </div>
           </div>
         </div>
+
+        {/* Notes Drawer - Appears right below metadata bar when toggled */}
+        {selectedClause.id && hasNotes(selectedClause.id) && (
+          <div
+            className={`overflow-hidden transition-all duration-200 ease-in-out ${
+              isNotesDrawerOpen
+                ? "max-h-96 opacity-100 mb-4"
+                : "max-h-0 opacity-0"
+            }`}
+          >
+            <div className="bg-accent-blue/5 border border-accent-blue/20 rounded-lg p-4">
+              {/* Quick Add Note Field */}
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm font-medium text-accent-blue">
+                    Notes
+                  </span>
+                  <span className="text-xs text-text-secondary">
+                    • visible only to your team
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Use Quick Actions above to add notes..."
+                    className="flex-1 px-3 py-2 text-sm bg-bg-elevated border border-border-muted rounded-md focus:ring-2 focus:ring-accent-blue focus:border-transparent cursor-pointer"
+                    readOnly
+                    onClick={handleAddNote}
+                    title="Click to add a note using the Quick Actions"
+                  />
+                </div>
+              </div>
+
+              {/* Notes List */}
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {getAllNotes(selectedClause.id).length > 0 ? (
+                  getAllNotes(selectedClause.id)
+                    .filter((note) => note && note.id && note.text)
+                    .map((note) => {
+                      if (!note || !note.id || !note.text) {
+                        return null;
+                      }
+
+                      // Format date - relative if today, absolute otherwise
+                      const noteDate = note.created_at
+                        ? new Date(note.created_at)
+                        : new Date();
+                      const now = new Date();
+                      const isToday =
+                        noteDate.toDateString() === now.toDateString();
+                      const formattedDate = isToday
+                        ? `Today ${noteDate.toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}`
+                        : noteDate.toLocaleDateString();
+
+                      return (
+                        <div
+                          key={note.id}
+                          className="border border-border-muted rounded-lg p-3 bg-bg-elevated hover:shadow-sm transition-shadow group"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <span className="text-xs text-text-secondary">
+                              {formattedDate}
+                            </span>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() =>
+                                  onEditNote(selectedClause, note.id)
+                                }
+                                className="p-1 hover:bg-accent-blue/10 rounded text-accent-blue transition-colors"
+                                title="Edit note"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                onClick={() =>
+                                  onDeleteNote(selectedClause, note.id)
+                                }
+                                className="p-1 hover:bg-accent-rose/10 rounded text-accent-rose transition-colors"
+                                title="Delete note"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                          <div className="text-sm text-text-primary leading-relaxed">
+                            {/* Truncate long notes to 3 lines */}
+                            <div className="line-clamp-3">{note.text}</div>
+                          </div>
+                        </div>
+                      );
+                    })
+                    .filter(Boolean)
+                ) : (
+                  <div className="text-center py-6">
+                    <div className="text-accent-blue text-2xl mb-2">✔️</div>
+                    <p className="text-sm text-text-secondary mb-2">
+                      No notes yet
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="tertiary"
+                      onClick={handleAddNote}
+                      className="text-accent-blue hover:bg-accent-blue/10"
+                    >
+                      Add your first note
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Clause Summary */}
         {selectedClause.summary && (
@@ -255,139 +411,6 @@ export default function ClauseDetailsPanel({
               </ul>
             </div>
           )}
-
-        {/* User Notes Display - Collapsible Enhanced UI */}
-        {selectedClause.id && hasNotes(selectedClause.id) && (
-          <div className="bg-accent-blue/5 border border-accent-blue/20 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <button
-                onClick={() => setIsNotesExpanded(!isNotesExpanded)}
-                className="flex items-center gap-2 font-medium text-accent-blue text-sm hover:text-accent-blue/80 transition-colors"
-              >
-                <span
-                  className={`transform transition-transform ${
-                    isNotesExpanded ? "rotate-90" : "rotate-0"
-                  }`}
-                >
-                  ▶
-                </span>
-                📝 Your Notes ({getNotesCount(selectedClause.id)})
-              </button>
-              <div className="flex gap-1">
-                <Button
-                  size="sm"
-                  variant="tertiary"
-                  onClick={() => onAddNote(selectedClause)}
-                  title="Add another note"
-                  className="text-xs text-accent-green hover:bg-accent-green/10"
-                >
-                  ➕ Add
-                </Button>
-              </div>
-            </div>
-
-            {/* Notes List - Enhanced Design with Collapsible */}
-            {isNotesExpanded && (
-              <div className="space-y-3">
-                {getAllNotes(selectedClause.id)
-                  .filter((note) => note && note.id && note.text)
-                  .map((note, index) => {
-                    // Additional safety check to prevent crashes from corrupted state
-                    if (!note || !note.id || !note.text) {
-                      console.warn(
-                        "🚨 [WARNING] Invalid note found in map, skipping:",
-                        note
-                      );
-                      return null;
-                    }
-                    return (
-                      <div
-                        key={note.id}
-                        className="border border-border-muted rounded-lg p-3 bg-bg-elevated shadow-sm hover:shadow-md transition-shadow"
-                      >
-                        {/* Note Header */}
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center justify-center w-6 h-6 bg-accent-blue/10 text-accent-blue rounded-full text-xs font-medium">
-                              {index + 1}
-                            </span>
-                            <span className="text-xs text-text-secondary">
-                              {note.created_at ? (
-                                <>
-                                  {new Date(
-                                    note.created_at
-                                  ).toLocaleDateString()}{" "}
-                                  at{" "}
-                                  {new Date(note.created_at).toLocaleTimeString(
-                                    [],
-                                    {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    }
-                                  )}
-                                </>
-                              ) : (
-                                "No date"
-                              )}
-                            </span>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              variant="tertiary"
-                              onClick={() =>
-                                onEditNote(selectedClause, note.id)
-                              }
-                              title="Edit this note"
-                              className="text-xs text-accent-blue hover:bg-accent-blue/10 px-2 py-1"
-                            >
-                              ✏️
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="tertiary"
-                              onClick={() =>
-                                onDeleteNote(selectedClause, note.id)
-                              }
-                              title="Delete this note"
-                              className="text-xs text-accent-rose hover:bg-accent-rose/10 px-2 py-1"
-                            >
-                              🗑️
-                            </Button>
-                          </div>
-                        </div>
-
-                        {/* Note Content */}
-                        <div className="bg-bg-surface rounded p-3 border-l-4 border-accent-blue">
-                          <p className="text-sm text-text-primary leading-relaxed">
-                            {note.text}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })
-                  .filter(Boolean)}
-              </div>
-            )}
-
-            {/* Quick Actions Footer - Show when expanded */}
-            {isNotesExpanded && (
-              <div className="mt-3 pt-3 border-t border-border-muted">
-                <div className="flex items-center justify-between text-xs text-text-secondary">
-                  <span>Total notes: {getNotesCount(selectedClause.id)}</span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => onAddNote(selectedClause)}
-                      className="text-accent-green hover:underline"
-                    >
-                      + Add another note
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Industry Comparison */}
         <div className="bg-accent-green/5 border border-accent-green/20 rounded-lg p-3">
@@ -475,6 +498,17 @@ export default function ClauseDetailsPanel({
           </div>
         </div>
       </div>
+
+      {/* Custom Note Input Modal */}
+      <TextInputModal
+        isOpen={isNoteModalOpen}
+        onClose={() => setIsNoteModalOpen(false)}
+        onSubmit={handleNoteSubmit}
+        title="Add a note for this clause"
+        placeholder="Enter your note..."
+        submitButtonText="Add Note"
+        cancelButtonText="Cancel"
+      />
     </Card>
   );
 }
