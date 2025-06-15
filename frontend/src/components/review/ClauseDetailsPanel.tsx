@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import TextInputModal from "@/components/TextInputModal";
+import ConfirmationModal from "@/components/ConfirmationModal";
 import {
   getRiskColor,
   getClauseTypeLabel,
@@ -51,6 +52,13 @@ export default function ClauseDetailsPanel({
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
 
+  // State for delete confirmation modal
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState<{
+    clauseId: string;
+    noteId: string;
+  } | null>(null);
+
   // Helper to get/set drawer state for current clause
   const isNotesDrawerOpen = selectedClause?.id
     ? notesDrawerState[selectedClause.id] || false
@@ -74,6 +82,22 @@ export default function ClauseDetailsPanel({
   const handleEditNote = (note: Note) => {
     setEditingNote(note);
     setIsNoteModalOpen(true);
+  };
+
+  // Custom delete confirmation handler
+  const handleDeleteNote = (noteId: string) => {
+    if (selectedClause?.id) {
+      setNoteToDelete({ clauseId: selectedClause.id, noteId });
+      setIsDeleteModalOpen(true);
+    }
+  };
+
+  const confirmDeleteNote = () => {
+    if (noteToDelete && selectedClause) {
+      onDeleteNote(selectedClause, noteToDelete.noteId);
+    }
+    setIsDeleteModalOpen(false);
+    setNoteToDelete(null);
   };
 
   const handleNoteSubmit = (noteText: string) => {
@@ -331,9 +355,7 @@ export default function ClauseDetailsPanel({
                                 ✏️
                               </button>
                               <button
-                                onClick={() =>
-                                  onDeleteNote(selectedClause, note.id)
-                                }
+                                onClick={() => handleDeleteNote(note.id)}
                                 className="p-1 hover:bg-accent-rose/10 rounded text-accent-rose transition-colors"
                                 title="Delete note"
                               >
@@ -532,6 +554,21 @@ export default function ClauseDetailsPanel({
         submitButtonText={editingNote ? "Save Changes" : "Add Note"}
         cancelButtonText="Cancel"
         initialValue={editingNote?.text || ""}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setNoteToDelete(null);
+        }}
+        onConfirm={confirmDeleteNote}
+        title="Delete note?"
+        message="Are you sure you want to delete this note? This action cannot be undone."
+        confirmButtonText="Delete"
+        cancelButtonText="Cancel"
+        variant="danger"
       />
     </Card>
   );

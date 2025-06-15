@@ -189,15 +189,11 @@ export default function ReviewWorkspace() {
       const targetNoteId = noteId || notes[0]?.id;
 
       if (targetNoteId) {
-        const confirmDelete = window.confirm(
-          "Are you sure you want to delete this note?"
-        );
-        if (confirmDelete) {
-          try {
-            await deleteNote(clause.id, targetNoteId);
-          } catch {
-            // Error handling is done in the hook
-          }
+        // Confirmation is now handled by the UI component
+        try {
+          await deleteNote(clause.id, targetNoteId);
+        } catch {
+          // Error handling is done in the hook
         }
       }
     }
