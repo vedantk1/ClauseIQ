@@ -32,6 +32,7 @@ pillow==11.2.1
 
 # AI/OpenAI integration
 openai==1.84.0
+tiktoken==0.8.0
 
 # HTTP client dependencies
 httpx==0.28.1
