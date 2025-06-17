@@ -14,7 +14,7 @@ An intelligent legal document analysis tool that uses AI to help non-lawyers und
 - **Dynamic Contract Type Detection**: Automatically identifies 10+ contract types (Employment, NDAs, Service Agreements, Leases, etc.)
 - **LLM-Based Classification**: Uses OpenAI GPT models for intelligent contract analysis
 - **Context-Aware Processing**: Contract-specific clause extraction and risk assessment
-- **Graceful Fallbacks**: Maintains functionality when AI services are unavailable
+- **Pure AI Approach**: Requires OpenAI API for consistent, high-quality analysis
 
 ### 📋 **Multi-Contract Support**
 
@@ -32,8 +32,7 @@ An intelligent legal document analysis tool that uses AI to help non-lawyers und
 ### 💡 **Intelligent Features**
 
 - **AI Model Selection**: Users can choose their preferred AI model (GPT-3.5-turbo, GPT-4o-mini, etc.)
-- **Semantic Section Detection**: AI-powered document segmentation replacing regex patterns
-- **Dynamic Clause Extraction**: Contract-specific clause identification
+- **Dynamic Clause Extraction**: Contract-specific clause identification with comprehensive coverage
 - **Contract-Specific Summaries**: Tailored analysis based on document type
 - **Risk Assessment**: Context-aware risk evaluation for different contract types
 
@@ -217,14 +216,16 @@ Comprehensive documentation is available in the organized [`docs/`](./docs/) dir
 ## Usage
 
 1. **Create Account**: Register or login to access the platform
-2. **Upload Document**: Select a PDF employment contract for analysis
-3. **AI Analysis**: Get intelligent summaries and section breakdowns using your preferred AI model
-4. **Review Results**: View plain-language explanations of legal terms and clauses
+2. **Upload Document**: Select a PDF contract (any of 10+ supported types) for analysis
+3. **AI Analysis**: Get intelligent summaries and clause breakdowns using your preferred AI model
+4. **Review Results**: View plain-language explanations of legal terms and contract-specific clauses
 5. **Document Management**:
    - Access your document history with search and sorting
    - Switch between grid and list view modes
    - Delete documents you no longer need (with confirmation)
    - View detailed analysis for any previous document
+
+**Note**: Requires OpenAI API access for document analysis. When AI services are unavailable, the system will provide clear error messages rather than degraded analysis.
 
 ## Contributing
 

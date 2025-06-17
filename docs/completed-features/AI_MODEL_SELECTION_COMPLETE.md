@@ -102,7 +102,7 @@ The system supports 5 AI models:
 - **MongoDB Storage** - User preferences stored in existing user collection
 - **Efficient Queries** - Single database call to retrieve preferences
 - **Data Persistence** - Preferences survive login/logout cycles
-- **Default Handling** - Graceful fallback to gpt-3.5-turbo
+- **Smart Default** - Fallback to gpt-4o-mini for new users
 
 ## 🔗 API Integration
 
@@ -134,7 +134,7 @@ All ClauseIQ document processing now uses the user's preferred model:
 - **Backward Compatible** - Default model ensures existing users unaffected
 - **Scalable Architecture** - Easy to add new models in the future
 - **Type Safety** - Full TypeScript support throughout
-- **Error Resilience** - Graceful fallbacks and error handling
+- **Honest Error Handling** - Clear messages when AI unavailable
 
 ---
 
