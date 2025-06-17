@@ -51,25 +51,28 @@ async def generate_structured_document_summary(document_text: str, filename: str
         }
     
     try:
-        # Calculate token budget and truncate text if too long
-        max_input_tokens = calculate_token_budget(model, response_tokens=1000)
+        # Use optimal token allocation for comprehensive legal analysis
+        optimal_response_tokens = get_optimal_response_tokens("structured", model)
+        max_input_tokens = calculate_token_budget(model, response_tokens=optimal_response_tokens)
+        
+        print(f"📊 Using {optimal_response_tokens} response tokens, {max_input_tokens} input tokens for {model}")
         
         # Reserve tokens for the prompt template
         prompt_template = """
-        Analyze this legal document and provide a structured summary in the exact JSON format below.
-        Be thorough but concise in each section.
+        Analyze this legal document and provide a comprehensive structured summary in the exact JSON format below.
+        With the expanded token budget, be thorough and detailed in each section - this is for professional legal analysis.
         
         Document: {filename}
         Content: {content}
         
         Respond with ONLY valid JSON in this exact format:
         {{
-            "overview": "Brief 2-3 sentence overview of the document's purpose and significance",
-            "key_parties": ["Party 1: Role/description", "Party 2: Role/description"],
-            "important_dates": ["Date type: Specific date or timeframe", "Another date: Description"],
-            "major_obligations": ["Obligation 1: Who does what", "Obligation 2: Description"],
-            "risk_highlights": ["Risk 1: Description and impact", "Risk 2: Potential issue"],
-            "key_insights": ["Insight 1: Important detail", "Insight 2: Notable provision"]
+            "overview": "Comprehensive 3-5 sentence overview of the document's purpose, significance, and key legal implications",
+            "key_parties": ["Party 1: Detailed role and legal relationship", "Party 2: Detailed role and obligations"],
+            "important_dates": ["Date type: Specific date with legal significance", "Deadline: Critical timeline with consequences"],
+            "major_obligations": ["Obligation 1: Detailed description of who must do what and when", "Obligation 2: Complete obligation with performance standards"],
+            "risk_highlights": ["Risk 1: Detailed description of risk, potential impact, and likelihood", "Risk 2: Comprehensive risk assessment with mitigation strategies"],
+            "key_insights": ["Insight 1: Important legal detail with implications", "Insight 2: Notable provision with strategic importance", "Insight 3: Cross-references and relationships between clauses"]
         }}
         """
         
@@ -83,10 +86,10 @@ async def generate_structured_document_summary(document_text: str, filename: str
         response = await openai_client.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": "You are a legal AI assistant that provides structured analysis of legal documents. Always respond with valid JSON in the requested format."},
+                {"role": "system", "content": "You are an elite legal AI assistant that provides comprehensive, detailed analysis of legal documents. With expanded token budget, provide thorough analysis that helps legal professionals understand complex documents completely."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=1000,
+            max_tokens=optimal_response_tokens,
             temperature=0.2
         )
         
@@ -248,8 +251,11 @@ async def detect_contract_type(document_text: str, filename: str = "", model: st
         return ContractType.OTHER
     
     try:
-        # Calculate token budget for contract type detection
-        max_input_tokens = calculate_token_budget(model, response_tokens=50, safety_margin=50)
+        # Use minimal token allocation for simple classification
+        optimal_response_tokens = get_optimal_response_tokens("classification", model)
+        max_input_tokens = calculate_token_budget(model, response_tokens=optimal_response_tokens)
+        
+        print(f"🏷️ Contract classification using {max_input_tokens} input tokens for {model}")
         
         prompt_template = """
         Analyze this legal document and identify its type. Based on the content, language, and structure, determine which category best describes this document:
@@ -285,7 +291,7 @@ async def detect_contract_type(document_text: str, filename: str = "", model: st
                 {"role": "system", "content": "You are a legal document classification expert. Analyze documents and identify their type with high accuracy."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=50,
+            max_tokens=optimal_response_tokens,
             temperature=0.1
         )
         
@@ -322,33 +328,47 @@ async def extract_clauses_with_llm(document_text: str, contract_type: ContractTy
         relevant_clause_types = _get_relevant_clause_types(contract_type)
         clause_types_str = ", ".join([ct.value for ct in relevant_clause_types])
         
-        # Calculate token budget for clause extraction
-        max_input_tokens = calculate_token_budget(model, response_tokens=3000)
+        # Use maximum token allocation for comprehensive clause extraction and analysis
+        optimal_response_tokens = get_optimal_response_tokens("extraction", model)
+        max_input_tokens = calculate_token_budget(model, response_tokens=optimal_response_tokens)
+        
+        print(f"🔍 Clause extraction using {optimal_response_tokens} response tokens, {max_input_tokens} input tokens for {model}")
+        print(f"📄 Can analyze {max_input_tokens//4:.0f} characters (~{max_input_tokens//250:.0f} pages) of legal text")
         
         prompt_template = """
-        Analyze this {contract_type} document and identify all significant clauses. For each clause you find:
-
+        Analyze this {contract_type} document and identify ALL significant clauses with comprehensive detail.
+        With expanded token budget, provide thorough analysis including clause relationships and cross-references.
+        
+        For each clause you find:
         1. Extract the exact text of the clause
         2. Classify it using one of these types: {clause_types}
-        3. Create a descriptive heading
-        4. Assess the risk level (low, medium, high)
+        3. Create a descriptive heading that captures the legal significance
+        4. Assess the risk level (low, medium, high) with detailed reasoning
+        5. Identify relationships to other clauses when relevant
 
         Focus on clauses that contain:
-        - Legal obligations or rights
-        - Terms and conditions
-        - Restrictions or limitations  
-        - Financial or payment terms
-        - Liability or risk provisions
-        - Termination or expiration conditions
+        - Legal obligations or rights with performance standards
+        - Terms and conditions with specific requirements
+        - Restrictions or limitations with consequences
+        - Financial or payment terms with penalties
+        - Liability or risk provisions with indemnification
+        - Termination or expiration conditions with notice requirements
+        - Intellectual property rights and licensing terms
+        - Confidentiality and non-disclosure provisions
+        - Dispute resolution and governing law clauses
+        - Amendment and modification procedures
 
-        Respond in this exact JSON format:
+        Respond in this exact JSON format with comprehensive detail:
         {{
             "clauses": [
                 {{
-                    "heading": "Descriptive clause title",
-                    "text": "Exact clause text from document",
+                    "heading": "Comprehensive descriptive clause title with legal significance",
+                    "text": "Complete exact clause text from document",
                     "clause_type": "clause_type_from_list",
-                    "risk_level": "low|medium|high"
+                    "risk_level": "low|medium|high",
+                    "risk_reasoning": "Detailed explanation of why this risk level was assigned",
+                    "key_terms": ["Important term 1", "Critical deadline", "Financial obligation"],
+                    "relationships": ["References to other clauses or sections when applicable"]
                 }}
             ]
         }}
@@ -378,10 +398,10 @@ async def extract_clauses_with_llm(document_text: str, contract_type: ContractTy
         response = await openai_client.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": f"You are a legal expert specializing in {contract_type.value} analysis. Extract and classify clauses with precision and attention to legal nuance."},
+                {"role": "system", "content": f"You are an elite legal expert specializing in {contract_type.value} analysis. With expanded token budget, extract and classify clauses with maximum precision, detail, and attention to legal nuance. Identify clause relationships and provide comprehensive risk analysis."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=3000,
+            max_tokens=optimal_response_tokens,
             temperature=0.2
         )
         
@@ -407,6 +427,15 @@ async def extract_clauses_with_llm(document_text: str, contract_type: ContractTy
                     clause_type=clause_type,
                     risk_level=risk_level
                 )
+                
+                # Store additional analysis data as metadata (if needed for future features)
+                if hasattr(clause, 'metadata'):
+                    clause.metadata = {
+                        'risk_reasoning': clause_data.get("risk_reasoning", ""),
+                        'key_terms': clause_data.get("key_terms", []),
+                        'relationships': clause_data.get("relationships", [])
+                    }
+                
                 clauses.append(clause)
             
             return clauses
@@ -459,8 +488,11 @@ async def generate_contract_specific_summary(document_text: str, contract_type: 
         return "AI summary not available - OpenAI client not configured."
     
     try:
-        # Calculate token budget for contract-specific summary
-        max_input_tokens = calculate_token_budget(model, response_tokens=1000)
+        # Use optimal token allocation for comprehensive contract analysis
+        optimal_response_tokens = get_optimal_response_tokens("summary", model)
+        max_input_tokens = calculate_token_budget(model, response_tokens=optimal_response_tokens)
+        
+        print(f"📋 Contract summary using {optimal_response_tokens} response tokens, {max_input_tokens} input tokens for {model}")
         
         # Contract-specific prompts
         contract_prompts = {
@@ -578,14 +610,24 @@ async def generate_contract_specific_summary(document_text: str, contract_type: 
         8. Overall risk assessment
         """)
         
-        # Calculate available tokens for document content
         prompt_template = f"""
         {specific_prompt}
+        
+        With expanded token budget, provide a comprehensive, detailed analysis that legal professionals can rely on.
+        Include specific examples, quote relevant clauses, and provide actionable insights.
         
         Document: {{filename}}
         Content: {{content}}
         
-        Provide a clear, structured summary in 4-6 paragraphs that a non-lawyer can understand:
+        Provide a detailed, structured summary in 6-10 comprehensive paragraphs that covers:
+        1. Document overview and strategic purpose
+        2. Key parties and their detailed roles/relationships  
+        3. Major obligations with specific performance requirements
+        4. Financial terms, payment schedules, and penalties
+        5. Risk analysis with specific clause references
+        6. Termination conditions and consequences
+        7. Notable provisions and strategic implications
+        8. Recommendations for legal review and negotiation points
         """
         
         prompt_overhead = get_token_count(prompt_template.format(filename=filename, content=""), model)
@@ -598,10 +640,10 @@ async def generate_contract_specific_summary(document_text: str, contract_type: 
         response = await openai_client.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": f"You are a legal AI assistant specializing in {contract_type.value} analysis. Provide comprehensive, accurate analysis that helps non-lawyers understand complex legal documents."},
+                {"role": "system", "content": f"You are an elite legal AI assistant specializing in {contract_type.value} analysis. With expanded token budget, provide comprehensive, detailed analysis that helps legal professionals understand complex documents completely. Quote specific clauses and provide actionable insights."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=1000,
+            max_tokens=optimal_response_tokens,
             temperature=0.3
         )
         
@@ -749,28 +791,158 @@ def truncate_text_by_tokens(text: str, max_tokens: int, model: str = "gpt-3.5-tu
     return truncated_text + "\n\n[Document truncated for analysis...]"
 
 
-def calculate_token_budget(model: str = "gpt-3.5-turbo", response_tokens: int = 1000, safety_margin: int = 100) -> int:
+def calculate_token_budget(model: str = "gpt-3.5-turbo", response_tokens: int = 1000, safety_margin: int = None) -> int:
     """
     Calculate available tokens for input text based on model context window.
+    Uses aggressive allocation for modern models to maximize legal analysis capability.
     
     Args:
         model: Model name to get context window size
         response_tokens: Expected tokens needed for response
-        safety_margin: Safety margin for prompt overhead
+        safety_margin: Safety margin for prompt overhead (auto-calculated if None)
     
     Returns:
         Available tokens for input text
     """
-    # Model context windows (conservative estimates)
+    # Updated model context windows (accurate as of 2025)
     context_windows = {
+        # GPT-3.5 family (legacy)
         "gpt-3.5-turbo": 16384,
         "gpt-3.5-turbo-16k": 16384,
+        
+        # GPT-4 family (standard)
         "gpt-4": 8192,
+        "gpt-4-32k": 32768,
+        
+        # GPT-4 modern (high-capacity)
+        "gpt-4-turbo": 128000,
+        "gpt-4-turbo-preview": 128000,
+        "gpt-4o": 128000,
+        "gpt-4o-mini": 128000,
+        
+        # Future models (when available)
+        "gpt-5": 200000,
+        "claude-3-opus": 200000,
+        "claude-3-sonnet": 200000,
+        "claude-3-haiku": 200000,
+    }
+    
+    max_context = context_windows.get(model, 8192)  # More reasonable fallback
+    
+    # Adaptive safety margins based on model capacity
+    if safety_margin is None:
+        if max_context >= 128000:  # Modern high-capacity models
+            safety_margin = 1000  # Can afford larger margin
+        elif max_context >= 32000:  # Mid-capacity models
+            safety_margin = 500
+        else:  # Legacy models
+            safety_margin = 200
+    
+    available_tokens = max_context - response_tokens - safety_margin
+    
+    # Ensure we don't go negative
+    return max(available_tokens, 1000)
+
+
+def get_optimal_response_tokens(use_case: str, model: str = "gpt-3.5-turbo") -> int:
+    """
+    Get optimal response token allocation based on use case and model capabilities.
+    Maximizes output quality for billion-dollar legal analysis.
+    
+    Args:
+        use_case: Type of analysis (summary, extraction, classification, etc.)
+        model: Model being used
+    
+    Returns:
+        Optimal response token count
+    """
+    # Base allocations by use case
+    base_allocations = {
+        "classification": 50,      # Simple classification tasks
+        "summary": 2000,          # Comprehensive document summaries  
+        "extraction": 8000,       # Detailed clause extraction with relationships
+        "analysis": 5000,         # Deep legal analysis and risk assessment
+        "structured": 3000,       # Structured JSON responses
+    }
+    
+    base_tokens = base_allocations.get(use_case, 1000)
+    
+    # Model multipliers - modern models can provide much richer analysis
+    context_windows = {
+        "gpt-3.5-turbo": 16384,
+        "gpt-4": 8192, 
         "gpt-4-32k": 32768,
         "gpt-4-turbo": 128000,
         "gpt-4o": 128000,
         "gpt-4o-mini": 128000,
     }
     
-    max_context = context_windows.get(model, 4096)  # Conservative fallback
-    return max_context - response_tokens - safety_margin
+    model_context = context_windows.get(model, 8192)
+    
+    # Scale up response tokens for high-capacity models
+    if model_context >= 128000:  # Modern high-capacity
+        multiplier = 2.0  # Can afford much richer responses
+    elif model_context >= 32000:  # Mid-capacity
+        multiplier = 1.5
+    else:  # Legacy models
+        multiplier = 1.0
+    
+    return int(base_tokens * multiplier)
+
+
+def get_model_capabilities(model: str = "gpt-4o") -> Dict[str, Any]:
+    """
+    Get detailed capabilities for a given model to show users what ClauseIQ can do.
+    """
+    capabilities = {}
+    
+    # Calculate capabilities for each use case
+    use_cases = ["classification", "summary", "extraction", "analysis", "structured"]
+    
+    for use_case in use_cases:
+        response_tokens = get_optimal_response_tokens(use_case, model)
+        input_tokens = calculate_token_budget(model, response_tokens=response_tokens)
+        
+        # Estimate document capacity
+        chars_capacity = input_tokens * 4  # Conservative estimate
+        pages_capacity = chars_capacity / 2000  # ~2000 chars per page
+        
+        capabilities[use_case] = {
+            "response_tokens": response_tokens,
+            "input_tokens": input_tokens,
+            "estimated_pages": round(pages_capacity, 1),
+            "estimated_characters": chars_capacity
+        }
+    
+    return {
+        "model": model,
+        "total_context": calculate_token_budget(model, 0, 0) + 1000,  # Approximate total
+        "capabilities": capabilities,
+        "competitive_advantage": f"Can analyze {capabilities['extraction']['estimated_pages']:.0f}+ page contracts in full detail"
+    }
+
+
+def print_model_comparison():
+    """Print a comparison of model capabilities for strategic planning"""
+    models = ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]
+    
+    print("\n🚀 ClauseIQ Model Capabilities Analysis")
+    print("=" * 80)
+    
+    for model in models:
+        caps = get_model_capabilities(model)
+        extraction_caps = caps["capabilities"]["extraction"]
+        
+        print(f"\n📊 {model.upper()}:")
+        print(f"   Contract Analysis: Up to {extraction_caps['estimated_pages']:.0f} pages")
+        print(f"   Detailed Extraction: {extraction_caps['response_tokens']:,} response tokens")
+        print(f"   Input Capacity: {extraction_caps['input_tokens']:,} tokens")
+        print(f"   {caps['competitive_advantage']}")
+    
+    print("\n💡 Strategic Advantage:")
+    best_model = get_model_capabilities("gpt-4o")
+    best_pages = best_model["capabilities"]["extraction"]["estimated_pages"]
+    print(f"   - Analyze entire {best_pages:.0f}+ page contracts without truncation")
+    print(f"   - Comprehensive clause relationship analysis")
+    print(f"   - Professional-grade legal insights")
+    print(f"   - Competitive differentiation: 'Full document analysis, not snippets'")
