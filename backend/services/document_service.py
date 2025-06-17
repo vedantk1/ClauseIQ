@@ -2,7 +2,6 @@
 Document processing utilities.
 """
 import os
-import re
 import pdfplumber
 from typing import List, Tuple
 from fastapi import UploadFile, HTTPException
@@ -41,194 +40,12 @@ def validate_file(file: UploadFile):
             )
 
 
-def extract_clauses(text: str) -> List[Clause]:
-    """Extract and categorize clauses from legal document text."""
-    if not text or not text.strip():
-        return []
-    
-    clauses = []
-    
-    # Define clause patterns and their types
-    clause_patterns = {
-        ClauseType.COMPENSATION: [
-            r'(salary|wage|compensation|payment|remuneration)[^.]*?[\.\n]',
-            r'(pay|paid|paying)[^.]*?[\.\n]',
-            r'(\$\d+|USD|dollars)[^.]*?[\.\n]'
-        ],
-        ClauseType.TERMINATION: [
-            r'(termination|terminate|end|ending|expir)[^.]*?[\.\n]',
-            r'(notice|30 days|two weeks)[^.]*?(termination|end)[^.]*?[\.\n]',
-            r'(employment.*end|end.*employment)[^.]*?[\.\n]'
-        ],
-        ClauseType.NON_COMPETE: [
-            r'(non-compete|noncompete|restraint.*trade)[^.]*?[\.\n]',
-            r'(compete|competition|competing)[^.]*?(prohibited|restrict|prevent)[^.]*?[\.\n]',
-            r'(not.*engage|shall not.*work)[^.]*?[\.\n]'
-        ],
-        ClauseType.CONFIDENTIALITY: [
-            r'(confidential|confidentiality|proprietary)[^.]*?[\.\n]',
-            r'(non-disclosure|nondisclosure|NDA)[^.]*?[\.\n]',
-            r'(trade secret|confidential information)[^.]*?[\.\n]'
-        ],
-        ClauseType.BENEFITS: [
-            r'(benefits|health insurance|medical|dental|401k|retirement)[^.]*?[\.\n]',
-            r'(vacation|PTO|sick leave|holiday)[^.]*?[\.\n]',
-            r'(insurance|coverage)[^.]*?[\.\n]'
-        ],
-        ClauseType.WORKING_CONDITIONS: [
-            r'(work schedule|hours|overtime|remote)[^.]*?[\.\n]',
-            r'(workplace|office|location)[^.]*?[\.\n]',
-            r'(duties|responsibilities|job description)[^.]*?[\.\n]'
-        ],
-        ClauseType.INTELLECTUAL_PROPERTY: [
-            r'(intellectual property|IP|copyright|patent|trademark)[^.]*?[\.\n]',
-            r'(invention|work.*hire|proprietary.*right)[^.]*?[\.\n]',
-            r'(assign.*right|transfer.*ownership)[^.]*?[\.\n]'
-        ],
-        ClauseType.DISPUTE_RESOLUTION: [
-            r'(arbitration|mediation|dispute resolution)[^.]*?[\.\n]',
-            r'(court|jurisdiction|governing law)[^.]*?[\.\n]',
-            r'(legal.*proceeding|lawsuit)[^.]*?[\.\n]'
-        ],
-        ClauseType.PROBATION: [
-            r'(probation|probationary period|trial period)[^.]*?[\.\n]',
-            r'(90 days|six months|evaluation)[^.]*?[\.\n]'
-        ]
-    }
-    
-    # Track which parts of text have been categorized
-    text_lower = text.lower()
-    processed_positions = set()
-    
-    for clause_type, patterns in clause_patterns.items():
-        for pattern in patterns:
-            matches = re.finditer(pattern, text_lower, re.IGNORECASE | re.DOTALL)
-            
-            for match in matches:
-                start, end = match.span()
-                
-                # Check if this text has already been processed
-                if any(pos in processed_positions for pos in range(start, end)):
-                    continue
-                
-                # Mark this range as processed
-                for pos in range(start, end):
-                    processed_positions.add(pos)
-                
-                # Extract the actual matched text from original (preserving case)
-                matched_text = text[start:end].strip()
-                
-                if len(matched_text) > 20:  # Only include substantial clauses
-                    # Determine risk level based on clause type and content
-                    risk_level = _determine_risk_level(clause_type, matched_text)
-                    
-                    # Generate a descriptive heading
-                    heading = _generate_clause_heading(clause_type, matched_text)
-                    
-                    clause = Clause(
-                        heading=heading,
-                        text=matched_text,
-                        clause_type=clause_type,
-                        risk_level=risk_level,
-                        position_start=start,
-                        position_end=end
-                    )
-                    
-                    clauses.append(clause)
-    
-    # If no specific clauses found, create general clauses from sentences
-    if not clauses:
-        sentences = re.split(r'[.!?]+', text)
-        for i, sentence in enumerate(sentences[:10]):  # Limit to first 10 sentences
-            if len(sentence.strip()) > 50:  # Only substantial sentences
-                clause = Clause(
-                    heading=f"General Provision {i+1}",
-                    text=sentence.strip(),
-                    clause_type=ClauseType.GENERAL,
-                    risk_level=RiskLevel.LOW
-                )
-                clauses.append(clause)
-    
-    return clauses
-
-
-def _determine_risk_level(clause_type: ClauseType, text: str) -> RiskLevel:
-    """Determine risk level based on clause type and content."""
-    text_lower = text.lower()
-    
-    # High-risk indicators
-    high_risk_keywords = [
-        'immediate termination', 'without notice', 'at will', 'liquidated damages',
-        'non-compete', 'restraint of trade', 'exclusive', 'perpetual', 'irrevocable',
-        'unlimited liability', 'personal guarantee', 'indemnify'
-    ]
-    
-    # Medium-risk indicators
-    medium_risk_keywords = [
-        'confidential', 'proprietary', 'terminate', 'breach', 'default',
-        'penalty', 'restriction', 'limitation', 'bind', 'obligation'
-    ]
-    
-    # Check for high-risk keywords
-    if any(keyword in text_lower for keyword in high_risk_keywords):
-        return RiskLevel.HIGH
-    
-    # Check for medium-risk keywords
-    if any(keyword in text_lower for keyword in medium_risk_keywords):
-        return RiskLevel.MEDIUM
-    
-    # Clause type based risk assessment
-    if clause_type in [ClauseType.NON_COMPETE, ClauseType.TERMINATION]:
-        return RiskLevel.HIGH
-    elif clause_type in [ClauseType.CONFIDENTIALITY, ClauseType.INTELLECTUAL_PROPERTY]:
-        return RiskLevel.MEDIUM
-    
-    return RiskLevel.LOW
-
-
-def _generate_clause_heading(clause_type: ClauseType, text: str) -> str:
-    """Generate a descriptive heading for a clause."""
-    # Map clause types to readable headings
-    type_headings = {
-        ClauseType.COMPENSATION: "Compensation and Payment",
-        ClauseType.TERMINATION: "Termination Clause",
-        ClauseType.NON_COMPETE: "Non-Compete Agreement",
-        ClauseType.CONFIDENTIALITY: "Confidentiality Agreement",
-        ClauseType.BENEFITS: "Benefits and Perks",
-        ClauseType.WORKING_CONDITIONS: "Working Conditions",
-        ClauseType.INTELLECTUAL_PROPERTY: "Intellectual Property Rights",
-        ClauseType.DISPUTE_RESOLUTION: "Dispute Resolution",
-        ClauseType.PROBATION: "Probationary Period",
-        ClauseType.GENERAL: "General Provision"
-    }
-    
-    base_heading = type_headings.get(clause_type, "Legal Provision")
-    
-    # Try to make heading more specific based on content
-    text_lower = text.lower()
-    
-    if clause_type == ClauseType.COMPENSATION:
-        if 'salary' in text_lower:
-            return "Salary Information"
-        elif 'bonus' in text_lower:
-            return "Bonus Structure"
-        elif 'overtime' in text_lower:
-            return "Overtime Pay"
-    
-    elif clause_type == ClauseType.TERMINATION:
-        if 'notice' in text_lower:
-            return "Termination Notice"
-        elif 'cause' in text_lower:
-            return "Termination for Cause"
-        elif 'at will' in text_lower:
-            return "At-Will Employment"
-    
-    return base_heading
-
-
 async def process_document_with_llm(document_text: str, filename: str = "", model: str = "gpt-3.5-turbo") -> Tuple[ContractType, List[Clause]]:
     """
-    Process a document using LLM-based analysis instead of heuristic patterns.
+    Process a document using LLM-based analysis.
+    
+    Raises:
+        Exception: When AI is not available or LLM processing fails
     
     Returns:
         Tuple of (contract_type, clauses)
@@ -240,9 +57,7 @@ async def process_document_with_llm(document_text: str, filename: str = "", mode
     )
     
     if not is_ai_available():
-        # Fallback to heuristic methods if AI is not available
-        print("AI not available, falling back to heuristic analysis")
-        return ContractType.OTHER, extract_clauses(document_text)
+        raise Exception("AI processing is not available. Please check OpenAI API configuration.")
     
     try:
         # Step 1: Detect contract type
@@ -259,8 +74,8 @@ async def process_document_with_llm(document_text: str, filename: str = "", mode
         
     except Exception as e:
         print(f"Error in LLM document processing: {str(e)}")
-        # Fallback to heuristic methods on error
-        return ContractType.OTHER, extract_clauses(document_text)
+        # Re-raise the exception instead of falling back to heuristics
+        raise Exception(f"AI analysis failed: {str(e)}")
 
 
 def is_llm_processing_available() -> bool:

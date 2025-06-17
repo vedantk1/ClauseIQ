@@ -58,11 +58,9 @@
 - **File**: `backend/services/ai_service.py`
 
   - `detect_contract_type()` - LLM-based contract type detection
-  - `extract_sections_with_llm()` - Semantic section detection
   - `extract_clauses_with_llm()` - Dynamic, contract-specific clause extraction
   - `generate_contract_specific_summary()` - Tailored summaries by contract type
   - `_get_relevant_clause_types()` - Contract-specific clause mapping
-  - `_fallback_section_extraction()` - Graceful AI fallback handling
 
 - **File**: `backend/services/document_service.py`
 

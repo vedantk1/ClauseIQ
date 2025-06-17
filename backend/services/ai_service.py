@@ -26,42 +26,6 @@ else:
     openai_client = None
 
 
-async def generate_summary(text: str, heading: str = "", model: str = "gpt-3.5-turbo") -> str:
-    """Generate a summary for a text block using OpenAI's API"""
-    if not openai_client:
-        return "AI summary not available - OpenAI client not configured."
-    
-    try:
-        prompt = f"""
-        Summarize the following legal document text in 2-3 sentences.
-        Focus on the key obligations, rights, and important terms.
-        
-        Heading: {heading}
-        Text: {text[:2000]}  # Limit text length
-        
-        Summary:
-        """
-        
-        response = await openai_client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "You are a legal AI assistant that provides clear, concise summaries of legal document content."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=150,
-            temperature=0.3
-        )
-        
-        return response.choices[0].message.content.strip()
-        
-    except OpenAIError as e:
-        print(f"OpenAI API error in generate_summary: {str(e)}")
-        return f"Summary generation failed: {str(e)}"
-    except Exception as e:
-        print(f"Unexpected error in generate_summary: {str(e)}")
-        return "Summary generation failed due to an unexpected error."
-
-
 async def generate_document_summary(document_text: str, filename: str = "", model: str = "gpt-3.5-turbo") -> str:
     """Generate a summary for an entire document using OpenAI's API"""
     if not openai_client:
@@ -609,6 +573,11 @@ def _get_relevant_clause_types(contract_type: ContractType) -> List[ClauseType]:
         ClauseType.INDEMNIFICATION,
         ClauseType.FORCE_MAJEURE,
         ClauseType.GOVERNING_LAW,
+        ClauseType.ASSIGNMENT_RIGHTS,
+        ClauseType.AMENDMENT_PROCEDURES,
+        ClauseType.NOTICES,
+        ClauseType.ENTIRE_AGREEMENT,
+        ClauseType.SEVERABILITY,
         ClauseType.GENERAL
     ]
     
@@ -616,26 +585,54 @@ def _get_relevant_clause_types(contract_type: ContractType) -> List[ClauseType]:
     contract_specific = {
         ContractType.EMPLOYMENT: [
             ClauseType.COMPENSATION, ClauseType.TERMINATION, ClauseType.NON_COMPETE,
-            ClauseType.BENEFITS, ClauseType.WORKING_CONDITIONS, ClauseType.PROBATION
+            ClauseType.BENEFITS, ClauseType.WORKING_CONDITIONS, ClauseType.PROBATION,
+            ClauseType.SEVERANCE, ClauseType.OVERTIME_PAY, ClauseType.VACATION_POLICY,
+            ClauseType.STOCK_OPTIONS, ClauseType.BACKGROUND_CHECK
         ],
         ContractType.NDA: [
-            ClauseType.DISCLOSURE_OBLIGATIONS, ClauseType.RETURN_OF_INFORMATION
+            ClauseType.DISCLOSURE_OBLIGATIONS, ClauseType.RETURN_OF_INFORMATION,
+            ClauseType.DEFINITION_OF_CONFIDENTIAL, ClauseType.EXCEPTIONS_TO_CONFIDENTIALITY,
+            ClauseType.DURATION_OF_OBLIGATIONS
         ],
         ContractType.SERVICE_AGREEMENT: [
             ClauseType.SCOPE_OF_WORK, ClauseType.DELIVERABLES, 
-            ClauseType.PAYMENT_TERMS, ClauseType.SERVICE_LEVEL
+            ClauseType.PAYMENT_TERMS, ClauseType.SERVICE_LEVEL,
+            ClauseType.WARRANTIES, ClauseType.SERVICE_CREDITS,
+            ClauseType.DATA_PROTECTION, ClauseType.THIRD_PARTY_SERVICES,
+            ClauseType.CHANGE_MANAGEMENT, ClauseType.TERMINATION
         ],
         ContractType.CONSULTING: [
             ClauseType.SCOPE_OF_WORK, ClauseType.DELIVERABLES, 
-            ClauseType.PAYMENT_TERMS, ClauseType.SERVICE_LEVEL
+            ClauseType.PAYMENT_TERMS, ClauseType.SERVICE_LEVEL,
+            ClauseType.WARRANTIES, ClauseType.TERMINATION
         ],
         ContractType.CONTRACTOR: [
             ClauseType.SCOPE_OF_WORK, ClauseType.DELIVERABLES, 
-            ClauseType.PAYMENT_TERMS, ClauseType.TERMINATION
+            ClauseType.PAYMENT_TERMS, ClauseType.TERMINATION,
+            ClauseType.WARRANTIES
         ],
         ContractType.LEASE: [
             ClauseType.RENT, ClauseType.SECURITY_DEPOSIT, 
-            ClauseType.MAINTENANCE, ClauseType.USE_RESTRICTIONS
+            ClauseType.MAINTENANCE, ClauseType.USE_RESTRICTIONS,
+            ClauseType.UTILITIES, ClauseType.PARKING, ClauseType.PET_POLICY,
+            ClauseType.SUBLETTING, ClauseType.EARLY_TERMINATION,
+            ClauseType.RENEWAL_OPTIONS, ClauseType.PROPERTY_INSPECTION
+        ],
+        ContractType.PURCHASE: [
+            ClauseType.PAYMENT_TERMS, ClauseType.DELIVERY_TERMS,
+            ClauseType.INSPECTION_RIGHTS, ClauseType.TITLE_TRANSFER,
+            ClauseType.RISK_OF_LOSS, ClauseType.RETURNS_REFUNDS,
+            ClauseType.WARRANTIES, ClauseType.TERMINATION
+        ],
+        ContractType.PARTNERSHIP: [
+            ClauseType.PAYMENT_TERMS, ClauseType.TERMINATION,
+            ClauseType.SCOPE_OF_WORK, ClauseType.LIABILITY,
+            ClauseType.DISPUTE_RESOLUTION, ClauseType.ASSIGNMENT_RIGHTS
+        ],
+        ContractType.LICENSE: [
+            ClauseType.USE_RESTRICTIONS, ClauseType.PAYMENT_TERMS,
+            ClauseType.TERMINATION, ClauseType.WARRANTIES,
+            ClauseType.DURATION_OF_OBLIGATIONS, ClauseType.ASSIGNMENT_RIGHTS
         ]
     }
     

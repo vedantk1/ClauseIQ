@@ -21,11 +21,9 @@ Successfully implemented a comprehensive LLM-based classification system to repl
 - **File**: `backend/services/ai_service.py`
 - **New Functions**:
   - `detect_contract_type()` - LLM-based contract type detection
-  - `extract_sections_with_llm()` - Semantic section detection using AI
   - `extract_clauses_with_llm()` - Dynamic clause extraction with contract-specific prompts
   - `generate_contract_specific_summary()` - Tailored summaries for different contract types
   - `_get_relevant_clause_types()` - Contract-specific clause mapping
-  - `_fallback_section_extraction()` - Graceful fallback when AI unavailable
 
 #### 3. **Document Service Enhancement**
 
