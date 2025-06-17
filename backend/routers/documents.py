@@ -13,7 +13,6 @@ from middleware.api_standardization import APIResponse, ErrorResponse
 from middleware.versioning import versioned_response
 from services.document_service import validate_file
 from models.document import (
-    ProcessDocumentResponse,
     DocumentListResponse,
     DocumentDetailResponse
 )
@@ -199,72 +198,4 @@ async def delete_all_documents(current_user: dict = Depends(get_current_user)):
         )
 
 
-@router.post("/process-document/", response_model=ProcessDocumentResponse)
-async def process_document(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
-    """Process and store a document."""
-    validate_file(file)
-    
-    temp_file_path = None
-    
-    try:
-        # Create temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
-            temp_file_path = temp_file.name
-            content = await file.read()
-            temp_file.write(content)
-        
-        # Extract text from PDF
-        extracted_text = ""
-        with pdfplumber.open(temp_file_path) as pdf:
-            for page in pdf.pages:
-                extracted_text += page.extract_text() or ""
-        
-        if not extracted_text.strip():
-            raise HTTPException(status_code=400, detail="No text could be extracted from the PDF.")
-        
-        # Generate summary using AI service
-        from services.ai_service import generate_document_summary, is_ai_available
-        storage = get_mongo_storage()
-        user_model = storage.get_user_preferred_model(current_user["id"])
-        
-        ai_summary = "Summary not generated."
-        if is_ai_available():
-            ai_summary = await generate_document_summary(extracted_text, file.filename, user_model)
-        else:
-            ai_summary = "OpenAI client not configured. Summary not generated."
-        
-        # Create document entry
-        doc_id = str(uuid.uuid4())
-        document_data = {
-            "id": doc_id,
-            "filename": file.filename,
-            "upload_date": datetime.now().isoformat(),
-            "text": extracted_text,
-            "ai_full_summary": ai_summary,
-            "user_id": current_user["id"]
-        }
-        
-        # Save to storage
-        storage.save_document_for_user(document_data, current_user["id"])
-        
-        return ProcessDocumentResponse(
-            id=doc_id,
-            filename=file.filename,
-            full_text=extracted_text[:500] + "..." if len(extracted_text) > 500 else extracted_text,
-            summary=ai_summary
-        )
-        
-    except HTTPException:
-        raise 
-    except Exception as e:
-        print(f"Error processing document: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"An error occurred while processing the document: {str(e)}"
-        )
-    finally:
-        if temp_file_path and os.path.exists(temp_file_path):
-            try:
-                os.remove(temp_file_path)
-            except Exception as e:
-                print(f"Warning: Could not remove temporary file {temp_file_path}: {e}")
+

@@ -22,9 +22,8 @@ The AI model selection feature for ClauseIQ has been **successfully implemented*
 
 3. **AI Integration** - Updated ✅
    - `generate_summary()` function now accepts model parameter
-   - `generate_document_summary()` function now accepts model parameter
    - `/analyze/` endpoint uses user's preferred model
-   - `/process-document/` endpoint uses user's preferred model
+   - `/analyze-document/` endpoint uses user's preferred model
 
 ### **Phase 2: Frontend Implementation**
 

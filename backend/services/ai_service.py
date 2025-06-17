@@ -26,51 +26,6 @@ else:
     openai_client = None
 
 
-async def generate_document_summary(document_text: str, filename: str = "", model: str = "gpt-3.5-turbo") -> str:
-    """Generate a summary for an entire document using OpenAI's API"""
-    if not openai_client:
-        return "AI summary not available - OpenAI client not configured."
-    
-    try:
-        # Truncate text if too long (approximately 8000 characters to stay under token limits)
-        truncated_text = document_text[:8000]
-        if len(document_text) > 8000:
-            truncated_text += "\n\n[Document truncated for analysis...]"
-        
-        prompt = f"""
-        Analyze this legal document and provide a comprehensive summary that covers:
-        1. Document type and purpose
-        2. Key parties involved
-        3. Main obligations and rights
-        4. Important terms and conditions
-        5. Notable clauses or provisions
-        6. Overall risk assessment
-        
-        Document: {filename}
-        Content: {truncated_text}
-        
-        Please provide a structured summary in 4-6 paragraphs:
-        """
-        
-        response = await openai_client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "You are a legal AI assistant that provides comprehensive analysis of legal documents. Focus on identifying key terms, obligations, rights, and potential risks."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=800,
-            temperature=0.3
-        )
-        
-        return response.choices[0].message.content.strip()
-        
-    except OpenAIError as e:
-        print(f"OpenAI API error in generate_document_summary: {str(e)}")
-        return f"Document summary generation failed: {str(e)}"
-    except Exception as e:
-        print(f"Unexpected error in generate_document_summary: {str(e)}")
-        return "Document summary generation failed due to an unexpected error."
-
 
 async def generate_structured_document_summary(document_text: str, filename: str = "", model: str = "gpt-3.5-turbo") -> Dict[str, Any]:
     """Generate a structured document summary with categorized insights"""
@@ -504,6 +459,28 @@ async def generate_contract_specific_summary(document_text: str, contract_type: 
             7. Termination conditions
             8. Overall risk assessment for both parties
             """,
+            ContractType.CONSULTING: """
+            Analyze this consulting agreement and provide a comprehensive summary covering:
+            1. Consultant and client relationship details
+            2. Scope of consulting services and deliverables
+            3. Fee structure and payment schedules
+            4. Project timeline and milestones
+            5. Intellectual property ownership and usage rights
+            6. Confidentiality and non-disclosure provisions
+            7. Termination clauses and project completion terms
+            8. Overall assessment of consultant vs client obligations
+            """,
+            ContractType.CONTRACTOR: """
+            Analyze this contractor agreement and provide a comprehensive summary covering:
+            1. Contractor and hiring party relationship
+            2. Work scope, deliverables, and performance standards
+            3. Payment terms, rates, and invoicing procedures
+            4. Project timeline and deadline requirements
+            5. Independent contractor vs employee classification terms
+            6. Intellectual property and work product ownership
+            7. Termination provisions and contract completion
+            8. Overall risk assessment for contractor and hiring party
+            """,
             ContractType.LEASE: """
             Analyze this lease agreement and provide a comprehensive summary covering:
             1. Property details and rental terms
@@ -514,6 +491,39 @@ async def generate_contract_specific_summary(document_text: str, contract_type: 
             6. Maintenance and repair obligations
             7. Termination and renewal terms
             8. Overall assessment of tenant rights and obligations
+            """,
+            ContractType.PURCHASE: """
+            Analyze this purchase agreement and provide a comprehensive summary covering:
+            1. Purchase price, payment terms, and financing arrangements
+            2. Product or asset specifications and quality standards
+            3. Delivery terms, shipping responsibilities, and timelines
+            4. Inspection rights and acceptance procedures
+            5. Title transfer and risk of loss provisions
+            6. Warranty terms, guarantees, and return/refund policies
+            7. Breach remedies and dispute resolution mechanisms
+            8. Overall risk assessment for buyer and seller
+            """,
+            ContractType.PARTNERSHIP: """
+            Analyze this partnership agreement and provide a comprehensive summary covering:
+            1. Partnership structure, legal entity type, and business purpose
+            2. Partner roles, responsibilities, and management authority
+            3. Capital contributions, profit/loss distribution, and financial obligations
+            4. Decision-making processes, voting rights, and governance structure
+            5. Partner compensation, draws, and withdrawal procedures
+            6. Partnership dissolution, exit strategies, and asset distribution
+            7. Non-compete, confidentiality, and post-partnership restrictions
+            8. Overall assessment of partner rights, obligations, and risks
+            """,
+            ContractType.LICENSE: """
+            Analyze this license agreement and provide a comprehensive summary covering:
+            1. Licensed intellectual property, technology, or rights granted
+            2. Territory, field of use, and exclusivity provisions
+            3. Royalty structure, fees, and payment obligations
+            4. Term duration, renewal options, and termination triggers
+            5. Usage restrictions, compliance requirements, and performance standards
+            6. Licensor support, updates, and maintenance obligations
+            7. Infringement handling, enforcement rights, and legal protections
+            8. Overall assessment of licensor vs licensee rights and restrictions
             """
         }
         

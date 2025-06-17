@@ -137,20 +137,20 @@ Frontend will be available at: http://localhost:3000
 
 ## API Endpoints
 
-| Endpoint                | Method | Description                                  |
-| ----------------------- | ------ | -------------------------------------------- |
-| `/`                     | GET    | Health check                                 |
-| `/extract-text/`        | POST   | Extract raw text from PDF                    |
-| `/analyze/`             | POST   | Full analysis with section breakdown         |
-| `/process-document/`    | POST   | Complete document processing with AI summary |
-| `/documents/`           | GET    | List all processed documents                 |
-| `/documents/{id}`       | GET    | Get specific document                        |
-| `/documents/{id}`       | DELETE | Delete specific document (user must own it)  |
-| `/auth/register`        | POST   | User registration                            |
-| `/auth/login`           | POST   | User authentication                          |
-| `/auth/me`              | GET    | Get current user info                        |
-| `/auth/forgot-password` | POST   | Request password reset                       |
-| `/auth/reset-password`  | POST   | Reset password with token                    |
+| Endpoint                | Method | Description                                   |
+| ----------------------- | ------ | --------------------------------------------- |
+| `/`                     | GET    | Health check                                  |
+| `/extract-text/`        | POST   | Extract raw text from PDF                     |
+| `/analyze/`             | POST   | Full analysis with section breakdown          |
+| `/analyze-document/`    | POST   | Complete document analysis with AI processing |
+| `/documents/`           | GET    | List all processed documents                  |
+| `/documents/{id}`       | GET    | Get specific document                         |
+| `/documents/{id}`       | DELETE | Delete specific document (user must own it)   |
+| `/auth/register`        | POST   | User registration                             |
+| `/auth/login`           | POST   | User authentication                           |
+| `/auth/me`              | GET    | Get current user info                         |
+| `/auth/forgot-password` | POST   | Request password reset                        |
+| `/auth/reset-password`  | POST   | Reset password with token                     |
 
 ## Testing
 

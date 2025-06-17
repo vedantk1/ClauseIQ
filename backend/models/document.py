@@ -6,13 +6,6 @@ from typing import List, Optional, Dict, Any
 from .common import Clause, RiskSummary
 
 
-class ProcessDocumentResponse(BaseModel):
-    id: str
-    filename: str
-    full_text: str
-    summary: str
-
-
 class DocumentListItem(BaseModel):
     id: str
     filename: str
