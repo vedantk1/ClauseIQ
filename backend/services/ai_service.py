@@ -5,11 +5,12 @@ ARCHITECTURE:
 This is the main orchestrator for AI capabilities in ClauseIQ. It provides high-level
 AI functions while delegating utilities to specialized modules in services/ai/.
 
-RECENT IMPROVEMENTS (v1.5):
-- Refactored from 948-line monolith to modular 723-line orchestrator (24% reduction)
+REFACTORING SUCCESS (v2.0):
+- Refactored from 948-line monolith to modular 676-line orchestrator (29% reduction)
 - Extracted utilities to services/ai/ package for better maintainability
 - Added lazy imports and graceful fallbacks for optional dependencies
-- Maintained 100% backward compatibility with legacy wrapper functions
+- Maintained 100% backward compatibility via smart module-level imports
+- Eliminated code duplication by removing redundant wrapper functions
 - Improved startup performance with modular loading
 
 TOKEN MANAGEMENT:
@@ -22,13 +23,23 @@ TOKEN MANAGEMENT:
 The old approach (8,000 chars ≈ 2,000 tokens) had up to 60% estimation error.
 The new token-based approach provides exact token counts regardless of text complexity.
 
+BACKWARD COMPATIBILITY:
+All existing imports continue to work unchanged! The module imports utilities from
+specialized modules at the top level, so legacy code works seamlessly:
+
+    from services.ai_service import get_token_count  # ✅ Works perfectly
+    
+This is the SAME function as:
+    
+    from services.ai.token_utils import get_token_count  # ✅ Direct import
+
 MIGRATION:
-For new code, prefer importing utilities from services/ai/ modules:
+For new code, prefer direct imports from services/ai/ modules for clarity:
 - services.ai.client_manager for OpenAI client management
 - services.ai.token_utils for token counting and text processing
 - services.ai.contract_utils for contract type utilities
 
-Legacy imports from this module continue to work for backward compatibility.
+But existing code doesn't need to change - it works perfectly as-is!
 """
 import asyncio
 import json
