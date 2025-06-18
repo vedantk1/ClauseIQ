@@ -50,11 +50,12 @@ async def process_document_with_llm(document_text: str, filename: str = "", mode
     Returns:
         Tuple of (contract_type, clauses)
     """
+    # MIGRATED: Using new modular AI services for better maintainability
     from services.ai_service import (
         detect_contract_type, 
         extract_clauses_with_llm,
-        is_ai_available
     )
+    from services.ai.client_manager import is_ai_available  # New modular import
     
     if not is_ai_available():
         raise Exception("AI processing is not available. Please check OpenAI API configuration.")
@@ -80,5 +81,6 @@ async def process_document_with_llm(document_text: str, filename: str = "", mode
 
 def is_llm_processing_available() -> bool:
     """Check if LLM-based document processing is available."""
-    from services.ai_service import is_ai_available
+    # MIGRATED: Using new modular AI client manager
+    from services.ai.client_manager import is_ai_available
     return is_ai_available()

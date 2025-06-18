@@ -1,18 +1,7 @@
 """
 AI processing and OpenAI integration service.
 
-ARCHITECTURE:
-This is the main orchestrator for AI capabilities in ClauseIQ. It provides high-level
-AI functions while delegating utilities to specialized modules in services/ai/.
-
-RECENT IMPROVEMENTS (v1.5):
-- Refactored from 948-line monolith to modular 723-line orchestrator (24% reduction)
-- Extracted utilities to services/ai/ package for better maintainability
-- Added lazy imports and graceful fallbacks for optional dependencies
-- Maintained 100% backward compatibility with legacy wrapper functions
-- Improved startup performance with modular loading
-
-TOKEN MANAGEMENT:
+RECENT IMPROVEMENTS:
 - Replaced character-based truncation with accurate token-based truncation using tiktoken
 - Added dynamic token budget calculation based on model context windows
 - Implemented sentence-boundary preservation during truncation when possible
@@ -21,50 +10,36 @@ TOKEN MANAGEMENT:
 
 The old approach (8,000 chars ≈ 2,000 tokens) had up to 60% estimation error.
 The new token-based approach provides exact token counts regardless of text complexity.
-
-MIGRATION:
-For new code, prefer importing utilities from services/ai/ modules:
-- services.ai.client_manager for OpenAI client management
-- services.ai.token_utils for token counting and text processing
-- services.ai.contract_utils for contract type utilities
-
-Legacy imports from this module continue to work for backward compatibility.
 """
 import asyncio
 import json
 import re
 from typing import Optional, List, Dict, Any
+import tiktoken
+from openai import AsyncOpenAI, OpenAIError
+from settings import get_settings
+from models.common import Clause, RiskLevel, ClauseType
+from clauseiq_types.common import ContractType
 
-# Lazy imports for dependencies that might not be available
-def _get_models():
-    """Lazy import of model types."""
-    try:
-        from models.common import Clause, RiskLevel, ClauseType
-        from clauseiq_types.common import ContractType
-        return Clause, RiskLevel, ClauseType, ContractType
-    except ImportError:
-        return None, None, None, None
 
-# Import utilities from the new modular structure
-from .ai.client_manager import get_openai_client, is_ai_available
-from .ai.token_utils import (
-    get_token_count, 
-    truncate_text_by_tokens, 
-    calculate_token_budget,
-    get_optimal_response_tokens,
-    get_model_capabilities,
-    print_model_comparison
-)
-from .ai.contract_utils import get_relevant_clause_types, get_contract_type_mapping
+# Initialize OpenAI client
+settings = get_settings()
+api_key = settings.openai.api_key
 
-# Get model types
-Clause, RiskLevel, ClauseType, ContractType = _get_models()
+if api_key and api_key != "your_api_key_here" and api_key.startswith("sk-"):
+    openai_client = AsyncOpenAI(api_key=api_key)
+    print("OpenAI client initialized successfully")
+elif api_key and api_key != "your_api_key_here":
+    print("Warning: Invalid OpenAI API key format. AI-powered summaries will not be available.")
+    openai_client = None
+else:
+    print("No valid OpenAI API key provided. AI-powered summaries will not be available.")
+    openai_client = None
 
 
 
 async def generate_structured_document_summary(document_text: str, filename: str = "", model: str = "gpt-3.5-turbo") -> Dict[str, Any]:
     """Generate a structured document summary with categorized insights"""
-    openai_client = get_openai_client()
     if not openai_client:
         return {
             "overview": "AI summary not available - OpenAI client not configured.",
@@ -178,9 +153,8 @@ async def generate_structured_document_summary(document_text: str, filename: str
         }
 
 
-async def analyze_clause(clause, model: str = "gpt-3.5-turbo"):
+async def analyze_clause(clause: Clause, model: str = "gpt-3.5-turbo") -> Clause:
     """Analyze a clause for risk assessment and generate recommendations."""
-    openai_client = get_openai_client()
     if not openai_client:
         # Return clause with basic analysis if no AI available
         clause.summary = "AI analysis not available"
@@ -190,6 +164,23 @@ async def analyze_clause(clause, model: str = "gpt-3.5-turbo"):
         return clause
     
     try:
+        prompt = f"""
+        Analyze this legal clause and provide:
+        1. A brief summary (1-2 sentences)
+        2. Risk level assessment (low/medium/high) with justification
+        3. 2-3 specific recommendations for improvement or consideration
+        4. 2-3 key points to note
+        
+        Clause Type: {clause.clause_type}
+        Clause Text: {clause.text[:1500]}
+        
+        Format your response as:
+        SUMMARY: [brief summary]
+        RISK: [low/medium/high] - [justification]
+        RECOMMENDATIONS: [recommendation 1] | [recommendation 2] | [recommendation 3]
+        KEY_POINTS: [point 1] | [point 2] | [point 3]
+        """
+        
         response = await openai_client.chat.completions.create(
             model=model,
             messages=[
@@ -256,7 +247,6 @@ async def analyze_clause(clause, model: str = "gpt-3.5-turbo"):
 
 async def detect_contract_type(document_text: str, filename: str = "", model: str = "gpt-3.5-turbo") -> ContractType:
     """Detect contract type using LLM analysis."""
-    openai_client = get_openai_client()
     if not openai_client:
         return ContractType.OTHER
     
@@ -307,8 +297,19 @@ async def detect_contract_type(document_text: str, filename: str = "", model: st
         
         detected_type = response.choices[0].message.content.strip().lower()
         
-        # Map response to enum value using the utility function
-        type_mapping = get_contract_type_mapping()
+        # Map response to enum value
+        type_mapping = {
+            "employment": ContractType.EMPLOYMENT,
+            "nda": ContractType.NDA,
+            "service_agreement": ContractType.SERVICE_AGREEMENT,
+            "lease": ContractType.LEASE,
+            "purchase": ContractType.PURCHASE,
+            "partnership": ContractType.PARTNERSHIP,
+            "license": ContractType.LICENSE,
+            "consulting": ContractType.CONSULTING,
+            "contractor": ContractType.CONTRACTOR,
+            "other": ContractType.OTHER
+        }
         
         return type_mapping.get(detected_type, ContractType.OTHER)
         
@@ -319,13 +320,12 @@ async def detect_contract_type(document_text: str, filename: str = "", model: st
 
 async def extract_clauses_with_llm(document_text: str, contract_type: ContractType, model: str = "gpt-3.5-turbo") -> List[Clause]:
     """Extract and classify clauses using LLM analysis."""
-    openai_client = get_openai_client()
     if not openai_client:
         return []
     
     try:
         # Get contract-specific clause types
-        relevant_clause_types = get_relevant_clause_types(contract_type)
+        relevant_clause_types = _get_relevant_clause_types(contract_type)
         clause_types_str = ", ".join([ct.value for ct in relevant_clause_types])
         
         # Use maximum token allocation for comprehensive clause extraction and analysis
@@ -484,7 +484,6 @@ async def extract_clauses_with_llm(document_text: str, contract_type: ContractTy
 
 async def generate_contract_specific_summary(document_text: str, contract_type: ContractType, filename: str = "", model: str = "gpt-3.5-turbo") -> str:
     """Generate a contract-type-specific summary using LLM."""
-    openai_client = get_openai_client()
     if not openai_client:
         return "AI summary not available - OpenAI client not configured."
     
@@ -655,11 +654,295 @@ async def generate_contract_specific_summary(document_text: str, contract_type: 
         return f"Summary generation failed: {str(e)}"
 
 
-# =============================================================================
-# LEGACY UTILITY FUNCTIONS - KEPT FOR BACKWARD COMPATIBILITY
+def is_ai_available() -> bool:
+    """Check if AI processing is available (OpenAI client is configured)"""
+    return openai_client is not None
+
+
 def _get_relevant_clause_types(contract_type: ContractType) -> List[ClauseType]:
     """Get relevant clause types for a specific contract type."""
-    return get_relevant_clause_types(contract_type)
+    
+    # Universal clauses applicable to most contracts
+    universal_clauses = [
+        ClauseType.CONFIDENTIALITY,
+        ClauseType.INTELLECTUAL_PROPERTY,
+        ClauseType.DISPUTE_RESOLUTION,
+        ClauseType.LIABILITY,
+        ClauseType.INDEMNIFICATION,
+        ClauseType.FORCE_MAJEURE,
+        ClauseType.GOVERNING_LAW,
+        ClauseType.ASSIGNMENT_RIGHTS,
+        ClauseType.AMENDMENT_PROCEDURES,
+        ClauseType.NOTICES,
+        ClauseType.ENTIRE_AGREEMENT,
+        ClauseType.SEVERABILITY,
+        ClauseType.GENERAL
+    ]
+    
+    # Contract-specific clauses
+    contract_specific = {
+        ContractType.EMPLOYMENT: [
+            ClauseType.COMPENSATION, ClauseType.TERMINATION, ClauseType.NON_COMPETE,
+            ClauseType.BENEFITS, ClauseType.WORKING_CONDITIONS, ClauseType.PROBATION,
+            ClauseType.SEVERANCE, ClauseType.OVERTIME_PAY, ClauseType.VACATION_POLICY,
+            ClauseType.STOCK_OPTIONS, ClauseType.BACKGROUND_CHECK
+        ],
+        ContractType.NDA: [
+            ClauseType.DISCLOSURE_OBLIGATIONS, ClauseType.RETURN_OF_INFORMATION,
+            ClauseType.DEFINITION_OF_CONFIDENTIAL, ClauseType.EXCEPTIONS_TO_CONFIDENTIALITY,
+            ClauseType.DURATION_OF_OBLIGATIONS
+        ],
+        ContractType.SERVICE_AGREEMENT: [
+            ClauseType.SCOPE_OF_WORK, ClauseType.DELIVERABLES, 
+            ClauseType.PAYMENT_TERMS, ClauseType.SERVICE_LEVEL,
+            ClauseType.WARRANTIES, ClauseType.SERVICE_CREDITS,
+            ClauseType.DATA_PROTECTION, ClauseType.THIRD_PARTY_SERVICES,
+            ClauseType.CHANGE_MANAGEMENT, ClauseType.TERMINATION
+        ],
+        ContractType.CONSULTING: [
+            ClauseType.SCOPE_OF_WORK, ClauseType.DELIVERABLES, 
+            ClauseType.PAYMENT_TERMS, ClauseType.SERVICE_LEVEL,
+            ClauseType.WARRANTIES, ClauseType.TERMINATION
+        ],
+        ContractType.CONTRACTOR: [
+            ClauseType.SCOPE_OF_WORK, ClauseType.DELIVERABLES, 
+            ClauseType.PAYMENT_TERMS, ClauseType.TERMINATION,
+            ClauseType.WARRANTIES
+        ],
+        ContractType.LEASE: [
+            ClauseType.RENT, ClauseType.SECURITY_DEPOSIT, 
+            ClauseType.MAINTENANCE, ClauseType.USE_RESTRICTIONS,
+            ClauseType.UTILITIES, ClauseType.PARKING, ClauseType.PET_POLICY,
+            ClauseType.SUBLETTING, ClauseType.EARLY_TERMINATION,
+            ClauseType.RENEWAL_OPTIONS, ClauseType.PROPERTY_INSPECTION
+        ],
+        ContractType.PURCHASE: [
+            ClauseType.PAYMENT_TERMS, ClauseType.DELIVERY_TERMS,
+            ClauseType.INSPECTION_RIGHTS, ClauseType.TITLE_TRANSFER,
+            ClauseType.RISK_OF_LOSS, ClauseType.RETURNS_REFUNDS,
+            ClauseType.WARRANTIES, ClauseType.TERMINATION
+        ],
+        ContractType.PARTNERSHIP: [
+            ClauseType.PAYMENT_TERMS, ClauseType.TERMINATION,
+            ClauseType.SCOPE_OF_WORK, ClauseType.LIABILITY,
+            ClauseType.DISPUTE_RESOLUTION, ClauseType.ASSIGNMENT_RIGHTS
+        ],
+        ContractType.LICENSE: [
+            ClauseType.USE_RESTRICTIONS, ClauseType.PAYMENT_TERMS,
+            ClauseType.TERMINATION, ClauseType.WARRANTIES,
+            ClauseType.DURATION_OF_OBLIGATIONS, ClauseType.ASSIGNMENT_RIGHTS
+        ]
+    }
+    
+    specific_clauses = contract_specific.get(contract_type, [])
+    return specific_clauses + universal_clauses
 
-# End of ai_service.py - Modular AI orchestrator
-# For utility functions, use the specialized modules in services/ai/
+
+def get_token_count(text: str, model: str = "gpt-3.5-turbo") -> int:
+    """Get accurate token count for a given text and model"""
+    try:
+        encoding = tiktoken.encoding_for_model(model)
+        return len(encoding.encode(text))
+    except KeyError:
+        # Fallback to cl100k_base encoding for unknown models
+        encoding = tiktoken.get_encoding("cl100k_base")
+        return len(encoding.encode(text))
+
+
+def truncate_text_by_tokens(text: str, max_tokens: int, model: str = "gpt-3.5-turbo", preserve_sentences: bool = True) -> str:
+    """
+    Truncate text to fit within token limit while optionally preserving sentence boundaries.
+    
+    Args:
+        text: Text to truncate
+        max_tokens: Maximum number of tokens allowed
+        model: Model name for accurate tokenization
+        preserve_sentences: If True, truncate at sentence boundaries when possible
+    
+    Returns:
+        Truncated text with truncation notice if text was shortened
+    """
+    try:
+        encoding = tiktoken.encoding_for_model(model)
+    except KeyError:
+        # Fallback to cl100k_base encoding for unknown models
+        encoding = tiktoken.get_encoding("cl100k_base")
+    
+    tokens = encoding.encode(text)
+    
+    if len(tokens) <= max_tokens:
+        return text
+    
+    # Truncate to max_tokens
+    truncated_tokens = tokens[:max_tokens]
+    truncated_text = encoding.decode(truncated_tokens)
+    
+    # If preserve_sentences is True, try to cut at sentence boundary
+    if preserve_sentences:
+        # Find the last complete sentence
+        sentences = re.split(r'[.!?]+\s+', truncated_text)
+        if len(sentences) > 1:
+            # Keep all complete sentences except the last incomplete one
+            complete_text = '. '.join(sentences[:-1]) + '.'
+            # Verify the complete text still fits within token limit
+            if get_token_count(complete_text + "\n\n[Document truncated for analysis...]", model) <= max_tokens:
+                truncated_text = complete_text
+    
+    return truncated_text + "\n\n[Document truncated for analysis...]"
+
+
+def calculate_token_budget(model: str = "gpt-3.5-turbo", response_tokens: int = 1000, safety_margin: int = None) -> int:
+    """
+    Calculate available tokens for input text based on model context window.
+    Uses aggressive allocation for modern models to maximize legal analysis capability.
+    
+    Args:
+        model: Model name to get context window size
+        response_tokens: Expected tokens needed for response
+        safety_margin: Safety margin for prompt overhead (auto-calculated if None)
+    
+    Returns:
+        Available tokens for input text
+    """
+    # Updated model context windows (accurate as of 2025)
+    context_windows = {
+        # GPT-3.5 family (legacy)
+        "gpt-3.5-turbo": 16384,
+        "gpt-3.5-turbo-16k": 16384,
+        
+        # GPT-4 family (standard)
+        "gpt-4": 8192,
+        "gpt-4-32k": 32768,
+        
+        # GPT-4 modern (high-capacity)
+        "gpt-4-turbo": 128000,
+        "gpt-4-turbo-preview": 128000,
+        "gpt-4o": 128000,
+        "gpt-4o-mini": 128000,
+        
+        # Future models (when available)
+        "gpt-5": 200000,
+        "claude-3-opus": 200000,
+        "claude-3-sonnet": 200000,
+        "claude-3-haiku": 200000,
+    }
+    
+    max_context = context_windows.get(model, 8192)  # More reasonable fallback
+    
+    # Adaptive safety margins based on model capacity
+    if safety_margin is None:
+        if max_context >= 128000:  # Modern high-capacity models
+            safety_margin = 1000  # Can afford larger margin
+        elif max_context >= 32000:  # Mid-capacity models
+            safety_margin = 500
+        else:  # Legacy models
+            safety_margin = 200
+    
+    available_tokens = max_context - response_tokens - safety_margin
+    
+    # Ensure we don't go negative
+    return max(available_tokens, 1000)
+
+
+def get_optimal_response_tokens(use_case: str, model: str = "gpt-3.5-turbo") -> int:
+    """
+    Get optimal response token allocation based on use case and model capabilities.
+    Maximizes output quality for billion-dollar legal analysis.
+    
+    Args:
+        use_case: Type of analysis (summary, extraction, classification, etc.)
+        model: Model being used
+    
+    Returns:
+        Optimal response token count
+    """
+    # Base allocations by use case
+    base_allocations = {
+        "classification": 50,      # Simple classification tasks
+        "summary": 2000,          # Comprehensive document summaries  
+        "extraction": 8000,       # Detailed clause extraction with relationships
+        "analysis": 5000,         # Deep legal analysis and risk assessment
+        "structured": 3000,       # Structured JSON responses
+    }
+    
+    base_tokens = base_allocations.get(use_case, 1000)
+    
+    # Model multipliers - modern models can provide much richer analysis
+    context_windows = {
+        "gpt-3.5-turbo": 16384,
+        "gpt-4": 8192, 
+        "gpt-4-32k": 32768,
+        "gpt-4-turbo": 128000,
+        "gpt-4o": 128000,
+        "gpt-4o-mini": 128000,
+    }
+    
+    model_context = context_windows.get(model, 8192)
+    
+    # Scale up response tokens for high-capacity models
+    if model_context >= 128000:  # Modern high-capacity
+        multiplier = 2.0  # Can afford much richer responses
+    elif model_context >= 32000:  # Mid-capacity
+        multiplier = 1.5
+    else:  # Legacy models
+        multiplier = 1.0
+    
+    return int(base_tokens * multiplier)
+
+
+def get_model_capabilities(model: str = "gpt-4o") -> Dict[str, Any]:
+    """
+    Get detailed capabilities for a given model to show users what ClauseIQ can do.
+    """
+    capabilities = {}
+    
+    # Calculate capabilities for each use case
+    use_cases = ["classification", "summary", "extraction", "analysis", "structured"]
+    
+    for use_case in use_cases:
+        response_tokens = get_optimal_response_tokens(use_case, model)
+        input_tokens = calculate_token_budget(model, response_tokens=response_tokens)
+        
+        # Estimate document capacity
+        chars_capacity = input_tokens * 4  # Conservative estimate
+        pages_capacity = chars_capacity / 2000  # ~2000 chars per page
+        
+        capabilities[use_case] = {
+            "response_tokens": response_tokens,
+            "input_tokens": input_tokens,
+            "estimated_pages": round(pages_capacity, 1),
+            "estimated_characters": chars_capacity
+        }
+    
+    return {
+        "model": model,
+        "total_context": calculate_token_budget(model, 0, 0) + 1000,  # Approximate total
+        "capabilities": capabilities,
+        "competitive_advantage": f"Can analyze {capabilities['extraction']['estimated_pages']:.0f}+ page contracts in full detail"
+    }
+
+
+def print_model_comparison():
+    """Print a comparison of model capabilities for strategic planning"""
+    models = ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]
+    
+    print("\n🚀 ClauseIQ Model Capabilities Analysis")
+    print("=" * 80)
+    
+    for model in models:
+        caps = get_model_capabilities(model)
+        extraction_caps = caps["capabilities"]["extraction"]
+        
+        print(f"\n📊 {model.upper()}:")
+        print(f"   Contract Analysis: Up to {extraction_caps['estimated_pages']:.0f} pages")
+        print(f"   Detailed Extraction: {extraction_caps['response_tokens']:,} response tokens")
+        print(f"   Input Capacity: {extraction_caps['input_tokens']:,} tokens")
+        print(f"   {caps['competitive_advantage']}")
+    
+    print("\n💡 Strategic Advantage:")
+    best_model = get_model_capabilities("gpt-4o")
+    best_pages = best_model["capabilities"]["extraction"]["estimated_pages"]
+    print(f"   - Analyze entire {best_pages:.0f}+ page contracts without truncation")
+    print(f"   - Comprehensive clause relationship analysis")
+    print(f"   - Professional-grade legal insights")
+    print(f"   - Competitive differentiation: 'Full document analysis, not snippets'")

@@ -36,7 +36,9 @@ async def update_contract_types():
     try:
         # Import after path setup
         from database.service import DocumentService
-        from services.ai_service import detect_contract_type, is_ai_available
+        # MIGRATED: Using new modular AI services
+        from services.ai_service import detect_contract_type  # Keep main function from main service
+        from services.ai.client_manager import is_ai_available  # Use new modular import
         from models.common import ContractType
         
         # Check if AI is available

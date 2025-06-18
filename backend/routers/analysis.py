@@ -12,6 +12,7 @@ from database.service import get_document_service
 from middleware.api_standardization import APIResponse, create_success_response, create_error_response
 from middleware.versioning import versioned_response, deprecated_endpoint
 from services.document_service import validate_file, process_document_with_llm, is_llm_processing_available
+# PHASE 3 MIGRATION: Main AI functions still from ai_service for stability
 from services.ai_service import generate_contract_specific_summary, generate_structured_document_summary
 from models.analysis import ClauseAnalysisResponse
 from models.document import AnalyzeDocumentResponse
@@ -180,6 +181,7 @@ async def analyze_clauses_only(
             
             print("Using LLM-based clause extraction")
             # First detect contract type to get relevant clause types
+            # MIGRATED: Keep main functions from ai_service for stability
             from services.ai_service import detect_contract_type, extract_clauses_with_llm
             contract_type = await detect_contract_type(extracted_text, file.filename, user_model)
             analyzed_clauses = await extract_clauses_with_llm(extracted_text, contract_type, user_model)
@@ -256,6 +258,7 @@ async def get_document_clauses(
             )
         
         # Use LLM-based clause extraction
+        # MIGRATED: Keep main functions from ai_service for API stability
         from services.ai_service import extract_clauses_with_llm, detect_contract_type
         
         # Detect contract type first (or use saved one if available)
