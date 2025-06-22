@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     email_from: EmailStr = Field("noreply@legalai.com", alias="EMAIL_FROM")
     email_from_name: str = Field("Legal AI", alias="EMAIL_FROM_NAME")
     
+    # Pinecone Configuration
+    pinecone_api_key: str = Field("your-pinecone-api-key", alias="PINECONE_API_KEY")
+    pinecone_environment: str = Field("us-east-1", alias="PINECONE_ENVIRONMENT")
+    
     # Security Configuration
     password_reset_token_expire_minutes: int = Field(30, alias="PASSWORD_RESET_TOKEN_EXPIRE_MINUTES")
     frontend_url: str = Field("http://localhost:3000", alias="FRONTEND_URL")
@@ -96,6 +100,14 @@ class Settings(BaseSettings):
             'uri': self.mongodb_uri,
             'database': self.mongodb_database,
             'collection': self.mongodb_collection
+        })()
+    
+    @property
+    def pinecone(self):
+        """Pinecone configuration."""
+        return type('Pinecone', (), {
+            'api_key': self.pinecone_api_key,
+            'environment': self.pinecone_environment
         })()
     
     @property

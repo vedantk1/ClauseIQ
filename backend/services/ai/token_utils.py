@@ -5,6 +5,26 @@ Extracted from ai_service.py for better maintainability.
 from typing import Dict, Any
 
 
+def _map_model_for_tokenization(model: str) -> str:
+    """
+    Map custom model names to tiktoken-compatible model names.
+    
+    Args:
+        model: The model name to map
+        
+    Returns:
+        A tiktoken-compatible model name
+    """
+    model_mapping = {
+        "gpt-4.1-nano": "gpt-4",
+        "gpt-4.1-mini": "gpt-4", 
+        "gpt-4o-mini": "gpt-4",
+        "gpt-4o": "gpt-4",
+        # Add more mappings as needed
+    }
+    return model_mapping.get(model, model)
+
+
 def get_token_count(text: str, model: str = "gpt-3.5-turbo") -> int:
     """
     Get accurate token count for text using tiktoken.
@@ -18,18 +38,18 @@ def get_token_count(text: str, model: str = "gpt-3.5-turbo") -> int:
     """
     try:
         import tiktoken
-        encoding = tiktoken.encoding_for_model(model)
+        # Map custom model names to tiktoken-compatible names
+        mapped_model = _map_model_for_tokenization(model)
+        encoding = tiktoken.encoding_for_model(mapped_model)
         return len(encoding.encode(text))
-    except ImportError:
-        # Fallback estimation if tiktoken not available
-        return len(text) // 4
-    except KeyError:
-        # Fallback to cl100k_base for unknown models
+    except (ImportError, KeyError, ValueError) as e:
+        # Fallback to cl100k_base for unknown models or any other error
         try:
             import tiktoken
             encoding = tiktoken.get_encoding("cl100k_base")
             return len(encoding.encode(text))
         except ImportError:
+            # Ultimate fallback: rough estimation
             return len(text) // 4
 
 
@@ -58,11 +78,13 @@ def truncate_text_by_tokens(text: str, max_tokens: int, model: str = "gpt-3.5-tu
         # Simple character-based truncation with binary search
         try:
             import tiktoken
-            encoding = tiktoken.encoding_for_model(model)
+            # Map custom model names to tiktoken-compatible names
+            mapped_model = _map_model_for_tokenization(model)
+            encoding = tiktoken.encoding_for_model(mapped_model)
             tokens = encoding.encode(text)
             truncated_tokens = tokens[:max_tokens]
             return encoding.decode(truncated_tokens)
-        except ImportError:
+        except (ImportError, KeyError, ValueError):
             # Fallback to character estimation
             chars_per_token = 4
             max_chars = max_tokens * chars_per_token
@@ -83,11 +105,13 @@ def truncate_text_by_tokens(text: str, max_tokens: int, model: str = "gpt-3.5-tu
     if not result and sentences:
         try:
             import tiktoken
-            encoding = tiktoken.encoding_for_model(model)
+            # Map custom model names to tiktoken-compatible names
+            mapped_model = _map_model_for_tokenization(model)
+            encoding = tiktoken.encoding_for_model(mapped_model)
             tokens = encoding.encode(sentences[0])
             truncated_tokens = tokens[:max_tokens]
             result = encoding.decode(truncated_tokens)
-        except ImportError:
+        except (ImportError, KeyError, ValueError):
             chars_per_token = 4
             max_chars = max_tokens * chars_per_token
             result = sentences[0][:max_chars]

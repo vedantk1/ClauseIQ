@@ -62,9 +62,30 @@ class DocumentService:
         return False
     
     async def delete_document_for_user(self, doc_id: str, user_id: str) -> bool:
-        """Delete document for specific user."""
-        db = await self._get_db()
-        return await db.delete_document(doc_id, user_id)
+        """Delete document for specific user and clean up RAG data."""
+        try:
+            # First, clean up RAG data from Supabase
+            try:
+                from services.rag_service import get_rag_service
+                rag_service = get_rag_service()
+                await rag_service.delete_document_from_rag(doc_id, user_id)
+                logger.info(f"Cleaned up RAG data for document {doc_id}")
+            except Exception as e:
+                logger.warning(f"Could not clean up RAG data for document {doc_id}: {e}")
+                # Continue with document deletion even if RAG cleanup fails
+            
+            # Then delete from MongoDB
+            db = await self._get_db()
+            result = await db.delete_document(doc_id, user_id)
+            
+            if result:
+                logger.info(f"Successfully deleted document {doc_id} for user {user_id}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error deleting document {doc_id}: {e}")
+            return False
     
     async def delete_all_documents_for_user(self, user_id: str) -> int:
         """Delete all documents for user."""
@@ -347,6 +368,58 @@ class DocumentService:
         await db.save_user_interactions(document_id, user_id, existing_interactions)
         
         return True
+    
+    async def update_document_rag_metadata(self, doc_id: str, user_id: str, rag_data: Dict[str, Any]) -> bool:
+        """Update document with RAG processing metadata."""
+        db = await self._get_db()
+        
+        # Update document with RAG metadata (accept all fields from rag_data)
+        rag_metadata = {
+            "rag_processed": rag_data.get("rag_processed", True),
+            "ready_for_chat": rag_data.get("ready_for_chat", False),
+            "text_length": rag_data.get("text_length"),
+            "chunk_count": rag_data.get("chunk_count", 0),
+            "processing_status": rag_data.get("processing_status", "completed"),
+            "processed_at": rag_data.get("processed_at"),
+            "rag_vector_store_id": rag_data.get("vector_store_id"),
+            "rag_file_id": rag_data.get("file_id"),
+            "rag_chunk_count": rag_data.get("chunk_count", 0),
+            "rag_processed_at": datetime.now().isoformat(),
+            "pinecone_stored": rag_data.get("pinecone_stored", False),
+            "chunk_ids": rag_data.get("chunk_ids", []),
+            "embedding_model": rag_data.get("embedding_model"),
+            "storage_service": rag_data.get("storage_service")
+        }
+        
+        # Remove None values to avoid overwriting with null
+        rag_metadata = {k: v for k, v in rag_metadata.items() if v is not None}
+        
+        # Use update operation instead of save to avoid duplicate key error
+        success = await db.update_document(doc_id, user_id, rag_metadata)
+        return success
+    
+    async def mark_document_for_rag_reprocessing(self, doc_id: str, user_id: str) -> bool:
+        """Mark document as needing RAG reprocessing due to failure."""
+        db = await self._get_db()
+        document = await db.get_document(doc_id, user_id)
+        if not document:
+            return False
+        
+        # Mark for reprocessing
+        document.update({
+            "rag_processed": False,
+            "rag_needs_reprocessing": True,
+            "rag_last_error": datetime.now().isoformat()
+        })
+        
+        await db.save_document(document)
+        return True
+    
+    async def get_documents_needing_rag_processing(self, user_id: str) -> List[Dict[str, Any]]:
+        """Get documents that need RAG processing."""
+        # This would need to be implemented in the database interface
+        # For now, return empty list
+        return []
     
     # Health check
     async def get_database_info(self) -> Dict[str, Any]:

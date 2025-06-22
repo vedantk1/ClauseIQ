@@ -4,6 +4,7 @@ Document analysis routes.
 import os
 import tempfile
 import uuid
+import logging
 from datetime import datetime
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Request
 import pdfplumber
@@ -14,12 +15,15 @@ from middleware.versioning import versioned_response, deprecated_endpoint
 from services.document_service import validate_file, process_document_with_llm, is_llm_processing_available
 # PHASE 3 MIGRATION: Main AI functions still from ai_service for stability
 from services.ai_service import generate_contract_specific_summary, generate_structured_document_summary
+# RAG integration for chat functionality
+from services.rag_service import get_rag_service
 from models.analysis import ClauseAnalysisResponse
 from models.document import AnalyzeDocumentResponse
 from models.interaction import UserInteractionRequest, NoteRequest
 from clauseiq_types.common import RiskLevel, Clause, RiskSummary, ContractType
 
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["analysis"])
 
 
@@ -99,8 +103,42 @@ async def analyze_document(
                 "user_id": current_user["id"]
             }
             
-            # Save to storage
-            await service.save_document_for_user(document_data, current_user["id"])
+            # Process RAG before saving document to ensure it happens before PDF cleanup
+            try:
+                rag_service = get_rag_service()
+                logger.info(f"Starting RAG processing for document {doc_id}")
+                
+                rag_data = await rag_service.process_document_for_rag(
+                    document_id=doc_id,
+                    text=extracted_text,
+                    filename=file.filename,
+                    user_id=current_user["id"]
+                )
+                
+                # Update document with RAG metadata
+                if rag_data:
+                    document_data["rag_processed"] = True
+                    document_data["rag_vector_store_id"] = rag_data.get("vector_store_id")
+                    document_data["rag_file_id"] = rag_data.get("file_id")
+                    document_data["rag_chunk_count"] = rag_data.get("chunk_count", 0)
+                    logger.info(f"Document {doc_id} processed for RAG successfully with {rag_data.get('chunk_count', 0)} chunks")
+                else:
+                    logger.warning(f"RAG processing returned no data for document {doc_id}")
+                    
+            except Exception as rag_error:
+                # RAG processing failure should not break document analysis
+                logger.warning(f"RAG processing failed for document {doc_id}: {rag_error}")
+                document_data["rag_processed"] = False
+                # Continue without RAG for now
+            
+            # Save to storage with RAG metadata included
+            logger.info(f"Saving document {doc_id} to database...")
+            try:
+                await service.save_document_for_user(document_data, current_user["id"])
+                logger.info(f"Document {doc_id} saved successfully to database")
+            except Exception as save_error:
+                logger.error(f"Failed to save document {doc_id}: {save_error}")
+                raise save_error
             
             # Return response with clauses and summary
             response_data = {
@@ -387,6 +425,42 @@ async def analyze_document_unified(
             
             # Save unified document to storage in one operation
             await service.save_document_for_user(document_data, current_user["id"])
+            
+            # **ARCHITECTURAL FIX**: Automatically process document for RAG/Chat
+            # This ensures every uploaded document is immediately ready for chat
+            try:
+                from services.rag_service import RAGService
+                rag_service = RAGService()
+                
+                # Process document for RAG (embeddings, chunking, etc.)
+                rag_result = await rag_service.process_document_for_rag(
+                    doc_id, extracted_text, file.filename, current_user["id"]
+                )
+                
+                # Update document with RAG processing status
+                if rag_result and rag_result.get("pinecone_stored", False):
+                    # Add RAG metadata to document
+                    rag_metadata = {
+                        "ready_for_chat": True,
+                        "rag_processed": True,
+                        "text_length": len(extracted_text),
+                        "chunk_count": rag_result.get("chunk_count", 0),
+                        "processing_status": "completed",
+                        "processed_at": rag_result.get("processed_at"),
+                        "embedding_model": rag_result.get("embedding_model"),
+                        "storage_service": rag_result.get("storage_service")
+                    }
+                    
+                    # Update document with RAG status
+                    await service.update_document_rag_metadata(doc_id, current_user["id"], rag_metadata)
+                    print(f"✅ Document {doc_id} automatically processed for RAG/Chat")
+                else:
+                    print(f"⚠️ RAG processing failed for document {doc_id}: {rag_result.get('error')}")
+                    
+            except Exception as rag_error:
+                # Log RAG processing error but don't fail the entire request
+                print(f"⚠️ RAG processing error for document {doc_id}: {rag_error}")
+                # Document analysis succeeded, but RAG failed - user can still view analysis
             
             response_data = AnalyzeDocumentResponse(
                 id=doc_id,

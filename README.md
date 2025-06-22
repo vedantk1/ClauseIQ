@@ -1,11 +1,12 @@
 # ClauseIQ - AI-Powered Legal Document Analyzer
 
-An intelligent legal document analysis tool that uses AI to help non-lawyers understand contracts by providing clear, plain-language summaries of complex legal text. Now supports multiple contract types with dynamic AI-powered classification.
+An intelligent legal document analysis tool that uses AI to help non-lawyers understand contracts by providing clear, plain-language summaries of complex legal text. Now supports multiple contract types with dynamic AI-powered classification and **interactive document chat powered by RAG (Retrieval Augmented Generation)**.
 
 ![ClauseIQ Demo](https://img.shields.io/badge/Status-Production%20Ready-green)
 ![Python](https://img.shields.io/badge/Python-3.13-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-15.3.3-black)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.12-009688)
+![OpenAI](https://img.shields.io/badge/OpenAI-Powered-412991)
 
 ## Features
 
@@ -16,7 +17,16 @@ An intelligent legal document analysis tool that uses AI to help non-lawyers und
 - **Context-Aware Processing**: Contract-specific clause extraction and risk assessment
 - **Pure AI Approach**: Requires OpenAI API for consistent, high-quality analysis
 
-### 📋 **Multi-Contract Support**
+### � **Chat with Your Documents (NEW!)**
+
+- **Interactive Q&A**: Ask natural language questions about your legal documents
+- **RAG-Powered Responses**: Advanced retrieval system provides accurate, contextual answers
+- **Source Attribution**: Every AI response includes references to specific document sections
+- **Smart Document Chunking**: Intelligent segmentation respects legal document structure
+- **Persistent Chat History**: Save and revisit conversations about your documents
+- **Multi-Session Support**: Create multiple chat sessions per document for different topics
+
+### �📋 **Multi-Contract Support**
 
 - **Employment Contracts**: Salary, benefits, termination clauses
 - **Non-Disclosure Agreements (NDAs)**: Confidentiality and disclosure restrictions
@@ -35,6 +45,7 @@ An intelligent legal document analysis tool that uses AI to help non-lawyers und
 - **Dynamic Clause Extraction**: Contract-specific clause identification with comprehensive coverage
 - **Contract-Specific Summaries**: Tailored analysis based on document type
 - **Risk Assessment**: Context-aware risk evaluation for different contract types
+- **Vector Search**: High-accuracy document retrieval using OpenAI's text-embedding-3-large model
 
 ## Architecture
 
@@ -137,20 +148,38 @@ Frontend will be available at: http://localhost:3000
 
 ## API Endpoints
 
-| Endpoint                | Method | Description                                   |
-| ----------------------- | ------ | --------------------------------------------- |
-| `/`                     | GET    | Health check                                  |
-| `/extract-text/`        | POST   | Extract raw text from PDF                     |
-| `/analyze/`             | POST   | Full analysis with section breakdown          |
-| `/analyze-document/`    | POST   | Complete document analysis with AI processing |
-| `/documents/`           | GET    | List all processed documents                  |
-| `/documents/{id}`       | GET    | Get specific document                         |
-| `/documents/{id}`       | DELETE | Delete specific document (user must own it)   |
-| `/auth/register`        | POST   | User registration                             |
-| `/auth/login`           | POST   | User authentication                           |
-| `/auth/me`              | GET    | Get current user info                         |
-| `/auth/forgot-password` | POST   | Request password reset                        |
-| `/auth/reset-password`  | POST   | Reset password with token                     |
+### Core Document Analysis
+
+| Endpoint             | Method | Description                                   |
+| -------------------- | ------ | --------------------------------------------- |
+| `/`                  | GET    | Health check                                  |
+| `/extract-text/`     | POST   | Extract raw text from PDF                     |
+| `/analyze/`          | POST   | Full analysis with section breakdown          |
+| `/analyze-document/` | POST   | Complete document analysis with AI processing |
+| `/documents/`        | GET    | List all processed documents                  |
+| `/documents/{id}`    | GET    | Get specific document                         |
+| `/documents/{id}`    | DELETE | Delete specific document (user must own it)   |
+
+### Document Chat (RAG) - NEW!
+
+| Endpoint                                     | Method | Description                           |
+| -------------------------------------------- | ------ | ------------------------------------- |
+| `/documents/{id}/chat/sessions`              | POST   | Create new chat session for document  |
+| `/documents/{id}/chat/{session_id}/messages` | POST   | Send message and get AI response      |
+| `/documents/{id}/chat/{session_id}`          | GET    | Get chat session with message history |
+| `/documents/{id}/chat/sessions`              | GET    | List all chat sessions for document   |
+| `/documents/{id}/chat/{session_id}`          | DELETE | Delete specific chat session          |
+| `/documents/{id}/chat/status`                | GET    | Check if document is ready for chat   |
+
+### Authentication
+
+| Endpoint                | Method | Description               |
+| ----------------------- | ------ | ------------------------- |
+| `/auth/register`        | POST   | User registration         |
+| `/auth/login`           | POST   | User authentication       |
+| `/auth/me`              | GET    | Get current user info     |
+| `/auth/forgot-password` | POST   | Request password reset    |
+| `/auth/reset-password`  | POST   | Reset password with token |
 
 ## Testing
 
