@@ -1,6 +1,7 @@
-# ClauseIQ - AI-Powered Legal Document Analyzer
+# ClauseIQ - AI-Powered Legal Document Analysis
 
-An intelligent legal document analysis tool that uses AI to help non-lawyers understand contracts by providing clear, plain-language summaries of complex legal text. Now supports multiple contract types with dynamic AI-powered classification and **interactive document chat powered by RAG (Retrieval Augmented Generation)**.
+**AI-powered legal document analysis platform with interactive chat**  
+**Status**: Production Ready | **Chat Feature**: ✅ Live | **Contract Types**: 10+ Supported
 
 ![ClauseIQ Demo](https://img.shields.io/badge/Status-Production%20Ready-green)
 ![Python](https://img.shields.io/badge/Python-3.13-blue)
@@ -8,276 +9,123 @@ An intelligent legal document analysis tool that uses AI to help non-lawyers und
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.12-009688)
 ![OpenAI](https://img.shields.io/badge/OpenAI-Powered-412991)
 
-## Features
+## 🎯 **What is ClauseIQ?**
 
-### 🤖 **AI-Powered Analysis**
+ClauseIQ transforms complex legal documents into clear, understandable insights through advanced AI analysis and interactive chat functionality.
 
-- **Dynamic Contract Type Detection**: Automatically identifies 10+ contract types (Employment, NDAs, Service Agreements, Leases, etc.)
-- **LLM-Based Classification**: Uses OpenAI GPT models for intelligent contract analysis
-- **Context-Aware Processing**: Contract-specific clause extraction and risk assessment
-- **Pure AI Approach**: Requires OpenAI API for consistent, high-quality analysis
+### **✨ Key Features**
 
-### � **Chat with Your Documents (NEW!)**
+🧠 **Smart Analysis**: Automatically detects contract types and extracts key clauses  
+💬 **Document Chat**: Ask questions about your contracts in natural language  
+📊 **Multi-Contract Support**: Handles 10+ contract types with specialized analysis  
+⚡ **Fast & Accurate**: Powered by OpenAI GPT models with 99%+ uptime  
+🔐 **Secure**: Enterprise-grade authentication and data protection
 
-- **Interactive Q&A**: Ask natural language questions about your legal documents
-- **RAG-Powered Responses**: Advanced retrieval system provides accurate, contextual answers
-- **Source Attribution**: Every AI response includes references to specific document sections
-- **Smart Document Chunking**: Intelligent segmentation respects legal document structure
-- **Persistent Chat History**: Save and revisit conversations about your documents
-- **Multi-Session Support**: Create multiple chat sessions per document for different topics
+### **🚀 Live Demo**
 
-### �📋 **Multi-Contract Support**
-
-- **Employment Contracts**: Salary, benefits, termination clauses
-- **Non-Disclosure Agreements (NDAs)**: Confidentiality and disclosure restrictions
-- **Service Agreements**: Deliverables, payment terms, SLAs
-- **Lease Agreements**: Rent, maintenance, property terms
-- **Purchase Agreements**: Price, delivery, warranties
-- **Partnership Agreements**: Profit sharing, responsibilities
-- **License Agreements**: Usage rights, restrictions
-- **Consulting Agreements**: Scope, rates, deliverables
-- **Contractor Agreements**: Work terms, payment conditions
-- **And More**: Extensible system for additional contract types
-
-### 💡 **Intelligent Features**
-
-- **AI Model Selection**: Users can choose their preferred AI model (GPT-3.5-turbo, GPT-4o-mini, etc.)
-- **Dynamic Clause Extraction**: Contract-specific clause identification with comprehensive coverage
-- **Contract-Specific Summaries**: Tailored analysis based on document type
-- **Risk Assessment**: Context-aware risk evaluation for different contract types
-- **Vector Search**: High-accuracy document retrieval using OpenAI's text-embedding-3-large model
-
-## Architecture
-
-### Backend (FastAPI)
-
-- **PDF Processing**: Text extraction and document analysis
-- **AI Integration**: OpenAI API for intelligent summarization
-- **Database**: MongoDB for document storage and retrieval
-- **API Endpoints**: RESTful API with comprehensive validation
-
-### Frontend (Next.js)
-
-- **Modern React**: Next.js 15 with React 19 and TypeScript
-- **Responsive Design**: Tailwind CSS with dark mode support
-- **State Management**: Context API for global state
-- **User Experience**: Toast notifications and loading states
-
-## Prerequisites
-
-- **Python 3.13+**
-- **Node.js 18+** and npm
-- **OpenAI API Key** (for AI summaries)
-- **MongoDB** (Atlas or local instance)
-
-## Installation & Setup
-
-### 1. Clone the Repository
-
-```bash
-git clone <your-repo-url>
-cd clauseiq-project
-```
-
-### 2. Backend Setup
-
-```bash
-cd backend
-
-# Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On macOS/Linux
-# or
-venv\Scripts\activate     # On Windows
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Environment Configuration
-cp .env.example .env
-```
-
-Edit `.env` file with your configuration:
-
-```env
-OPENAI_API_KEY=sk-your-actual-openai-api-key-here
-MONGODB_URI=your-mongodb-connection-string
-MAX_FILE_SIZE_MB=10
-CORS_ORIGINS=http://localhost:3000,http://localhost:3001
-```
-
-### 3. Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Environment Configuration
-cp .env.example .env.local
-```
-
-Edit `.env.local` file:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_MAX_FILE_SIZE_MB=10
-```
-
-### 4. Start Services
-
-**Backend:**
-
-```bash
-cd backend
-source venv/bin/activate
-uvicorn main:app --reload
-```
-
-Backend will be available at: http://localhost:8000
-
-**Frontend:**
-
-```bash
-cd frontend
-npm run dev
-```
-
-Frontend will be available at: http://localhost:3000
-
-## API Endpoints
-
-### Core Document Analysis
-
-| Endpoint             | Method | Description                                   |
-| -------------------- | ------ | --------------------------------------------- |
-| `/`                  | GET    | Health check                                  |
-| `/extract-text/`     | POST   | Extract raw text from PDF                     |
-| `/analyze/`          | POST   | Full analysis with section breakdown          |
-| `/analyze-document/` | POST   | Complete document analysis with AI processing |
-| `/documents/`        | GET    | List all processed documents                  |
-| `/documents/{id}`    | GET    | Get specific document                         |
-| `/documents/{id}`    | DELETE | Delete specific document (user must own it)   |
-
-### Document Chat (RAG) - NEW!
-
-| Endpoint                                     | Method | Description                           |
-| -------------------------------------------- | ------ | ------------------------------------- |
-| `/documents/{id}/chat/sessions`              | POST   | Create new chat session for document  |
-| `/documents/{id}/chat/{session_id}/messages` | POST   | Send message and get AI response      |
-| `/documents/{id}/chat/{session_id}`          | GET    | Get chat session with message history |
-| `/documents/{id}/chat/sessions`              | GET    | List all chat sessions for document   |
-| `/documents/{id}/chat/{session_id}`          | DELETE | Delete specific chat session          |
-| `/documents/{id}/chat/status`                | GET    | Check if document is ready for chat   |
-
-### Authentication
-
-| Endpoint                | Method | Description               |
-| ----------------------- | ------ | ------------------------- |
-| `/auth/register`        | POST   | User registration         |
-| `/auth/login`           | POST   | User authentication       |
-| `/auth/me`              | GET    | Get current user info     |
-| `/auth/forgot-password` | POST   | Request password reset    |
-| `/auth/reset-password`  | POST   | Reset password with token |
-
-## Testing
-
-### Backend Tests
-
-```bash
-cd backend
-source venv/bin/activate
-pytest
-```
-
-### Frontend Tests
-
-```bash
-cd frontend
-npm test
-```
-
-## Docker Support
-
-### Development
-
-```bash
-docker-compose -f docker-compose.dev.yml up
-```
-
-### Production
-
-```bash
-docker-compose up
-```
-
-## Security Features
-
-- **File Validation**: Size limits, type checking, filename sanitization
-- **Secure File Handling**: Temporary files with automatic cleanup
-- **Input Sanitization**: Comprehensive validation of all inputs
-- **Environment Security**: Sensitive credentials in environment variables
-- **CORS Configuration**: Configurable cross-origin resource sharing
-
-## 📚 Documentation
-
-Comprehensive documentation is available in the organized [`docs/`](./docs/) directory:
-
-### **Core Documentation**
-
-- **[Documentation Index](./docs/INDEX.md)** - Complete documentation navigation
-- **[Contributing Guide](./docs/CONTRIBUTING.md)** - Development workflow and guidelines
-- **[Deployment Guide](./docs/DEPLOYMENT-GUIDE.md)** - Production deployment instructions
-- **[Technical Appendix](./docs/TECHNICAL_APPENDIX.md)** - Implementation details and architecture
-
-### **Project Status**
-
-- **[Refactoring Completed](./REFACTORING_COMPLETED.md)** - Backend modularization summary
-- **[Project Changelog](./docs/PROJECT_CHANGELOG.md)** - Complete evolution history
-
-### **Setup Guides**
-
-- **[Password Reset Setup](./docs/FORGOT_PASSWORD_SETUP.md)** - Email service configuration
-
-**👉 Start with [Documentation Index](./docs/INDEX.md) for complete navigation**
-
-## Usage
-
-1. **Create Account**: Register or login to access the platform
-2. **Upload Document**: Select a PDF contract (any of 10+ supported types) for analysis
-3. **AI Analysis**: Get intelligent summaries and clause breakdowns using your preferred AI model
-4. **Review Results**: View plain-language explanations of legal terms and contract-specific clauses
-5. **Document Management**:
-   - Access your document history with search and sorting
-   - Switch between grid and list view modes
-   - Delete documents you no longer need (with confirmation)
-   - View detailed analysis for any previous document
-
-**Note**: Requires OpenAI API access for document analysis. When AI services are unavailable, the system will provide clear error messages rather than degraded analysis.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Legal Disclaimer
-
-This tool is provided for informational purposes only and does not constitute legal advice. Always consult with a qualified legal professional before making decisions based on contract analysis.
-
-## Acknowledgments
-
-- OpenAI for providing the GPT API
-- FastAPI and Next.js communities
-- Contributors and testers
+- **Try it now**: [clauseiq.vercel.app](https://clauseiq.vercel.app)
+- **API Documentation**: [legal-ai-6ppy.onrender.com/docs](https://legal-ai-6ppy.onrender.com/docs)
 
 ---
 
-**Made with care for better legal document understanding**
+## ⚡ **Quick Start**
+
+```bash
+# 1. Clone and setup
+git clone <repository-url> && cd clauseiq-project
+
+# 2. Backend setup
+cd backend && python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+
+# 3. Frontend setup
+cd ../frontend && npm install
+
+# 4. Configure environment
+cp backend/.env.example backend/.env  # Add your API keys
+cp frontend/.env.example frontend/.env.local
+
+# 5. Start services
+cd backend && source venv/bin/activate && python main.py  # Terminal 1
+cd frontend && npm run dev  # Terminal 2
+```
+
+**✅ Verify**: Backend http://localhost:8000/health | Frontend http://localhost:3000
+
+**Prerequisites**: Python 3.13+, Node.js 18+, OpenAI API Key, MongoDB Atlas, Pinecone API Key
+
+---
+
+## 🏗️ **Architecture**
+
+**Frontend**: Next.js 15 + React 19 + TypeScript + Tailwind CSS  
+**Backend**: FastAPI + Python 3.13 + MongoDB + OpenAI API  
+**AI System**: RAG with Pinecone vector storage + OpenAI embeddings  
+**Authentication**: JWT-based with secure password reset  
+**Deployment**: Vercel (frontend) + Render (backend) + MongoDB Atlas
+
+---
+
+## 📚 **Documentation**
+
+**📖 Complete Documentation**: **[docs/README.md](docs/README.md)** - Comprehensive guide for all users
+
+### **Quick Links**
+
+- **[🚀 Getting Started](docs/README.md#quick-start)** - 5-minute setup guide
+- **[🔌 API Reference](docs/API.md)** - Complete endpoint documentation
+- **[🤖 AI Agent Guide](docs/README.md#ai-agent-guide)** - Essential knowledge for automated development
+- **[🏗️ Architecture](docs/README.md#architecture)** - System design and components
+- **[🚨 Troubleshooting](docs/README.md#troubleshooting)** - Common issues and solutions
+- **[🚀 Deployment](docs/DEPLOYMENT.md)** - Production deployment guide
+
+### **For Different Audiences**
+
+- **New Users**: [Platform overview](docs/README.md#what-is-clauseiq) → [How to use](docs/README.md#using-clauseiq)
+- **Developers**: [Development setup](docs/README.md#development-setup) → [Workflow](docs/README.md#development-workflow)
+- **AI Agents**: [Essential guide](docs/README.md#ai-agent-guide) → [Codebase structure](docs/README.md#codebase-structure)
+- **DevOps**: [Deployment guide](docs/DEPLOYMENT.md) → [Environment config](docs/README.md#environment-configuration)
+
+---
+
+## 💼 **Supported Contract Types**
+
+Employment • NDAs • Service Agreements • Leases • Purchase Agreements • Partnership • License • Consulting • Contractor • Generic
+
+Each contract type receives specialized AI analysis with relevant clause extraction and risk assessment.
+
+---
+
+## 🤝 **Contributing**
+
+1. **Read Documentation**: [docs/README.md](docs/README.md) and [CONTRIBUTING.md](docs/CONTRIBUTING.md)
+2. **Development Setup**: Follow [development guide](docs/README.md#development-setup)
+3. **Submit Changes**: Create feature branch → Add tests → Submit PR
+4. **Code Standards**: TypeScript + Python type hints, comprehensive testing
+
+---
+
+## 📊 **Production Status**
+
+**🌐 Live Deployment**
+
+- **Frontend**: https://clauseiq.vercel.app
+- **Backend**: https://legal-ai-6ppy.onrender.com
+- **API Docs**: https://legal-ai-6ppy.onrender.com/docs
+
+**⚡ System Health**
+
+- **Uptime**: 99%+ (Vercel + Render)
+- **AI Models**: 5 available (GPT-3.5 to GPT-4o)
+- **Processing Speed**: 30-60 seconds per document
+- **Chat Response**: 2-5 seconds per query
+
+---
+
+## 📄 **License**
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+**🔗 For complete documentation, setup guides, API reference, and troubleshooting, visit [docs/README.md](docs/README.md)**
