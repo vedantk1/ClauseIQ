@@ -40,7 +40,7 @@ def validate_file(file: UploadFile):
             )
 
 
-async def process_document_with_llm(document_text: str, filename: str = "", model: str = "gpt-3.5-turbo") -> Tuple[ContractType, List[Clause]]:
+async def process_document_with_llm(document_text: str, filename: str = "", model: str = None) -> Tuple[ContractType, List[Clause]]:
     """
     Process a document using LLM-based analysis.
     
@@ -50,6 +50,12 @@ async def process_document_with_llm(document_text: str, filename: str = "", mode
     Returns:
         Tuple of (contract_type, clauses)
     """
+    # Get model from settings if not provided
+    if model is None:
+        from config.environments import get_environment_config
+        config = get_environment_config()
+        model = config.ai.default_model
+        
     # MIGRATED: Using new modular AI services for better maintainability
     from services.ai_service import (
         detect_contract_type, 

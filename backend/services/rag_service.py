@@ -369,7 +369,7 @@ class RAGService:
         self, 
         query: str, 
         relevant_chunks: List[Dict[str, Any]], 
-        model: str = "gpt-4o-mini"
+        model: str = None
     ) -> Dict[str, Any]:
         """Generate a response using RAG with retrieved chunks."""
         if not await self.is_available():
@@ -380,6 +380,12 @@ class RAGService:
             }
         
         try:
+            # Get model from settings if not provided
+            if model is None:
+                from config.environments import get_environment_config
+                config = get_environment_config()
+                model = config.ai.default_model
+            
             client = _get_openai_client()
             
             # Prepare context from relevant chunks

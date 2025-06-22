@@ -73,8 +73,14 @@ Clause, RiskLevel, ClauseType, ContractType = _get_models()
 
 
 
-async def generate_structured_document_summary(document_text: str, filename: str = "", model: str = "gpt-3.5-turbo") -> Dict[str, Any]:
+async def generate_structured_document_summary(document_text: str, filename: str = "", model: str = None) -> Dict[str, Any]:
     """Generate a structured document summary with categorized insights"""
+    # Get model from settings if not provided
+    if model is None:
+        from config.environments import get_environment_config
+        config = get_environment_config()
+        model = config.ai.default_model
+        
     openai_client = get_openai_client()
     if not openai_client:
         return {
@@ -189,8 +195,14 @@ async def generate_structured_document_summary(document_text: str, filename: str
         }
 
 
-async def analyze_clause(clause, model: str = "gpt-3.5-turbo"):
+async def analyze_clause(clause, model: str = None):
     """Analyze a clause for risk assessment and generate recommendations."""
+    # Get model from settings if not provided
+    if model is None:
+        from config.environments import get_environment_config
+        config = get_environment_config()
+        model = config.ai.default_model
+        
     openai_client = get_openai_client()
     if not openai_client:
         # Return clause with basic analysis if no AI available
@@ -265,8 +277,14 @@ async def analyze_clause(clause, model: str = "gpt-3.5-turbo"):
         return clause
 
 
-async def detect_contract_type(document_text: str, filename: str = "", model: str = "gpt-3.5-turbo") -> ContractType:
+async def detect_contract_type(document_text: str, filename: str = "", model: str = None) -> ContractType:
     """Detect contract type using LLM analysis."""
+    # Get model from settings if not provided
+    if model is None:
+        from config.environments import get_environment_config
+        config = get_environment_config()
+        model = config.ai.default_model
+        
     openai_client = get_openai_client()
     if not openai_client:
         return ContractType.OTHER
@@ -328,8 +346,14 @@ async def detect_contract_type(document_text: str, filename: str = "", model: st
         return ContractType.OTHER
 
 
-async def extract_clauses_with_llm(document_text: str, contract_type: ContractType, model: str = "gpt-3.5-turbo") -> List[Clause]:
+async def extract_clauses_with_llm(document_text: str, contract_type: ContractType, model: str = None) -> List[Clause]:
     """Extract and classify clauses using LLM analysis."""
+    # Get model from settings if not provided
+    if model is None:
+        from config.environments import get_environment_config
+        config = get_environment_config()
+        model = config.ai.default_model
+        
     openai_client = get_openai_client()
     if not openai_client:
         return []
@@ -493,8 +517,14 @@ async def extract_clauses_with_llm(document_text: str, contract_type: ContractTy
         return []
 
 
-async def generate_contract_specific_summary(document_text: str, contract_type: ContractType, filename: str = "", model: str = "gpt-3.5-turbo") -> str:
+async def generate_contract_specific_summary(document_text: str, contract_type: ContractType, filename: str = "", model: str = None) -> str:
     """Generate a contract-type-specific summary using LLM."""
+    # Get model from settings if not provided
+    if model is None:
+        from config.environments import get_environment_config
+        config = get_environment_config()
+        model = config.ai.default_model
+        
     openai_client = get_openai_client()
     if not openai_client:
         return "AI summary not available - OpenAI client not configured."
