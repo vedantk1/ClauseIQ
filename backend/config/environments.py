@@ -66,6 +66,11 @@ class AIConfig(BaseModel):
     max_tokens: int = Field(default=4000, ge=1, description="Maximum tokens per request")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0, description="AI temperature")
     
+    # Conversation context settings
+    conversation_history_window: int = Field(default=10, ge=1, le=50, description="Max conversation turns to consider for context")
+    gate_model: str = Field(default="gpt-4o-mini", description="Model for conversation context gate")
+    rewrite_model: str = Field(default="gpt-4o-mini", description="Model for query rewriting")
+    
     @validator('openai_api_key')
     def validate_api_key(cls, v):
         if not v.startswith('sk-'):

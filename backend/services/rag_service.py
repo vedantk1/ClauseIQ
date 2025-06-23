@@ -76,10 +76,20 @@ class RAGService:
     """Core RAG service for document chat functionality."""
     
     def __init__(self):
+        # Get configuration
+        from config.environments import get_environment_config
+        self.config = get_environment_config()
+        
         self.embedding_model = "text-embedding-3-large"  # Upgraded to 3072 dimensions
         self.chunk_size = 1000  # tokens
         self.chunk_overlap = 200  # tokens
         self.max_chunks_per_query = 5
+        
+        # Conversation context settings from config
+        self.conversation_history_window = self.config.ai.conversation_history_window
+        self.gate_model = self.config.ai.gate_model
+        self.rewrite_model = self.config.ai.rewrite_model
+        
         # Import Pinecone vector service lazily to avoid circular imports
         self._pinecone_service = None
         
@@ -319,26 +329,130 @@ class RAGService:
             logger.error(f"Error calculating similarity: {e}")
             return 0.0
     
+    async def _needs_conversation_context(self, query: str) -> bool:
+        """Gate: Determine if query needs conversation context using gpt-4o-mini."""
+        try:
+            client = _get_openai_client()
+            if not client:
+                return False
+            
+            gate_prompt = """Analyze if this user question requires previous conversation context to be understood correctly.
+
+Return only "YES" if the question contains:
+- Pronouns referring to previous topics ("that", "it", "those", "this")
+- References to earlier discussion ("as we discussed", "you mentioned", "from before")
+- Comparative language needing context ("compare that to", "how does this differ")
+- Follow-up requests ("tell me more", "explain further", "give details")
+
+Return only "NO" if the question is standalone and can be answered independently.
+
+Question: "{query}"
+
+Response (YES or NO only):"""
+
+            response = await client.chat.completions.create(
+                model=self.gate_model,
+                messages=[{"role": "user", "content": gate_prompt.format(query=query)}],
+                max_tokens=10,
+                temperature=0.0
+            )
+            
+            result = response.choices[0].message.content.strip().upper()
+            needs_context = result == "YES"
+            
+            logger.info(f"Gate decision for '{query[:50]}...': {needs_context}")
+            return needs_context
+            
+        except Exception as e:
+            logger.error(f"Error in conversation context gate: {e}")
+            # Default to False on error to avoid breaking the flow
+            return False
+    
+    async def _rewrite_query_with_context(self, query: str, conversation_history: List[Dict[str, Any]]) -> str:
+        """Rewrite query using conversation context to resolve references."""
+        try:
+            client = _get_openai_client()
+            if not client:
+                return query
+            
+            # Use last N messages max to avoid token limits (from config)
+            recent_history = conversation_history[-self.conversation_history_window:] if len(conversation_history) > self.conversation_history_window else conversation_history
+            
+            # Format conversation context
+            context_parts = []
+            for msg in recent_history:
+                role = msg.get('role', 'unknown')
+                content = msg.get('content', '')
+                if content:
+                    context_parts.append(f"{role.title()}: {content}")
+            
+            context_text = "\n".join(context_parts)
+            
+            rewrite_prompt = f"""Based on the conversation history, rewrite the follow-up question to be self-contained and clear.
+
+CONVERSATION HISTORY:
+{context_text}
+
+FOLLOW-UP QUESTION: {query}
+
+Rewrite the follow-up question so it can be understood without the conversation history. Replace pronouns and references with specific terms from the context.
+
+Examples:
+- "Tell me about that in detail" → "Tell me about the payment terms in detail"
+- "Is that enforceable?" → "Are the termination clauses enforceable?"
+- "What does it mean?" → "What does the non-compete agreement mean?"
+
+REWRITTEN QUESTION:"""
+
+            response = await client.chat.completions.create(
+                model=self.rewrite_model,
+                messages=[{"role": "user", "content": rewrite_prompt}],
+                max_tokens=100,
+                temperature=0.1
+            )
+            
+            rewritten_query = response.choices[0].message.content.strip()
+            
+            logger.info(f"Query rewritten: '{query}' → '{rewritten_query}'")
+            return rewritten_query
+            
+        except Exception as e:
+            logger.error(f"Error rewriting query: {e}")
+            # Return original query on error
+            return query
+
     async def retrieve_relevant_chunks(
         self, 
         query: str, 
         document_id: str,
         user_id: str,
+        conversation_history: List[Dict[str, Any]] = None,
         max_chunks: int = None
-    ) -> List[Dict[str, Any]]:
-        """Retrieve the most relevant chunks for a query using Supabase vector search."""
+    ) -> Dict[str, Any]:
+        """Retrieve the most relevant chunks for a query with enhanced conversation context."""
         if not await self.is_available():
             logger.warning("RAG service not available for query processing")
-            return []
+            return {"chunks": [], "enhanced_query": query}
         
         if max_chunks is None:
             max_chunks = self.max_chunks_per_query
         
+        # Enhanced query processing with conversation context
+        enhanced_query = query
+        
+        if conversation_history and len(conversation_history) > 0:
+            # Gate: Check if query needs conversation context
+            needs_context = await self._needs_conversation_context(query)
+            
+            if needs_context:
+                # Rewrite query with conversation context
+                enhanced_query = await self._rewrite_query_with_context(query, conversation_history)
+        
         try:
-            # Use Pinecone vector search
+            # Use Pinecone vector search with enhanced query
             pinecone_service = self._get_pinecone_service()
             search_results = await pinecone_service.search_similar_chunks(
-                query=query,
+                query=enhanced_query,
                 user_id=user_id,
                 document_id=document_id,
                 k=max_chunks,
@@ -357,18 +471,23 @@ class RAGService:
                     "document_id": result["document_id"]
                 })
             
-            logger.info(f"Retrieved {len(formatted_results)} relevant chunks for query in document {document_id}")
-            return formatted_results
+            logger.info(f"Retrieved {len(formatted_results)} relevant chunks for query '{enhanced_query}' in document {document_id}")
+            
+            return {
+                "chunks": formatted_results,
+                "enhanced_query": enhanced_query
+            }
             
         except Exception as e:
             logger.error(f"Error retrieving chunks from Pinecone: {e}")
             # Return empty list if search fails - better than crashing
-            return []
+            return {"chunks": [], "enhanced_query": query}
     
     async def generate_rag_response(
         self, 
         query: str, 
         relevant_chunks: List[Dict[str, Any]], 
+        enhanced_query: str = None,
         model: str = None
     ) -> Dict[str, Any]:
         """Generate a response using RAG with retrieved chunks."""
@@ -398,6 +517,9 @@ class RAGService:
             
             context = "\n\n".join(context_parts)
             
+            # Use enhanced query if provided, otherwise use original query
+            final_query = enhanced_query if enhanced_query else query
+            
             # Create prompt for RAG
             prompt = f"""You are a legal document assistant. Answer the user's question based ONLY on the provided context from their legal document. 
 
@@ -411,7 +533,7 @@ IMPORTANT GUIDELINES:
 CONTEXT FROM DOCUMENT:
 {context}
 
-USER QUESTION: {query}
+USER QUESTION: {final_query}
 
 RESPONSE:"""
             

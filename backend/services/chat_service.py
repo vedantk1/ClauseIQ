@@ -144,14 +144,20 @@ class ChatService:
                     ai_response_content = "I'm sorry, but this document is not ready for chat yet. Please wait for processing to complete."
                     ai_sources = []
                 else:
-                    # Retrieve relevant chunks using updated RAG service
-                    relevant_chunks = await self.rag_service.retrieve_relevant_chunks(
-                        message, document_id, user_id
+                    # Get conversation history for context-aware RAG
+                    conversation_history = chat_sessions[session_index]["messages"]
+                    
+                    # Retrieve relevant chunks using updated RAG service with conversation context
+                    rag_result = await self.rag_service.retrieve_relevant_chunks(
+                        message, document_id, user_id, conversation_history
                     )
                     
-                    # Generate response
+                    relevant_chunks = rag_result["chunks"]
+                    enhanced_query = rag_result["enhanced_query"]
+                    
+                    # Generate response using enhanced query
                     rag_response = await self.rag_service.generate_rag_response(
-                        message, relevant_chunks
+                        message, relevant_chunks, enhanced_query
                     )
                     
                     ai_response_content = rag_response["response"]
