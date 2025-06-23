@@ -459,19 +459,30 @@ REWRITTEN QUESTION:"""
                 similarity_threshold=0.7
             )
             
+            # FALLBACK: If enhanced query finds no results, try original query
+            if not search_results and enhanced_query != query:
+                logger.info(f"🔄 Enhanced query found no results, trying original query: '{query}'")
+                search_results = await pinecone_service.search_similar_chunks(
+                    query=query,
+                    user_id=user_id,
+                    document_id=document_id,
+                    k=max_chunks,
+                    similarity_threshold=0.6  # Lower threshold for fallback
+                )
+            
             # Format results for compatibility with existing code
             formatted_results = []
             for result in search_results:
                 formatted_results.append({
                     "content": result["content"],
-                    "metadata": result["metadata"],
+                    "metadata": result["metadata"], 
                     "similarity_score": result["similarity_score"],
                     "source": "pinecone_vector",
                     "chunk_id": result["metadata"].get("chunk_id"),
                     "document_id": result["document_id"]
                 })
             
-            logger.info(f"Retrieved {len(formatted_results)} relevant chunks for query '{enhanced_query}' in document {document_id}")
+            logger.info(f"🔍 Retrieved {len(formatted_results)} relevant chunks for query '{enhanced_query}' in document {document_id}")
             
             return {
                 "chunks": formatted_results,
