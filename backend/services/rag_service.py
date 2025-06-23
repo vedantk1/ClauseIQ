@@ -360,7 +360,7 @@ Response (YES or NO only):"""
             result = response.choices[0].message.content.strip().upper()
             needs_context = result == "YES"
             
-            logger.info(f"Gate decision for '{query[:50]}...': {needs_context}")
+            logger.info(f"🚪 Gate decision for '{query}': {needs_context} (raw: '{result}')")
             return needs_context
             
         except Exception as e:
@@ -413,7 +413,7 @@ REWRITTEN QUESTION:"""
             
             rewritten_query = response.choices[0].message.content.strip()
             
-            logger.info(f"Query rewritten: '{query}' → '{rewritten_query}'")
+            logger.info(f"✏️  Query rewritten: '{query}' → '{rewritten_query}'")
             return rewritten_query
             
         except Exception as e:

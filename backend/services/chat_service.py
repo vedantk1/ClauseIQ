@@ -147,6 +147,11 @@ class ChatService:
                     # Get conversation history for context-aware RAG
                     conversation_history = chat_sessions[session_index]["messages"]
                     
+                    # DEBUG: Log conversation history to identify the issue
+                    logger.info(f"🔍 Conversation history has {len(conversation_history)} messages")
+                    if conversation_history:
+                        logger.info(f"🔍 Last message: {conversation_history[-1].get('content', '')[:100]}...")
+                    
                     # Retrieve relevant chunks using updated RAG service with conversation context
                     rag_result = await self.rag_service.retrieve_relevant_chunks(
                         message, document_id, user_id, conversation_history
@@ -154,6 +159,11 @@ class ChatService:
                     
                     relevant_chunks = rag_result["chunks"]
                     enhanced_query = rag_result["enhanced_query"]
+                    
+                    # DEBUG: Log RAG processing results
+                    logger.info(f"🔍 Original query: '{message}'")
+                    logger.info(f"🔍 Enhanced query: '{enhanced_query}'")
+                    logger.info(f"🔍 Found {len(relevant_chunks)} chunks")
                     
                     # Generate response using enhanced query
                     rag_response = await self.rag_service.generate_rag_response(
