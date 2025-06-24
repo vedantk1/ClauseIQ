@@ -350,6 +350,74 @@ class PineconeVectorService:
             logger.error(f"❌ Failed to delete chunks for document {document_id}: {e}")
             return {"success": False, "error": str(e)}
     
+    async def delete_all_vectors(self) -> Dict[str, Any]:
+        """
+        🧹 NUCLEAR OPTION: Delete ALL vectors from ALL namespaces.
+        
+        Used for foundational architecture deployment - complete database reset.
+        This will clear EVERYTHING from the Pinecone index.
+        
+        Returns:
+            Dict with success status and operation details
+        """
+        if not await self.initialize():
+            return {"success": False, "error": "Pinecone service not available"}
+        
+        try:
+            index = self.pc.Index(self.index_name)
+            
+            # Get index stats to see current state
+            stats = await asyncio.to_thread(index.describe_index_stats)
+            total_vectors_before = stats.total_vector_count
+            namespaces_before = list(stats.namespaces.keys()) if stats.namespaces else []
+            
+            logger.info(f"🧹 NUCLEAR CLEARING: {total_vectors_before} vectors across {len(namespaces_before)} namespaces")
+            
+            # Delete all vectors from each namespace
+            cleared_namespaces = []
+            for namespace in namespaces_before:
+                try:
+                    await asyncio.to_thread(
+                        index.delete,
+                        delete_all=True,
+                        namespace=namespace
+                    )
+                    cleared_namespaces.append(namespace)
+                    logger.info(f"✅ Cleared namespace: {namespace}")
+                except Exception as e:
+                    logger.warning(f"⚠️  Error clearing namespace {namespace}: {e}")
+            
+            # Also clear the default namespace (empty string)
+            try:
+                await asyncio.to_thread(
+                    index.delete,
+                    delete_all=True
+                )
+                logger.info("✅ Cleared default namespace")
+            except Exception as e:
+                logger.warning(f"⚠️  Error clearing default namespace: {e}")
+            
+            # Wait a bit for the deletion to propagate
+            await asyncio.sleep(2)
+            
+            # Get final stats
+            final_stats = await asyncio.to_thread(index.describe_index_stats)
+            total_vectors_after = final_stats.total_vector_count
+            
+            logger.info(f"🎯 NUCLEAR MISSION COMPLETE: {total_vectors_before} → {total_vectors_after} vectors")
+            
+            return {
+                "success": True,
+                "vectors_before": total_vectors_before,
+                "vectors_after": total_vectors_after,
+                "namespaces_cleared": cleared_namespaces,
+                "operation": "nuclear_vector_clearing"
+            }
+            
+        except Exception as e:
+            logger.error(f"💥 NUCLEAR CLEARING FAILED: {e}")
+            return {"success": False, "error": str(e)}
+
     async def get_document_chunk_count(self, document_id: str, user_id: str) -> int:
         """Get the number of chunks for a specific document."""
         if not await self.initialize():

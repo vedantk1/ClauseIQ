@@ -12,7 +12,6 @@ SECURITY:
 - User can only access their own documents and chat sessions
 - Proper error handling and validation
 """
-import logging
 from typing import Dict, Any
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, Request
@@ -23,8 +22,10 @@ from middleware.api_standardization import APIResponse, create_success_response,
 from middleware.versioning import versioned_response
 from services.chat_service import get_chat_service
 from services.pinecone_vector_service import get_pinecone_vector_service
+from config.logging import get_foundational_logger, log_exception
 
-logger = logging.getLogger(__name__)
+# 🚀 FOUNDATIONAL LOGGING: Proper chat logger
+logger = get_foundational_logger("chat")
 
 router = APIRouter(tags=["chat"])
 
@@ -69,6 +70,37 @@ class ChatSessionResponse(BaseModel):
     created_at: str
     updated_at: str
     messages: list
+
+# 🚀 FOUNDATIONAL API ENDPOINTS - THE FUTURE OF CHAT!
+
+# Response Models for Foundational Architecture
+class FoundationalSessionResponse(BaseModel):
+    """Response for foundational get/create session."""
+    session_id: str
+    document_id: str
+    messages: list = []
+    created_at: str
+    updated_at: str
+    message: str = "Session ready for chat"
+
+class FoundationalMessageRequest(BaseModel):
+    """Request to send a message in foundational architecture."""
+    message: str = Field(..., min_length=1, max_length=2000, description="Message content")
+
+class FoundationalMessageResponse(BaseModel):
+    """Response for foundational message sending."""
+    ai_response: ChatMessageResponse
+    session_id: str
+    timestamp: str
+
+class ChatHistoryResponse(BaseModel):
+    """Response for chat history retrieval."""
+    session_id: str
+    document_id: str
+    messages: list = []
+    message_count: int
+    created_at: str
+    updated_at: str
 
 @router.post("/{document_id}/chat/sessions", response_model=APIResponse[CreateChatSessionResponse])
 @versioned_response
@@ -340,7 +372,201 @@ async def delete_chat_session(
             correlation_id=correlation_id
         )
 
+# 🚀 FOUNDATIONAL API ENDPOINTS - THE FUTURE OF CHAT!
 
+# Response Models for Foundational Architecture
+class FoundationalSessionResponse(BaseModel):
+    """Response for foundational get/create session."""
+    session_id: str
+    document_id: str
+    messages: list = []
+    created_at: str
+    updated_at: str
+    message: str = "Session ready for chat"
+
+class FoundationalMessageRequest(BaseModel):
+    """Request to send a message in foundational architecture."""
+    message: str = Field(..., min_length=1, max_length=2000, description="Message content")
+
+# 🎯 FOUNDATIONAL ENDPOINT: Get or create THE session
+@router.post("/{document_id}/session", response_model=APIResponse[FoundationalSessionResponse])
+@versioned_response  
+async def get_or_create_session(
+    request: Request,
+    document_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    🚀 FOUNDATIONAL ARCHITECTURE: Get or create THE chat session for a document.
+    
+    This implements the core principle: ONE SESSION PER DOCUMENT
+    No more session chaos - just clean, simple chat architecture!
+    
+    Returns THE session for this document, creating it if needed.
+    """
+    correlation_id = getattr(request.state, 'correlation_id', None)
+    
+    try:
+        logger.info(f"🎯 FOUNDATIONAL: Getting/creating session for document {document_id}")
+        logger.debug(f"🔍 User ID: {current_user.get('id')}, Correlation: {correlation_id}")
+        
+        # Get chat service
+        chat_service = get_chat_service()
+        logger.debug(f"📡 Chat service obtained: {type(chat_service)}")
+        
+        # Call the service
+        logger.debug(f"📞 Calling get_or_create_session with doc_id={document_id}, user_id={current_user['id']}")
+        result = await chat_service.get_or_create_session(document_id, current_user["id"])
+        logger.debug(f"📋 Service result: {result}")
+        
+        if result["success"]:
+            # Build response data carefully
+            response_data = FoundationalSessionResponse(
+                session_id=result["session_id"],
+                document_id=result["document_id"],
+                messages=result.get("messages", []),
+                created_at=result.get("created_at", ""),
+                updated_at=result.get("updated_at", "")
+            )
+            
+            logger.info(f"✅ FOUNDATIONAL: Session {result['session_id']} ready for document {document_id}")
+            return create_success_response(
+                data=response_data,
+                correlation_id=correlation_id
+            )
+        else:
+            error_msg = result.get("error", "Failed to create session")
+            logger.error(f"❌ FOUNDATIONAL: Service failed: {error_msg}")
+            return create_error_response(
+                code="SESSION_CREATION_FAILED",
+                message=error_msg,
+                correlation_id=correlation_id
+            )
+            
+    except Exception as e:
+        log_exception(logger, "💥 FOUNDATIONAL: Exception in get_or_create_session", e)
+        return create_error_response(
+            code="INTERNAL_ERROR",
+            message="Internal server error",
+            correlation_id=correlation_id
+        )
+
+# 🎯 FOUNDATIONAL ENDPOINT: Send message without session_id complexity!
+@router.post("/{document_id}/message", response_model=APIResponse[SendMessageResponse])
+@versioned_response
+async def send_message_foundational(
+    request: Request,
+    document_id: str,
+    message_request: FoundationalMessageRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    🚀 FOUNDATIONAL ARCHITECTURE: Send message using THE session for this document.
+    
+    No session_id needed in URL! Clean and simple like ChatGPT.
+    The system automatically uses THE session for this document.
+    """
+    try:
+        logger.info(f"🎯 FOUNDATIONAL: Sending message to document {document_id}")
+        
+        chat_service = get_chat_service()
+        result = await chat_service.send_message_foundational(
+            document_id, 
+            current_user["id"], 
+            message_request.message
+        )
+        
+        if result["success"]:
+            user_message = ChatMessageResponse(
+                role=result["user_message"]["role"],
+                content=result["user_message"]["content"],
+                sources=result["user_message"].get("sources", []),
+                timestamp=result["user_message"]["timestamp"]
+            )
+            
+            ai_response = ChatMessageResponse(
+                role=result["ai_response"]["role"],
+                content=result["ai_response"]["content"],
+                sources=result["ai_response"].get("sources", []),
+                timestamp=result["ai_response"]["timestamp"]
+            )
+            
+            response_data = SendMessageResponse(
+                user_message=user_message,
+                ai_response=ai_response
+            )
+            
+            logger.info(f"✅ FOUNDATIONAL: Message sent successfully to document {document_id}")
+            return create_success_response(
+                data=response_data,
+                correlation_id=getattr(request.state, 'correlation_id', None)
+            )
+        else:
+            logger.error(f"❌ FOUNDATIONAL: Failed to send message: {result.get('error')}")
+            return create_error_response(
+                code="MESSAGE_SEND_FAILED",
+                message=result.get("error", "Failed to send message"),
+                correlation_id=getattr(request.state, 'correlation_id', None)
+            )
+            
+    except Exception as e:
+        log_exception(logger, "💥 FOUNDATIONAL: Exception in send_message", e)
+        return create_error_response(
+            code="INTERNAL_ERROR",
+            message="Internal server error",
+            correlation_id=getattr(request.state, 'correlation_id', None)
+        )
+
+# 🎯 FOUNDATIONAL ENDPOINT: Get chat history without complexity!
+@router.get("/{document_id}/history", response_model=APIResponse[ChatHistoryResponse])
+@versioned_response
+async def get_chat_history_foundational(
+    request: Request,
+    document_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    🚀 FOUNDATIONAL ARCHITECTURE: Get chat history for THE session of this document.
+    
+    Simple and clean - no session selection complexity!
+    """
+    try:
+        logger.info(f"🎯 FOUNDATIONAL: Getting chat history for document {document_id}")
+        
+        chat_service = get_chat_service()
+        result = await chat_service.get_session_history(document_id, current_user["id"])
+        
+        if result["success"]:
+            messages = result.get("messages", [])
+            response_data = ChatHistoryResponse(
+                session_id=result["session_id"],
+                document_id=document_id,
+                messages=messages,
+                message_count=len(messages),
+                created_at=result.get("created_at", ""),
+                updated_at=result.get("updated_at", "")
+            )
+            
+            logger.info(f"✅ FOUNDATIONAL: Retrieved {len(messages)} messages for document {document_id}")
+            return create_success_response(
+                data=response_data,
+                correlation_id=getattr(request.state, 'correlation_id', None)
+            )
+        else:
+            logger.error(f"❌ FOUNDATIONAL: Failed to get history: {result.get('error')}")
+            return create_error_response(
+                code="HISTORY_RETRIEVAL_FAILED",
+                message=result.get("error", "Failed to get chat history"),
+                correlation_id=getattr(request.state, 'correlation_id', None)
+            )
+            
+    except Exception as e:
+        log_exception(logger, "💥 FOUNDATIONAL: Exception in get_chat_history", e)
+        return create_error_response(
+            code="INTERNAL_ERROR",
+            message="Internal server error",
+            correlation_id=getattr(request.state, 'correlation_id', None)
+        )
 
 # Health check endpoint for RAG system
 @router.get("/rag/health")

@@ -10,32 +10,11 @@ from middleware.security import security_middleware
 from middleware.api_standardization import add_api_standardization
 from middleware.versioning import VersionedAPIRouter, APIVersion
 from database.factory import get_database_factory
-import logging
+from config.logging import FoundationalLogger, get_foundational_logger
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Configure special auth logger with file output
-auth_logger = logging.getLogger("auth")
-auth_logger.setLevel(logging.DEBUG)
-
-# Console handler with special formatting for auth logs
-auth_console_handler = logging.StreamHandler()
-auth_console_handler.setLevel(logging.DEBUG)
-auth_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-auth_console_handler.setFormatter(auth_formatter)
-auth_logger.addHandler(auth_console_handler)
-
-# Also log to file
-try:
-    auth_file_handler = logging.FileHandler('auth.log')
-    auth_file_handler.setLevel(logging.DEBUG)
-    auth_file_handler.setFormatter(auth_formatter)
-    auth_logger.addHandler(auth_file_handler)
-    logger.info("Auth logging to file enabled")
-except Exception as e:
-    logger.warning(f"Could not set up auth file logging: {str(e)}")
+# 🚀 FOUNDATIONAL LOGGING: Configure once, use everywhere!
+FoundationalLogger.configure(log_level="DEBUG", log_dir="logs")
+logger = get_foundational_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

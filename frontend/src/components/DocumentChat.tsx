@@ -33,7 +33,7 @@ export default function DocumentChat({
   );
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false); // 🚀 Not needed in foundational architecture
   const [isSending, setIsSending] = useState(false);
   const [chatStatus, setChatStatus] = useState<{
     chat_available: boolean;
@@ -83,6 +83,63 @@ export default function DocumentChat({
     fetchChatStatus();
   }, [documentId]);
 
+  // 🚀 FOUNDATIONAL ARCHITECTURE: Initialize THE session automatically
+  useEffect(() => {
+    const initializeFoundationalSession = async () => {
+      if (!chatStatus?.chat_available || !chatStatus?.ready_for_chat) {
+        return; // Wait for chat to be ready
+      }
+
+      console.log(
+        "🎯 [Foundational] Initializing session for document:",
+        documentId
+      );
+
+      try {
+        const sessionResponse = await documentChatApi.getOrCreateSession(
+          documentId
+        );
+
+        if (sessionResponse.ok) {
+          const sessionResult = (await sessionResponse.json()) as {
+            data: {
+              session_id: string;
+              document_id: string;
+              messages: ChatMessage[];
+              created_at: string;
+              updated_at: string;
+            };
+          };
+
+          const foundationalSession: ChatSession = {
+            session_id: sessionResult.data.session_id,
+            document_id: sessionResult.data.document_id,
+            messages: sessionResult.data.messages || [],
+            created_at: sessionResult.data.created_at,
+            updated_at: sessionResult.data.updated_at,
+          };
+
+          console.log("✅ [Foundational] THE session initialized:", {
+            sessionId: foundationalSession.session_id,
+            messageCount: foundationalSession.messages.length,
+          });
+
+          setCurrentSession(foundationalSession);
+          setMessages(foundationalSession.messages);
+        } else {
+          console.error(
+            "❌ [Foundational] Failed to initialize session:",
+            sessionResponse.statusText
+          );
+        }
+      } catch (error) {
+        console.error("💥 [Foundational] Session initialization error:", error);
+      }
+    };
+
+    initializeFoundationalSession();
+  }, [documentId, chatStatus?.chat_available, chatStatus?.ready_for_chat]);
+
   const checkChatStatus = async () => {
     try {
       const response = await documentChatApi.get(
@@ -106,62 +163,16 @@ export default function DocumentChat({
     }
   };
 
-  const createChatSession = async () => {
-    try {
-      setIsLoading(true);
-      console.log("🔄 [Chat] Creating chat session for document:", documentId);
+  // 🚀 FOUNDATIONAL LEGACY: Old session creation (not used in foundational architecture)
+  // const createChatSession = async () => {
+  //   // This method is preserved for backward compatibility but not used
+  //   // in foundational architecture since sessions are auto-initialized
+  //   console.log("⚠️ Legacy createChatSession called - foundational architecture handles this automatically");
+  // };
 
-      const response = await documentChatApi.post(
-        `/chat/${documentId}/chat/sessions`,
-        {}
-      );
-
-      console.log("📝 [Chat] Session creation response:", {
-        ok: response.ok,
-        status: response.status,
-        statusText: response.statusText,
-      });
-
-      if (response.ok) {
-        const result = (await response.json()) as {
-          data: { session_id: string; document_id: string };
-        };
-        const newSession: ChatSession = {
-          session_id: result.data.session_id,
-          document_id: result.data.document_id,
-          messages: [],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-
-        console.log("✅ [Chat] Session created successfully:", {
-          sessionId: newSession.session_id,
-          documentId: newSession.document_id,
-        });
-
-        setCurrentSession(newSession);
-        setMessages([]);
-        toast.success("Chat session created!");
-      } else {
-        const error = (await response.json()) as {
-          detail?: { message?: string };
-        };
-        console.error("❌ [Chat] Session creation failed:", {
-          status: response.status,
-          error: error.detail?.message,
-        });
-        toast.error(error.detail?.message || "Failed to create chat session");
-      }
-    } catch (error) {
-      console.error("💥 [Chat] Session creation network error:", error);
-      toast.error("Failed to create chat session");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const sendMessage = async () => {
-    if (!inputMessage.trim() || !currentSession || isSending) return;
+  // 🚀 FOUNDATIONAL SEND MESSAGE - Clean and Simple!
+  const sendMessageFoundational = async () => {
+    if (!inputMessage.trim() || isSending) return;
 
     const userMessage: ChatMessage = {
       role: "user",
@@ -169,9 +180,8 @@ export default function DocumentChat({
       timestamp: new Date().toISOString(),
     };
 
-    console.log("🚀 [Chat] Sending message:", {
+    console.log("🚀 [Foundational] Sending message:", {
       message: userMessage.content,
-      sessionId: currentSession.session_id,
       documentId: documentId,
     });
 
@@ -181,14 +191,12 @@ export default function DocumentChat({
     setIsSending(true);
 
     try {
-      const response = await documentChatApi.post(
-        `/chat/${documentId}/chat/${currentSession.session_id}/messages`,
-        {
-          message: userMessage.content,
-        }
+      const response = await documentChatApi.sendMessageFoundational(
+        documentId,
+        userMessage.content
       );
 
-      console.log("📥 [Chat] Response received:", {
+      console.log("📥 [Foundational] Response received:", {
         ok: response.ok,
         status: response.status,
         statusText: response.statusText,
@@ -200,7 +208,7 @@ export default function DocumentChat({
         };
         const aiMessage: ChatMessage = result.data.ai_response;
 
-        console.log("🤖 [Chat] AI Response:", {
+        console.log("🤖 [Foundational] AI Response:", {
           content: aiMessage.content.substring(0, 100) + "...",
           hasSources: !!aiMessage.sources && aiMessage.sources.length > 0,
           sourceCount: aiMessage.sources?.length || 0,
@@ -208,7 +216,7 @@ export default function DocumentChat({
         });
 
         if (aiMessage.sources && aiMessage.sources.length > 0) {
-          console.log("📚 [Chat] Sources found:", aiMessage.sources);
+          console.log("📚 [Foundational] Sources found:", aiMessage.sources);
         }
 
         setMessages((prev) => [...prev, aiMessage]);
@@ -216,7 +224,7 @@ export default function DocumentChat({
         const error = (await response.json()) as {
           detail?: { message?: string };
         };
-        console.error("❌ [Chat] Message failed:", {
+        console.error("❌ [Foundational] Message failed:", {
           status: response.status,
           error: error.detail?.message,
         });
@@ -225,20 +233,27 @@ export default function DocumentChat({
         setMessages((prev) => prev.slice(0, -1));
       }
     } catch (error) {
-      console.error("💥 [Chat] Network error:", error);
+      console.error("💥 [Foundational] Network error:", error);
       toast.error("Failed to send message");
       // Remove the user message if sending failed
       setMessages((prev) => prev.slice(0, -1));
     } finally {
       setIsSending(false);
-      console.log("✅ [Chat] Message sending completed");
+      console.log("✅ [Foundational] Message sending completed");
     }
   };
+
+  // 🚀 FOUNDATIONAL LEGACY: Old message sending (preserved for reference)
+  // const sendMessage = async () => {
+  //   // This method is preserved for backward compatibility but not used
+  //   // in foundational architecture - use sendMessageFoundational instead
+  //   console.log("⚠️ Legacy sendMessage called - use sendMessageFoundational for foundational architecture");
+  // };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      sendMessageFoundational(); // 🚀 Use foundational architecture!
     }
   };
 
@@ -304,7 +319,8 @@ export default function DocumentChat({
     );
   }
 
-  // If no session exists yet
+  // 🚀 FOUNDATIONAL ARCHITECTURE: No session creation UI needed!
+  // THE session is automatically initialized when chat is ready.
   if (!currentSession) {
     return (
       <div className={`space-y-4 ${className}`}>
@@ -324,20 +340,14 @@ export default function DocumentChat({
               />
             </svg>
             <h3 className="text-lg font-semibold text-text-primary mb-4">
-              Ready to Chat with Your Document
+              🚀 Initializing Your Document Chat
             </h3>
             <p className="text-text-secondary mb-6">
-              Start a conversation to ask questions about your contract. The AI
-              will provide answers based on the document content with specific
-              references.
+              Setting up your conversation session... The foundational
+              architecture is automatically preparing THE session for this
+              document.
             </p>
-            <Button
-              onClick={createChatSession}
-              disabled={isLoading}
-              className="px-6 py-2"
-            >
-              {isLoading ? "Creating..." : "Start Chat Session"}
-            </Button>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-purple mx-auto"></div>
             <p className="text-xs text-text-tertiary mt-4">
               Processed {chatStatus?.chunk_count || 0} document sections for
               intelligent search
@@ -427,7 +437,7 @@ export default function DocumentChat({
           className="flex-1 px-4 py-2 bg-bg-elevated border border-border-muted rounded-lg text-text-primary placeholder-text-secondary focus:ring-2 focus:ring-accent-purple focus:border-transparent disabled:opacity-50"
         />
         <Button
-          onClick={sendMessage}
+          onClick={sendMessageFoundational} // 🚀 Use foundational architecture!
           disabled={!inputMessage.trim() || isSending}
         >
           {isSending ? "Sending..." : "Send"}

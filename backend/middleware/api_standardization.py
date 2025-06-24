@@ -150,10 +150,19 @@ class APIStandardizationMiddleware(BaseHTTPMiddleware):
                 correlation_id=correlation_id
             )
             
+            # 🚀 FOUNDATIONAL: Ensure CORS headers in error responses
+            cors_headers = {
+                "X-Correlation-ID": correlation_id,
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Credentials": "true"
+            }
+            
             return JSONResponse(
                 status_code=500,
                 content=error_response.model_dump(),
-                headers={"X-Correlation-ID": correlation_id}
+                headers=cors_headers
             )
         
         # Calculate request duration
@@ -209,10 +218,24 @@ class HTTPExceptionHandler:
             correlation_id=correlation_id
         )
         
+        # 🚀 FOUNDATIONAL: Ensure CORS headers in HTTP error responses
+        cors_headers = {
+            "X-Correlation-ID": correlation_id,
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Credentials": "true"
+        } if correlation_id else {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS", 
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Credentials": "true"
+        }
+        
         return JSONResponse(
             status_code=exc.status_code,
             content=error_response.model_dump(),
-            headers={"X-Correlation-ID": correlation_id} if correlation_id else {}
+            headers=cors_headers
         )
 
 
@@ -243,10 +266,24 @@ class ValidationExceptionHandler:
                 correlation_id=correlation_id
             )
             
+            # 🚀 FOUNDATIONAL: Ensure CORS headers in validation error responses
+            cors_headers = {
+                "X-Correlation-ID": correlation_id,
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Credentials": "true"
+            } if correlation_id else {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "*", 
+                "Access-Control-Allow-Credentials": "true"
+            }
+            
             return JSONResponse(
                 status_code=422,
                 content=error_response.model_dump(),
-                headers={"X-Correlation-ID": correlation_id} if correlation_id else {}
+                headers=cors_headers
             )
         
         # Fallback for other validation errors
@@ -257,10 +294,24 @@ class ValidationExceptionHandler:
             correlation_id=correlation_id
         )
         
+        # 🚀 FOUNDATIONAL: Ensure CORS headers in fallback validation errors
+        cors_headers = {
+            "X-Correlation-ID": correlation_id,
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Credentials": "true"
+        } if correlation_id else {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Credentials": "true"
+        }
+        
         return JSONResponse(
             status_code=422,
             content=error_response.model_dump(),
-            headers={"X-Correlation-ID": correlation_id} if correlation_id else {}
+            headers=cors_headers
         )
 
 
