@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Button from "@/components/Button";
 import toast from "react-hot-toast";
+import { documentChatApi } from "@/lib/documentChatApiClient";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -60,16 +61,13 @@ export default function DocumentChat({
   useEffect(() => {
     const fetchChatStatus = async () => {
       try {
-        const response = await fetch(
-          `${getApiUrl()}/api/v1/chat/${documentId}/chat/status`,
-          {
-            headers: getAuthHeaders(),
-          }
+        const response = await documentChatApi.get(
+          `/chat/${documentId}/chat/status`
         );
         if (response.ok) {
-          const result = await response.json();
+          const result = (await response.json()) as { data: unknown };
           console.log("Check status button - response:", result);
-          setChatStatus(result.data);
+          setChatStatus(result.data as typeof chatStatus);
         } else {
           console.error(
             "Check status button - failed:",
@@ -85,32 +83,17 @@ export default function DocumentChat({
     fetchChatStatus();
   }, [documentId]);
 
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("access_token");
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-  };
-
-  const getApiUrl = () => {
-    return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  };
-
   const checkChatStatus = async () => {
     try {
-      const response = await fetch(
-        `${getApiUrl()}/api/v1/chat/${documentId}/chat/status`,
-        {
-          headers: getAuthHeaders(),
-        }
+      const response = await documentChatApi.get(
+        `/chat/${documentId}/chat/status`
       );
 
       if (response.ok) {
-        const result = await response.json();
+        const result = (await response.json()) as { data: unknown };
         console.log("Chat status response:", result);
         console.log("Setting chat status to:", result.data);
-        setChatStatus(result.data);
+        setChatStatus(result.data as typeof chatStatus);
       } else {
         console.error(
           "Failed to check chat status",
@@ -126,17 +109,23 @@ export default function DocumentChat({
   const createChatSession = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(
-        `${getApiUrl()}/api/v1/chat/${documentId}/chat/sessions`,
-        {
-          method: "POST",
-          headers: getAuthHeaders(),
-          body: JSON.stringify({}),
-        }
+      console.log("🔄 [Chat] Creating chat session for document:", documentId);
+
+      const response = await documentChatApi.post(
+        `/chat/${documentId}/chat/sessions`,
+        {}
       );
 
+      console.log("📝 [Chat] Session creation response:", {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+      });
+
       if (response.ok) {
-        const result = await response.json();
+        const result = (await response.json()) as {
+          data: { session_id: string; document_id: string };
+        };
         const newSession: ChatSession = {
           session_id: result.data.session_id,
           document_id: result.data.document_id,
@@ -144,15 +133,27 @@ export default function DocumentChat({
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
+
+        console.log("✅ [Chat] Session created successfully:", {
+          sessionId: newSession.session_id,
+          documentId: newSession.document_id,
+        });
+
         setCurrentSession(newSession);
         setMessages([]);
         toast.success("Chat session created!");
       } else {
-        const error = await response.json();
+        const error = (await response.json()) as {
+          detail?: { message?: string };
+        };
+        console.error("❌ [Chat] Session creation failed:", {
+          status: response.status,
+          error: error.detail?.message,
+        });
         toast.error(error.detail?.message || "Failed to create chat session");
       }
     } catch (error) {
-      console.error("Error creating chat session:", error);
+      console.error("💥 [Chat] Session creation network error:", error);
       toast.error("Failed to create chat session");
     } finally {
       setIsLoading(false);
@@ -168,42 +169,69 @@ export default function DocumentChat({
       timestamp: new Date().toISOString(),
     };
 
+    console.log("🚀 [Chat] Sending message:", {
+      message: userMessage.content,
+      sessionId: currentSession.session_id,
+      documentId: documentId,
+    });
+
     // Add user message immediately
     setMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
     setIsSending(true);
 
     try {
-      const response = await fetch(
-        `${getApiUrl()}/api/v1/chat/${documentId}/chat/${
-          currentSession.session_id
-        }/messages`,
+      const response = await documentChatApi.post(
+        `/chat/${documentId}/chat/${currentSession.session_id}/messages`,
         {
-          method: "POST",
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
-            message: userMessage.content,
-          }),
+          message: userMessage.content,
         }
       );
 
+      console.log("📥 [Chat] Response received:", {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+      });
+
       if (response.ok) {
-        const result = await response.json();
+        const result = (await response.json()) as {
+          data: { ai_response: ChatMessage };
+        };
         const aiMessage: ChatMessage = result.data.ai_response;
+
+        console.log("🤖 [Chat] AI Response:", {
+          content: aiMessage.content.substring(0, 100) + "...",
+          hasSources: !!aiMessage.sources && aiMessage.sources.length > 0,
+          sourceCount: aiMessage.sources?.length || 0,
+          timestamp: aiMessage.timestamp,
+        });
+
+        if (aiMessage.sources && aiMessage.sources.length > 0) {
+          console.log("📚 [Chat] Sources found:", aiMessage.sources);
+        }
+
         setMessages((prev) => [...prev, aiMessage]);
       } else {
-        const error = await response.json();
+        const error = (await response.json()) as {
+          detail?: { message?: string };
+        };
+        console.error("❌ [Chat] Message failed:", {
+          status: response.status,
+          error: error.detail?.message,
+        });
         toast.error(error.detail?.message || "Failed to send message");
         // Remove the user message if sending failed
         setMessages((prev) => prev.slice(0, -1));
       }
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("💥 [Chat] Network error:", error);
       toast.error("Failed to send message");
       // Remove the user message if sending failed
       setMessages((prev) => prev.slice(0, -1));
     } finally {
       setIsSending(false);
+      console.log("✅ [Chat] Message sending completed");
     }
   };
 
@@ -215,14 +243,14 @@ export default function DocumentChat({
   };
 
   // If chat is not available
-  console.log("Chat status check:", {
-    chatStatus,
-    chat_available: chatStatus?.chat_available,
-    ready_for_chat: chatStatus?.ready_for_chat,
-    condition1: !chatStatus?.chat_available,
-    condition2: !chatStatus?.ready_for_chat,
-    overall: !chatStatus?.chat_available || !chatStatus?.ready_for_chat,
-  });
+  // console.log("Chat status check:", {
+  //   chatStatus,
+  //   chat_available: chatStatus?.chat_available,
+  //   ready_for_chat: chatStatus?.ready_for_chat,
+  //   condition1: !chatStatus?.chat_available,
+  //   condition2: !chatStatus?.ready_for_chat,
+  //   overall: !chatStatus?.chat_available || !chatStatus?.ready_for_chat,
+  // });
 
   if (!chatStatus?.chat_available || !chatStatus?.ready_for_chat) {
     const isProcessing =
