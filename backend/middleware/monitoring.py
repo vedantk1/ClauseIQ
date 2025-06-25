@@ -194,6 +194,18 @@ async def performance_monitoring_middleware(request: Request, call_next):
             status_code=response.status_code
         )
         
+        # 🚀 INTEGRATION: Log to debug dashboard for real-time monitoring
+        try:
+            from debug_dashboard import debug_dashboard
+            await debug_dashboard.log_api_request(
+                request=request,
+                response_time=duration,
+                status_code=response.status_code,
+                error=None
+            )
+        except Exception:
+            pass  # Don't break main flow if debug logging fails
+        
         # Add performance headers
         response.headers["X-Process-Time"] = f"{duration * 1000:.2f}ms"
         
@@ -208,6 +220,19 @@ async def performance_monitoring_middleware(request: Request, call_next):
             duration=duration,
             status_code=500
         )
+        
+        # 🚀 INTEGRATION: Log errors to debug dashboard
+        try:
+            from debug_dashboard import debug_dashboard
+            await debug_dashboard.log_api_request(
+                request=request,
+                response_time=duration,
+                status_code=500,
+                error=str(error)
+            )
+        except Exception:
+            pass  # Don't break main flow if debug logging fails
+        
         raise
         
     finally:

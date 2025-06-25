@@ -98,6 +98,7 @@ class RateLimitConfig:
     AUTH = {"limit": 30, "window": 60}  # Allow more auth requests for login flows
     UPLOAD = {"limit": 10, "window": 60}  # Limited for file uploads
     AI_ANALYSIS = {"limit": 20, "window": 60}  # Limited for expensive AI operations
+    AI_DEBUG = {"limit": 300, "window": 60}  # High limit for AI debug endpoints to prevent loops
 
 
 async def rate_limit_middleware(request: Request, call_next):
@@ -112,6 +113,8 @@ async def rate_limit_middleware(request: Request, call_next):
             config = RateLimitConfig.UPLOAD
         elif path.startswith("/analysis/"):
             config = RateLimitConfig.AI_ANALYSIS
+        elif path.startswith("/api/v1/ai-debug/") or path.startswith("/ai-debug/"):
+            config = RateLimitConfig.AI_DEBUG
         else:
             config = RateLimitConfig.DEFAULT
         

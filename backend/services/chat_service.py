@@ -10,6 +10,7 @@ FEATURES:
 - Integration with RAG service for intelligent responses
 - Source attribution and transparency
 - User isolation and security
+- 🤖 AI-friendly debug logging for troubleshooting
 """
 import logging
 import uuid
@@ -18,6 +19,9 @@ from datetime import datetime
 
 from database.service import get_document_service
 from services.rag_service import RAGService, ChatMessage, ChatSession
+
+# 🤖 AI DEBUG INTEGRATION
+from utils.ai_debug_helper import ai_debug, DebugLevel
 
 logger = logging.getLogger(__name__)
 
@@ -380,25 +384,113 @@ class ChatService:
             }
 
     async def _generate_ai_response(self, document: dict, message: str, conversation_history: list) -> dict:
-        """Generate AI response using RAG."""
+        """Generate AI response using RAG with comprehensive pipeline logging."""
+        # 🚀 RAG PIPELINE DEBUG: Start tracking this request
+        from debug_dashboard import debug_dashboard
+        import time
+        
+        rag_start_time = time.time()
+        user_id = document["user_id"]
+        document_id = document["id"]
+        
+        # 🤖 AI DEBUG: Log RAG pipeline start for AI assistant visibility
+        ai_debug.log_system_event(
+            event_type="RAG_PIPELINE_START",
+            level=DebugLevel.INFO,
+            message=f"RAG pipeline started for query: {message[:50]}...",
+            context={
+                "document_id": document_id,
+                "query_length": len(message),
+                "conversation_length": len(conversation_history)
+            },
+            user_id=user_id
+        )
+        
+        pipeline_log = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "document_id": document_id,
+            "user_id": user_id,
+            "query": message[:200],  # Truncate for logging
+            "conversation_length": len(conversation_history),
+            "steps": [],
+            "success": False,
+            "total_time_ms": 0
+        }
+        
         try:
-            document_id = document["id"]
-            user_id = document["user_id"]
+            # 🚀 STEP 1: Service Availability Check
+            step_start = time.time()
+            service_available = await self.is_available()
+            step_duration = (time.time() - step_start) * 1000
+            
+            ai_debug.log_rag_pipeline_step(
+                step_name="service_availability",
+                success=service_available,
+                duration_ms=step_duration,
+                details={"available": service_available},
+                user_id=user_id,
+                document_id=document_id,
+                query=message
+            )
+            
+            pipeline_log["steps"].append({
+                "step": "service_availability",
+                "success": service_available,
+                "time_ms": round(step_duration, 2),
+                "details": {"available": service_available}
+            })
             
             # Generate AI response using RAG
-            if not await self.is_available():
+            if not service_available:
+                ai_debug.log_system_event(
+                    event_type="RAG_SERVICE_UNAVAILABLE",
+                    level=DebugLevel.ERROR,
+                    message="RAG service is unavailable",
+                    context={"document_id": document_id},
+                    user_id=user_id
+                )
+                pipeline_log["error"] = "AI service unavailable"
                 ai_response_content = "I'm sorry, but the AI service is currently unavailable. Please try again later."
                 ai_sources = []
             else:
+                # 🚀 STEP 2: Document RAG Status Check
+                step_start = time.time()
+                rag_processed = document.get("rag_processed", False)
+                step_duration = (time.time() - step_start) * 1000
+                
+                ai_debug.log_rag_pipeline_step(
+                    step_name="document_rag_status",
+                    success=rag_processed,
+                    duration_ms=step_duration,
+                    details={"rag_processed": rag_processed},
+                    user_id=user_id,
+                    document_id=document_id,
+                    query=message
+                )
+                
+                pipeline_log["steps"].append({
+                    "step": "document_rag_status",
+                    "success": rag_processed,
+                    "time_ms": round(step_duration, 2),
+                    "details": {"rag_processed": rag_processed}
+                })
+                
                 # Check if document has RAG processing
-                if not document.get("rag_processed", False):
+                if not rag_processed:
+                    ai_debug.log_system_event(
+                        event_type="DOCUMENT_NOT_RAG_PROCESSED",
+                        level=DebugLevel.WARNING,
+                        message="Document not ready for RAG processing",
+                        context={"document_id": document_id},
+                        user_id=user_id
+                    )
+                    pipeline_log["error"] = "Document not RAG processed"
                     ai_response_content = "I'm sorry, but this document is not ready for chat yet. Please wait for processing to complete."
                     ai_sources = []
                 else:
-                    # DEBUG: Log conversation history to identify the issue
-                    logger.info(f"🔍 Conversation history has {len(conversation_history)} messages")
-                    if conversation_history:
-                        logger.info(f"🔍 Last message: {conversation_history[-1].get('content', '')[:100]}...")
+                    # 🚀 STEP 3: Vector Retrieval
+                    step_start = time.time()
+                    logger.info(f"🔍 RAG Pipeline: Starting retrieval for query '{message[:100]}...'")
                     
                     # Retrieve relevant chunks using updated RAG service with conversation context
                     rag_result = await self.rag_service.retrieve_relevant_chunks(
@@ -407,19 +499,97 @@ class ChatService:
                     
                     relevant_chunks = rag_result["chunks"]
                     enhanced_query = rag_result["enhanced_query"]
+                    retrieval_time = round((time.time() - step_start) * 1000, 2)
                     
-                    # DEBUG: Log RAG processing results
-                    logger.info(f"🔍 Original query: '{message}'")
-                    logger.info(f"🔍 Enhanced query: '{enhanced_query}'")
-                    logger.info(f"🔍 Found {len(relevant_chunks)} chunks")
+                    ai_debug.log_rag_pipeline_step(
+                        step_name="vector_retrieval",
+                        success=len(relevant_chunks) > 0,
+                        duration_ms=retrieval_time,
+                        details={
+                            "original_query": message[:100],
+                            "enhanced_query": enhanced_query[:100],
+                            "chunks_found": len(relevant_chunks),
+                            "chunk_scores": [chunk.get("score", 0) for chunk in relevant_chunks[:5]]
+                        },
+                        user_id=user_id,
+                        document_id=document_id,
+                        query=message
+                    )
+                    
+                    pipeline_log["steps"].append({
+                        "step": "vector_retrieval",
+                        "success": len(relevant_chunks) > 0,
+                        "time_ms": retrieval_time,
+                        "details": {
+                            "original_query": message[:100],
+                            "enhanced_query": enhanced_query[:100],
+                            "chunks_found": len(relevant_chunks),
+                            "chunk_scores": [chunk.get("score", 0) for chunk in relevant_chunks[:5]]
+                        }
+                    })
+                    
+                    logger.info(f"🔍 RAG Pipeline: Retrieved {len(relevant_chunks)} chunks in {retrieval_time}ms")
+                    
+                    # 🚀 STEP 4: LLM Response Generation
+                    step_start = time.time()
                     
                     # Generate response using enhanced query
                     rag_response = await self.rag_service.generate_rag_response(
                         message, relevant_chunks, enhanced_query
                     )
                     
+                    generation_time = round((time.time() - step_start) * 1000, 2)
                     ai_response_content = rag_response["response"]
                     ai_sources = rag_response["sources"]
+                    
+                    ai_debug.log_rag_pipeline_step(
+                        step_name="llm_generation",
+                        success=bool(ai_response_content),
+                        duration_ms=generation_time,
+                        details={
+                            "response_length": len(ai_response_content),
+                            "sources_count": len(ai_sources),
+                            "has_citations": bool(ai_sources)
+                        },
+                        user_id=user_id,
+                        document_id=document_id,
+                        query=message
+                    )
+                    
+                    pipeline_log["steps"].append({
+                        "step": "llm_generation",
+                        "success": bool(ai_response_content),
+                        "time_ms": generation_time,
+                        "details": {
+                            "response_length": len(ai_response_content),
+                            "sources_count": len(ai_sources),
+                            "has_citations": bool(ai_sources)
+                        }
+                    })
+                    
+                    logger.info(f"🔍 RAG Pipeline: Generated response ({len(ai_response_content)} chars) in {generation_time}ms")
+            
+            # 🚀 PIPELINE SUCCESS: Mark as successful
+            pipeline_log["success"] = True
+            pipeline_log["total_time_ms"] = round((time.time() - rag_start_time) * 1000, 2)
+            
+            # 🤖 AI DEBUG: Log successful completion
+            ai_debug.log_system_event(
+                event_type="RAG_PIPELINE_SUCCESS",
+                level=DebugLevel.INFO,
+                message=f"RAG pipeline completed successfully in {pipeline_log['total_time_ms']}ms",
+                context={
+                    "document_id": document_id,
+                    "total_time_ms": pipeline_log['total_time_ms'],
+                    "steps_count": len(pipeline_log['steps'])
+                },
+                user_id=user_id
+            )
+            
+            # 🚀 LOG TO DEBUG DASHBOARD: Real-time RAG monitoring
+            debug_dashboard.log_rag_pipeline(pipeline_log)
+            
+            logger.info(f"✅ RAG Pipeline completed successfully in {pipeline_log['total_time_ms']}ms")
             
             # Create AI response message
             ai_message = ChatMessage(
@@ -436,7 +606,27 @@ class ChatService:
             }
             
         except Exception as e:
-            logger.error(f"Error generating AI response: {e}")
+            # 🚀 LOG PIPELINE ERROR: Track failures for debugging
+            pipeline_log["success"] = False
+            pipeline_log["error"] = str(e)
+            pipeline_log["total_time_ms"] = round((time.time() - rag_start_time) * 1000, 2)
+            debug_dashboard.log_rag_pipeline(pipeline_log)
+            
+            # 🤖 AI DEBUG: Log critical RAG failure
+            ai_debug.log_system_event(
+                event_type="RAG_PIPELINE_FAILURE",
+                level=DebugLevel.ERROR,
+                message=f"RAG pipeline failed after {pipeline_log['total_time_ms']}ms",
+                context={
+                    "document_id": document_id,
+                    "error_type": e.__class__.__name__,
+                    "pipeline_steps_completed": len(pipeline_log['steps'])
+                },
+                error=e,
+                user_id=user_id
+            )
+            
+            logger.error(f"❌ RAG Pipeline failed: {e}")
             return {
                 "role": "assistant",
                 "content": "I apologize, but I encountered an error while processing your message. Please try again.",

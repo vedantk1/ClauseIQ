@@ -1,8 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
+import json
 from config.environments import get_environment_config
 from routers import auth, documents, analysis, analytics, health, reports, chat
+from routers import ai_debug as ai_debug_router
 from middleware.rate_limiter import rate_limit_middleware
 from middleware.logging import logging_middleware
 from middleware.monitoring import performance_monitoring_middleware
@@ -16,30 +19,78 @@ from config.logging import FoundationalLogger, get_foundational_logger
 FoundationalLogger.configure(log_level="DEBUG", log_dir="logs")
 logger = get_foundational_logger(__name__)
 
+# 🤖 AI DEBUG INTEGRATION: Enhanced logging for AI assistant troubleshooting
+from utils.ai_debug_helper import log_startup_diagnostics, ai_debug, DebugLevel
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan management."""
     # Startup
     logger.info("Starting ClauseIQ Legal AI Backend...")
+    
+    # 🤖 LOG STARTUP FOR AI DEBUGGING
+    log_startup_diagnostics()
+    
+    # 🤖 AI DEBUG: Log startup diagnostics for AI assistant reference
+    ai_debug.log_system_event(
+        event_type="BACKEND_STARTUP",
+        level=DebugLevel.INFO,
+        message="ClauseIQ backend startup initiated"
+    )
+    
     db_factory = get_database_factory()
     try:
         import asyncio
         # Add a timeout for DB initialization (e.g., 10 seconds)
         await asyncio.wait_for(db_factory.initialize(), timeout=10)
+        
+        ai_debug.log_system_event(
+            event_type="DATABASE_INIT",
+            level=DebugLevel.INFO,
+            message="Database initialization completed successfully"
+        )
     except Exception as e:
+        ai_debug.log_system_event(
+            event_type="DATABASE_INIT",
+            level=DebugLevel.CRITICAL,
+            message="Database initialization failed - system cannot start",
+            error=e
+        )
         logger.error(f"Database initialization failed: {e}")
         raise RuntimeError(f"Database initialization failed: {e}")
     try:
         is_healthy = await asyncio.wait_for(db_factory.health_check(), timeout=10)
     except Exception as e:
+        ai_debug.log_system_event(
+            event_type="DATABASE_HEALTH_CHECK",
+            level=DebugLevel.CRITICAL,
+            message="Database health check failed during startup",
+            error=e
+        )
         logger.error(f"Database health check failed: {e}")
         raise RuntimeError(f"Database health check failed: {e}")
     if not is_healthy:
+        ai_debug.log_system_event(
+            event_type="DATABASE_HEALTH_CHECK",
+            level=DebugLevel.CRITICAL,
+            message="Database health check returned unhealthy status"
+        )
         logger.error("Database health check failed during startup")
         raise RuntimeError("Database connection failed")
+    
+    ai_debug.log_system_event(
+        event_type="BACKEND_STARTUP_COMPLETE",
+        level=DebugLevel.INFO,
+        message="ClauseIQ backend startup completed successfully - all systems operational"
+    )
     logger.info("Database connection established successfully")
     yield
     # Shutdown
+    ai_debug.log_system_event(
+        event_type="BACKEND_SHUTDOWN",
+        level=DebugLevel.INFO,
+        message="ClauseIQ backend shutdown initiated"
+    )
     logger.info("Shutting down ClauseIQ Legal AI Backend...")
     await db_factory.close()
     logger.info("Database connections closed")
@@ -92,10 +143,12 @@ v1_router.include_router(health.router)
 v1_router.include_router(reports.router)
 v1_router.include_router(chat.router, prefix="/chat")
 
+# 🤖 AI DEBUG ROUTER: Special endpoints for AI assistant troubleshooting
+v1_router.include_router(ai_debug_router.router)
+
 app.include_router(v1_router)
 
-# NOTE: Removed duplicate router includes that were causing authentication race conditions
-# All routers are now properly versioned through v1_router above
+
 
 @app.get("/")
 async def root():
@@ -161,6 +214,4 @@ async def detailed_health():
             "error": str(e)
         }
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# End of main application setup
