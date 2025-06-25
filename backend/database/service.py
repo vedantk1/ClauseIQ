@@ -88,12 +88,13 @@ class DocumentService:
             return False
     
     async def delete_all_documents_for_user(self, user_id: str) -> int:
-        """Delete all documents for user."""
+        """Delete all documents for user and clean up RAG data."""
         db = await self._get_db()
         documents = await db.list_documents(user_id, limit=1000)  # Get all documents
         count = 0
         for doc in documents:
-            if await db.delete_document(doc["id"], user_id):
+            # Use the service method to ensure RAG cleanup
+            if await self.delete_document_for_user(doc["id"], user_id):
                 count += 1
         return count
     
