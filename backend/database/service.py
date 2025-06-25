@@ -62,9 +62,24 @@ class DocumentService:
         return False
     
     async def delete_document_for_user(self, doc_id: str, user_id: str) -> bool:
-        """Delete document for specific user and clean up RAG data."""
+        """Delete document for specific user and clean up RAG data and PDF files."""
         try:
-            # First, clean up RAG data from Supabase
+            # First get document to check for PDF file
+            document = await self.get_document_for_user(doc_id, user_id)
+            
+            # Clean up PDF file if it exists
+            pdf_file_id = document.get('pdf_file_id') if document else None
+            if pdf_file_id:
+                try:
+                    from services.file_storage_service import get_file_storage_service
+                    file_storage = get_file_storage_service()
+                    await file_storage.delete_file(pdf_file_id, user_id)
+                    logger.info(f"Cleaned up PDF file {pdf_file_id} for document {doc_id}")
+                except Exception as e:
+                    logger.warning(f"Could not clean up PDF file for document {doc_id}: {e}")
+                    # Continue with document deletion even if PDF cleanup fails
+            
+            # Then, clean up RAG data from Supabase
             try:
                 from services.rag_service import get_rag_service
                 rag_service = get_rag_service()
@@ -74,7 +89,7 @@ class DocumentService:
                 logger.warning(f"Could not clean up RAG data for document {doc_id}: {e}")
                 # Continue with document deletion even if RAG cleanup fails
             
-            # Then delete from MongoDB
+            # Finally delete from MongoDB
             db = await self._get_db()
             result = await db.delete_document(doc_id, user_id)
             
@@ -460,7 +475,108 @@ class DocumentService:
         except Exception as e:
             logger.error(f"Failed to update document {document_id}: {e}")
             return False
-
+    
+    # PDF File Operations
+    async def store_pdf_file(self, document_id: str, user_id: str, file_data: bytes, 
+                           filename: str, content_type: str = "application/pdf") -> bool:
+        """Store PDF file for a document and update document metadata."""
+        try:
+            from services.file_storage_service import get_file_storage_service
+            file_storage = get_file_storage_service()
+            
+            # Store the PDF file
+            file_id = await file_storage.store_file(
+                file_data=file_data,
+                filename=filename,
+                content_type=content_type,
+                user_id=user_id,
+                metadata={'document_id': document_id}
+            )
+            
+            # Update document with PDF metadata
+            pdf_metadata = {
+                'pdf_file_id': file_id,
+                'pdf_file_size': len(file_data),
+                'pdf_content_type': content_type,
+                'pdf_stored_at': datetime.now().isoformat(),
+                'has_pdf_file': True
+            }
+            
+            # Update document
+            db = await self._get_db()
+            success = await db.update_document(document_id, user_id, pdf_metadata)
+            
+            if success:
+                logger.info(f"Successfully stored PDF file {filename} for document {document_id}")
+            else:
+                # Rollback file storage if document update fails
+                await file_storage.delete_file(file_id, user_id)
+                raise Exception("Failed to update document with PDF metadata")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Failed to store PDF file for document {document_id}: {e}")
+            return False
+    
+    async def get_pdf_file(self, document_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get PDF file for a document."""
+        try:
+            # First get document to get PDF file ID
+            document = await self.get_document_for_user(document_id, user_id)
+            if not document or not document.get('has_pdf_file'):
+                return None
+            
+            pdf_file_id = document.get('pdf_file_id')
+            if not pdf_file_id:
+                return None
+            
+            # Get file from storage
+            from services.file_storage_service import get_file_storage_service
+            file_storage = get_file_storage_service()
+            
+            return await file_storage.get_file(pdf_file_id, user_id)
+            
+        except Exception as e:
+            logger.error(f"Failed to get PDF file for document {document_id}: {e}")
+            return None
+    
+    async def get_pdf_file_stream(self, document_id: str, user_id: str):
+        """Get PDF file stream for efficient downloading."""
+        try:
+            # First get document to get PDF file ID
+            document = await self.get_document_for_user(document_id, user_id)
+            if not document or not document.get('has_pdf_file'):
+                return None, None
+            
+            pdf_file_id = document.get('pdf_file_id')
+            if not pdf_file_id:
+                return None, None
+            
+            # Get file metadata and stream
+            from services.file_storage_service import get_file_storage_service
+            file_storage = get_file_storage_service()
+            
+            metadata = await file_storage.get_file_metadata(pdf_file_id, user_id)
+            stream = await file_storage.get_file_stream(pdf_file_id, user_id)
+            
+            return metadata, stream
+            
+        except Exception as e:
+            logger.error(f"Failed to get PDF file stream for document {document_id}: {e}")
+            return None, None
+    
+    async def has_pdf_file(self, document_id: str, user_id: str) -> bool:
+        """Check if document has a PDF file."""
+        try:
+            document = await self.get_document_for_user(document_id, user_id)
+            return document.get('has_pdf_file', False) if document else False
+        except Exception as e:
+            logger.error(f"Failed to check PDF file for document {document_id}: {e}")
+            return False
+    
+    # Note: Document-based PDF methods are above in the "PDF File Operations" section
+    # The methods below provide direct file storage access if needed
 
 class CompatibilityService:
     """
@@ -548,6 +664,17 @@ class CompatibilityService:
     def get_user_preferred_model(self, user_id: str) -> str:
         return self._run_async(self._doc_service.get_user_preferred_model(user_id))
     
+    # PDF File Operations (document-based)
+    def store_pdf_file_for_document(self, document_id: str, user_id: str, file_data: bytes, 
+                                   filename: str, content_type: str = "application/pdf") -> bool:
+        return self._run_async(self._doc_service.store_pdf_file(document_id, user_id, file_data, filename, content_type))
+    
+    def get_pdf_file_for_document(self, document_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        return self._run_async(self._doc_service.get_pdf_file(document_id, user_id))
+    
+    def has_pdf_file(self, document_id: str, user_id: str) -> bool:
+        return self._run_async(self._doc_service.has_pdf_file(document_id, user_id))
+
     def get_database_info(self) -> Dict[str, Any]:
         return self._run_async(self._doc_service.get_database_info())
 

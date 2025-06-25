@@ -145,8 +145,32 @@ async def analyze_document(
             # Save to storage with RAG metadata included
             logger.info(f"Saving document {doc_id} to database...")
             try:
+                # First save document metadata
                 await service.save_document_for_user(document_data, current_user["id"])
                 logger.info(f"Document {doc_id} saved successfully to database")
+                
+                # Then store the PDF file (atomic operation)
+                try:
+                    logger.info(f"Storing PDF file for document {doc_id}")
+                    pdf_stored = await service.store_pdf_file(
+                        document_id=doc_id,
+                        user_id=current_user["id"],
+                        file_data=content,  # Use the content we read earlier
+                        filename=file.filename,
+                        content_type=file.content_type or "application/pdf"
+                    )
+                    
+                    if pdf_stored:
+                        logger.info(f"PDF file stored successfully for document {doc_id}")
+                    else:
+                        logger.warning(f"Failed to store PDF file for document {doc_id}")
+                        # Don't fail the entire upload if PDF storage fails
+                        
+                except Exception as pdf_error:
+                    logger.error(f"PDF storage failed for document {doc_id}: {pdf_error}")
+                    # Don't fail the entire upload if PDF storage fails
+                    # The document analysis was successful, PDF storage is supplementary
+                
             except Exception as save_error:
                 logger.error(f"Failed to save document {doc_id}: {save_error}")
                 raise save_error

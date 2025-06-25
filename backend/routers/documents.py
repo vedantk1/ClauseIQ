@@ -5,7 +5,8 @@ import os
 import tempfile
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
+from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Response
+from fastapi.responses import StreamingResponse
 import pdfplumber
 from auth import get_current_user
 from database.service import get_document_service
@@ -194,6 +195,155 @@ async def delete_all_documents(current_user: dict = Depends(get_current_user)):
         return ErrorResponse(
             error="DELETE_ALL_FAILED",
             message=f"Failed to delete documents: {str(e)}",
+            status_code=500
+        )
+
+
+# PDF File Operations
+
+@router.get("/documents/{document_id}/pdf")
+async def download_pdf(document_id: str, current_user: dict = Depends(get_current_user)):
+    """Download the original PDF file for a document."""
+    try:
+        service = get_document_service()
+        
+        # First check if document exists and belongs to user
+        document = await service.get_document_for_user(document_id, current_user["id"])
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Check if document has PDF file
+        if not document.get('has_pdf_file', False):
+            raise HTTPException(status_code=404, detail="PDF file not available for this document")
+        
+        # Get PDF file metadata and stream
+        metadata, stream = await service.get_pdf_file_stream(document_id, current_user["id"])
+        
+        if not metadata or not stream:
+            raise HTTPException(status_code=404, detail="PDF file not found")
+        
+        # Prepare response headers
+        headers = {
+            'Content-Type': metadata.get('content_type', 'application/pdf'),
+            'Content-Length': str(metadata.get('file_size', 0)),
+            'Content-Disposition': f'attachment; filename="{metadata.get("filename", "document.pdf")}"',
+            'Cache-Control': 'private, max-age=3600',  # Cache for 1 hour
+            'X-Document-ID': document_id
+        }
+        
+        # Return streaming response
+        return StreamingResponse(
+            stream,
+            media_type=metadata.get('content_type', 'application/pdf'),
+            headers=headers
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to download PDF: {str(e)}")
+
+
+@router.head("/documents/{document_id}/pdf")
+async def check_pdf_exists(document_id: str, current_user: dict = Depends(get_current_user)):
+    """Check if PDF file exists for a document (HEAD request)."""
+    try:
+        service = get_document_service()
+        
+        # Check if document exists and belongs to user
+        document = await service.get_document_for_user(document_id, current_user["id"])
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Check if document has PDF file
+        has_pdf = await service.has_pdf_file(document_id, current_user["id"])
+        
+        if not has_pdf:
+            raise HTTPException(status_code=404, detail="PDF file not available")
+        
+        # Return headers only
+        return Response(
+            status_code=200,
+            headers={
+                'Content-Type': 'application/pdf',
+                'X-Has-PDF': 'true',
+                'X-Document-ID': document_id
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to check PDF: {str(e)}")
+
+
+@router.get("/documents/{document_id}/pdf/metadata", response_model=APIResponse[dict])
+@versioned_response("1.0")
+async def get_pdf_metadata(document_id: str, current_user: dict = Depends(get_current_user)):
+    """Get PDF file metadata without downloading the file."""
+    try:
+        service = get_document_service()
+        
+        # Check if document exists and belongs to user
+        document = await service.get_document_for_user(document_id, current_user["id"])
+        if not document:
+            return ErrorResponse(
+                error="DOCUMENT_NOT_FOUND",
+                message="Document not found",
+                status_code=404
+            )
+        
+        # Check if document has PDF file
+        if not document.get('has_pdf_file', False):
+            return ErrorResponse(
+                error="PDF_NOT_AVAILABLE",
+                message="PDF file not available for this document",
+                status_code=404
+            )
+        
+        # Get PDF file metadata
+        from services.file_storage_service import get_file_storage_service
+        file_storage = get_file_storage_service()
+        
+        pdf_file_id = document.get('pdf_file_id')
+        if not pdf_file_id:
+            return ErrorResponse(
+                error="PDF_FILE_ID_MISSING",
+                message="PDF file ID not found",
+                status_code=404
+            )
+        
+        metadata = await file_storage.get_file_metadata(pdf_file_id, current_user["id"])
+        
+        if not metadata:
+            return ErrorResponse(
+                error="PDF_METADATA_NOT_FOUND",
+                message="PDF file metadata not found",
+                status_code=404
+            )
+        
+        # Prepare response data
+        response_data = {
+            'document_id': document_id,
+            'pdf_file_id': pdf_file_id,
+            'filename': metadata.get('filename'),
+            'content_type': metadata.get('content_type'),
+            'file_size': metadata.get('file_size'),
+            'upload_date': metadata.get('upload_date').isoformat() if metadata.get('upload_date') else None,
+            'checksum': metadata.get('checksum'),
+            'has_pdf_file': True
+        }
+        
+        return APIResponse(
+            success=True,
+            data=response_data,
+            message="PDF metadata retrieved successfully"
+        )
+        
+    except Exception as e:
+        return ErrorResponse(
+            error="GET_PDF_METADATA_FAILED",
+            message=f"Failed to get PDF metadata: {str(e)}",
             status_code=500
         )
 
