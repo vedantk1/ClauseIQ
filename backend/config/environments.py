@@ -51,6 +51,7 @@ class SecurityConfig(BaseModel):
     access_token_expire_minutes: int = Field(default=30, ge=1, description="Access token expiry")
     refresh_token_expire_days: int = Field(default=7, ge=1, description="Refresh token expiry")
     password_reset_token_expire_minutes: int = Field(default=30, ge=1, description="Password reset token expiry")
+    frontend_url: str = Field(default="http://localhost:3000", description="Frontend URL for email links")
     
     @validator('jwt_secret_key')
     def validate_jwt_secret(cls, v):
@@ -87,6 +88,18 @@ class SupabaseConfig(BaseModel):
     def validate_url(cls, v):
         if not v.startswith('https://') or not 'supabase.co' in v:
             raise ValueError('Supabase URL must be a valid supabase.co URL')
+        return v
+
+
+class PineconeConfig(BaseModel):
+    """Pinecone configuration for vector search."""
+    api_key: str = Field(..., description="Pinecone API key")
+    environment: str = Field(default="us-east-1", description="Pinecone environment/region")
+    
+    @validator('api_key')
+    def validate_api_key(cls, v):
+        if not v.startswith(('pcsk_', 'pc-')):
+            raise ValueError('Pinecone API key must start with pcsk_ or pc-')
         return v
 
 
@@ -141,6 +154,7 @@ class EnvironmentConfig(BaseSettings):
     jwt_access_token_expire_minutes: int = Field(default=30, description="Access token expiry")
     jwt_refresh_token_expire_days: int = Field(default=7, description="Refresh token expiry")
     jwt_password_reset_token_expire_minutes: int = Field(default=30, description="Password reset token expiry")
+    frontend_url: str = Field(default="http://localhost:3000", description="Frontend URL for email links")
     
     # AI
     openai_api_key: str = Field(default="sk-placeholder", description="OpenAI API key")
@@ -151,6 +165,10 @@ class EnvironmentConfig(BaseSettings):
     # Supabase Vector Search
     supabase_url: str = Field(default="https://your-project.supabase.co", description="Supabase project URL")
     supabase_service_key: str = Field(default="your-service-key", description="Supabase service role key")
+    
+    # Pinecone Vector Search
+    pinecone_api_key: str = Field(default="your-pinecone-api-key", description="Pinecone API key")
+    pinecone_environment: str = Field(default="us-east-1", description="Pinecone environment/region")
     
     # File Upload
     max_file_size_mb: int = Field(default=10, description="Maximum file size in MB")
@@ -198,7 +216,8 @@ class EnvironmentConfig(BaseSettings):
             jwt_algorithm=self.jwt_algorithm,
             access_token_expire_minutes=self.jwt_access_token_expire_minutes,
             refresh_token_expire_days=self.jwt_refresh_token_expire_days,
-            password_reset_token_expire_minutes=self.jwt_password_reset_token_expire_minutes
+            password_reset_token_expire_minutes=self.jwt_password_reset_token_expire_minutes,
+            frontend_url=self.frontend_url
         )
     
     @property
@@ -219,6 +238,14 @@ class EnvironmentConfig(BaseSettings):
             service_key=self.supabase_service_key
         )
     
+    @property
+    def pinecone(self) -> PineconeConfig:
+        """Get Pinecone configuration."""
+        return PineconeConfig(
+            api_key=self.pinecone_api_key,
+            environment=self.pinecone_environment
+        )
+
     @property
     def file_upload(self) -> FileUploadConfig:
         """Get file upload configuration."""

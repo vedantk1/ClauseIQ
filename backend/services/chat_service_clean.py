@@ -49,14 +49,11 @@ class ChatService:
             # Verify user owns the document
             document = await self.doc_service.get_document_for_user(document_id, user_id)
             if not document:
-                ai_debug.log_api_error(
-                    endpoint="chat_session",
+                ai_debug.log_chat_error(
                     error_type="document_not_found",
-                    message="Document not found or access denied",
-                    details={
-                        "document_id": document_id,
-                        "user_id": user_id
-                    }
+                    document_id=document_id,
+                    user_id=user_id,
+                    details="Document not found or access denied"
                 )
                 return {
                     "success": False,
@@ -65,15 +62,11 @@ class ChatService:
             
             # Check if document has RAG enabled
             if not document.get("rag_processed", False):
-                ai_debug.log_api_error(
-                    endpoint="chat_session",
+                ai_debug.log_chat_error(
                     error_type="rag_not_processed",
-                    message="Document not ready for chat",
-                    details={
-                        "document_id": document_id,
-                        "user_id": user_id,
-                        "rag_processed": document.get("rag_processed", False)
-                    }
+                    document_id=document_id,
+                    user_id=user_id,
+                    details="Document not ready for chat"
                 )
                 return {
                     "success": False,
@@ -103,21 +96,19 @@ class ChatService:
             }
             
             # Save THE session to document
-            update_result = await self.doc_service.update_document_data(
+            db = await self.doc_service._get_db()
+            update_result = await db.update_document(
                 document_id, 
                 user_id, 
                 {"chat_session": session_data}
             )
             
             if not update_result:
-                ai_debug.log_api_error(
-                    endpoint="chat_session",
+                ai_debug.log_chat_error(
                     error_type="session_creation_failed",
-                    message="Failed to save session to document",
-                    details={
-                        "document_id": document_id,
-                        "user_id": user_id
-                    }
+                    document_id=document_id,
+                    user_id=user_id,
+                    details="Failed to save session to document"
                 )
                 return {
                     "success": False,
@@ -125,16 +116,7 @@ class ChatService:
                 }
             
             logger.info(f"🎯 FOUNDATIONAL: Created new session {session_id} for document {document_id}")
-            ai_debug.log_system_event(
-                event_type="CHAT_SESSION_CREATED",
-                level=DebugLevel.INFO,
-                message=f"Created new chat session for document {document_id}",
-                context={
-                    "session_id": session_id,
-                    "document_id": document_id,
-                    "user_id": user_id
-                }
-            )
+            ai_debug.log_chat_session_created(session_id, document_id, user_id)
             
             return {
                 "success": True,
@@ -302,7 +284,7 @@ class ChatService:
             
             retrieval_time = round((time.time() - step_start) * 1000, 2)
             
-            if not rag_result or not rag_result.get("chunks"):
+            if not rag_result or not rag_result.get("relevant_chunks"):
                 ai_debug.log_rag_pipeline_step(
                     step_name="vector_retrieval",
                     success=False,
@@ -319,7 +301,7 @@ class ChatService:
                     "sources": []
                 }
             else:
-                relevant_chunks = rag_result["chunks"]
+                relevant_chunks = rag_result["relevant_chunks"]
                 enhanced_query = rag_result.get("enhanced_query", message)
                 
                 ai_debug.log_rag_pipeline_step(
@@ -336,7 +318,7 @@ class ChatService:
                 
                 # 🚀 STEP 4: LLM Response Generation
                 step_start = time.time()
-                response_result = await self._generate_ai_response(document, message, conversation_history, relevant_chunks, enhanced_query)
+                response_result = await self._generate_ai_response(document, message, conversation_history, relevant_chunks)
                 generation_time = round((time.time() - step_start) * 1000, 2)
                 
                 if response_result.get("success", False):
@@ -418,12 +400,12 @@ class ChatService:
                 "error": "Failed to process message"
             }
 
-    async def _generate_ai_response(self, document: dict, message: str, conversation_history: list, relevant_chunks: list, enhanced_query: str = None) -> dict:
+    async def _generate_ai_response(self, document: dict, message: str, conversation_history: list, relevant_chunks: list) -> dict:
         """Generate AI response using the RAG service."""
         try:
             # Format context from relevant chunks
             context_text = "\n\n".join([
-                f"Source {i+1}:\n{chunk['content']}"
+                f"Source {i+1}:\n{chunk['text']}"
                 for i, chunk in enumerate(relevant_chunks[:5])
             ])
             
@@ -448,25 +430,24 @@ User Question: {message}
 Please provide a clear, helpful answer based on the document content. If the context doesn't contain enough information to answer the question, say so clearly."""
             
             # Get AI response from RAG service
-            ai_response = await self.rag_service.generate_rag_response(
-                query=message,
-                relevant_chunks=relevant_chunks,
-                enhanced_query=enhanced_query
+            ai_response = await self.rag_service.generate_response(
+                prompt=prompt,
+                conversation_history=conversation_history
             )
             
-            if ai_response and ai_response.get("response"):
+            if ai_response and ai_response.get("success"):
                 # Format sources for transparency
                 sources = []
                 for i, chunk in enumerate(relevant_chunks[:3]):
                     sources.append({
                         "chunk_id": chunk.get("chunk_id", f"chunk_{i+1}"),
-                        "text_preview": chunk["content"][:200] + "..." if len(chunk["content"]) > 200 else chunk["content"],
+                        "text_preview": chunk["text"][:200] + "..." if len(chunk["text"]) > 200 else chunk["text"],
                         "similarity_score": chunk.get("similarity_score", 0)
                     })
                 
                 return {
                     "success": True,
-                    "content": ai_response["response"],
+                    "content": ai_response["content"],
                     "sources": sources,
                     "model": ai_response.get("model", "unknown")
                 }

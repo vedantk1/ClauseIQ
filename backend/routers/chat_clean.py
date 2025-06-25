@@ -20,7 +20,7 @@ from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, Field
 
 from auth import get_current_user
-from middleware.api_standardization import APIResponse, create_success_response_with_request, create_error_response_with_request
+from middleware.api_standardization import APIResponse, create_success_response, create_error_response
 from middleware.versioning import versioned_response
 from services.chat_service import get_chat_service
 from services.pinecone_vector_service import get_pinecone_vector_service
@@ -57,7 +57,6 @@ class SessionResponse(BaseModel):
     created_at: str
     updated_at: str
     message_count: int
-    messages: list = []
 
 class ChatHistoryResponse(BaseModel):
     """Response for chat history."""
@@ -95,14 +94,11 @@ async def get_or_create_session(
         
         if not result["success"]:
             logger.warning(f"Failed to get/create session: {result.get('error')}")
-            # Determine appropriate HTTP status based on error type
-            error_message = result["error"]
-            if "not found" in error_message.lower() or "access denied" in error_message.lower():
-                raise HTTPException(status_code=404, detail=error_message)
-            elif "not ready" in error_message.lower():
-                raise HTTPException(status_code=422, detail=error_message)
-            else:
-                raise HTTPException(status_code=400, detail=error_message)
+            return create_error_response(
+                message=result["error"],
+                status_code=400,
+                request=request
+            )
         
         session = result["session"]
         
@@ -112,12 +108,11 @@ async def get_or_create_session(
             user_id=session["user_id"],
             created_at=session["created_at"],
             updated_at=session["updated_at"],
-            message_count=len(session.get("messages", [])),
-            messages=session.get("messages", [])
+            message_count=len(session.get("messages", []))
         )
         
         logger.info(f"✅ Session ready: {session['session_id']}")
-        return create_success_response_with_request(
+        return create_success_response(
             data=response_data,
             message="Session ready",
             request=request
@@ -126,7 +121,11 @@ async def get_or_create_session(
     except Exception as e:
         logger.error(f"❌ Error in get_or_create_session: {e}")
         log_exception(logger, e, "Error getting/creating session")
-        raise HTTPException(status_code=500, detail="Failed to get or create session")
+        return create_error_response(
+            message="Failed to get or create session",
+            status_code=500,
+            request=request
+        )
 
 
 @router.post("/{document_id}/message", response_model=APIResponse[SendMessageResponse])
@@ -153,14 +152,11 @@ async def send_message(
         
         if not result["success"]:
             logger.warning(f"Failed to send message: {result.get('error')}")
-            # Determine appropriate HTTP status based on error type
-            error_message = result["error"]
-            if "not found" in error_message.lower():
-                raise HTTPException(status_code=404, detail=error_message)
-            elif "not ready" in error_message.lower() or "not available" in error_message.lower():
-                raise HTTPException(status_code=503, detail=error_message)
-            else:
-                raise HTTPException(status_code=400, detail=error_message)
+            return create_error_response(
+                message=result["error"],
+                status_code=400,
+                request=request
+            )
         
         message = result["message"]
         
@@ -176,7 +172,7 @@ async def send_message(
         )
         
         logger.info(f"✅ Message sent to session {result['session_id']}")
-        return create_success_response_with_request(
+        return create_success_response(
             data=response_data,
             message="Message sent successfully",
             request=request
@@ -185,7 +181,11 @@ async def send_message(
     except Exception as e:
         logger.error(f"❌ Error in send_message: {e}")
         log_exception(logger, e, "Error sending message")
-        raise HTTPException(status_code=500, detail="Failed to send message")
+        return create_error_response(
+            message="Failed to send message",
+            status_code=500,
+            request=request
+        )
 
 
 @router.get("/{document_id}/history", response_model=APIResponse[ChatHistoryResponse])
@@ -205,12 +205,11 @@ async def get_chat_history(
         
         if not result["success"]:
             logger.warning(f"Failed to get chat history: {result.get('error')}")
-            # Determine appropriate HTTP status based on error type
-            error_message = result["error"]
-            if "not found" in error_message.lower():
-                raise HTTPException(status_code=404, detail=error_message)
-            else:
-                raise HTTPException(status_code=400, detail=error_message)
+            return create_error_response(
+                message=result["error"],
+                status_code=400,
+                request=request
+            )
         
         response_data = ChatHistoryResponse(
             session_id=result["session_id"],
@@ -220,7 +219,7 @@ async def get_chat_history(
         )
         
         logger.info(f"✅ Retrieved {len(result['messages'])} messages")
-        return create_success_response_with_request(
+        return create_success_response(
             data=response_data,
             message="Chat history retrieved successfully",
             request=request
@@ -229,7 +228,11 @@ async def get_chat_history(
     except Exception as e:
         logger.error(f"❌ Error in get_chat_history: {e}")
         log_exception(logger, e, "Error getting chat history")
-        raise HTTPException(status_code=500, detail="Failed to get chat history")
+        return create_error_response(
+            message="Failed to get chat history",
+            status_code=500,
+            request=request
+        )
 
 
 @router.get("/{document_id}/status", response_model=APIResponse[dict])
@@ -251,30 +254,19 @@ async def get_chat_status(
             session = result["session"]
             status_data = {
                 "ready": True,
-                "chat_available": True,  # Frontend expects this field
-                "ready_for_chat": True,  # Frontend expects this field
-                "rag_processed": True,   # Frontend expects this field
-                "processing_status": "ready",  # Frontend expects this field
                 "session_id": session["session_id"],
                 "message_count": len(session.get("messages", [])),
-                "last_updated": session["updated_at"],
-                "chunk_count": 0,  # Could be populated from document
-                "text_length": 0   # Could be populated from document
+                "last_updated": session["updated_at"]
             }
             logger.info(f"✅ Document {document_id} is ready for chat")
         else:
             status_data = {
                 "ready": False,
-                "chat_available": False,
-                "ready_for_chat": False,
-                "rag_processed": False,
-                "processing_status": "error",
-                "reason": result["error"],
-                "error": result["error"]
+                "reason": result["error"]
             }
             logger.info(f"⏳ Document {document_id} not ready: {result['error']}")
         
-        return create_success_response_with_request(
+        return create_success_response(
             data=status_data,
             message="Chat status retrieved",
             request=request
@@ -283,7 +275,11 @@ async def get_chat_status(
     except Exception as e:
         logger.error(f"❌ Error in get_chat_status: {e}")
         log_exception(logger, e, "Error getting chat status")
-        raise HTTPException(status_code=500, detail="Failed to get chat status")
+        return create_error_response(
+            message="Failed to get chat status",
+            status_code=500,
+            request=request
+        )
 
 
 @router.get("/health", response_model=APIResponse[HealthResponse])
@@ -324,7 +320,7 @@ async def get_health_status(request: Request):
         ]) else "Some systems experiencing issues"
         
         logger.info(f"🏥 Health check complete: {overall_status}")
-        return create_success_response_with_request(
+        return create_success_response(
             data=response_data,
             message=overall_status,
             request=request
@@ -333,4 +329,8 @@ async def get_health_status(request: Request):
     except Exception as e:
         logger.error(f"❌ Error in health check: {e}")
         log_exception(logger, e, "Error in health check")
-        raise HTTPException(status_code=500, detail="Health check failed")
+        return create_error_response(
+            message="Health check failed",
+            status_code=500,
+            request=request
+        )

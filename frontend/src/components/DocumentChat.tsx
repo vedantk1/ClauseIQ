@@ -57,13 +57,11 @@ export default function DocumentChat({
     scrollToBottom();
   }, [messages]);
 
-  // Check chat status when component mounts
+  // Check chat status when component mounts - force reload
   useEffect(() => {
     const fetchChatStatus = async () => {
       try {
-        const response = await documentChatApi.get(
-          `/chat/${documentId}/chat/status`
-        );
+        const response = await documentChatApi.get(`/${documentId}/status`);
         if (response.ok) {
           const result = (await response.json()) as { data: unknown };
           console.log("Check status button - response:", result);
@@ -111,10 +109,21 @@ export default function DocumentChat({
             };
           };
 
+          console.log("🔍 DEBUG Session Result:", {
+            sessionId: sessionResult.data.session_id,
+            hasMessages: Array.isArray(sessionResult.data.messages),
+            messagesCount: Array.isArray(sessionResult.data.messages)
+              ? sessionResult.data.messages.length
+              : "undefined",
+            fullData: sessionResult.data,
+          });
+
           const foundationalSession: ChatSession = {
             session_id: sessionResult.data.session_id,
             document_id: sessionResult.data.document_id,
-            messages: sessionResult.data.messages || [],
+            messages: Array.isArray(sessionResult.data.messages)
+              ? sessionResult.data.messages
+              : [],
             created_at: sessionResult.data.created_at,
             updated_at: sessionResult.data.updated_at,
           };
@@ -142,9 +151,7 @@ export default function DocumentChat({
 
   const checkChatStatus = async () => {
     try {
-      const response = await documentChatApi.get(
-        `/chat/${documentId}/chat/status`
-      );
+      const response = await documentChatApi.get(`/${documentId}/status`);
 
       if (response.ok) {
         const result = (await response.json()) as { data: unknown };
@@ -204,9 +211,9 @@ export default function DocumentChat({
 
       if (response.ok) {
         const result = (await response.json()) as {
-          data: { ai_response: ChatMessage };
+          data: { message: ChatMessage; session_id: string };
         };
-        const aiMessage: ChatMessage = result.data.ai_response;
+        const aiMessage: ChatMessage = result.data.message;
 
         console.log("🤖 [Foundational] AI Response:", {
           content: aiMessage.content.substring(0, 100) + "...",

@@ -24,7 +24,7 @@ from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
 from pinecone import Pinecone, ServerlessSpec
 
-from settings import get_settings
+from config.environments import get_environment_config
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class PineconeVectorService:
     """
     
     def __init__(self):
-        self.settings = get_settings()
+        self.settings = get_environment_config()
         self.pc: Optional[Pinecone] = None
         self.embeddings: Optional[OpenAIEmbeddings] = None
         self.vector_store: Optional[PineconeVectorStore] = None
@@ -56,17 +56,21 @@ class PineconeVectorService:
             
         try:
             # Initialize Pinecone client
-            pinecone_api_key = getattr(self.settings, 'pinecone_api_key', None)
-            if not pinecone_api_key:
+            pinecone_config = self.settings.pinecone
+            if not pinecone_config.api_key or pinecone_config.api_key == "your-pinecone-api-key":
                 logger.error("PINECONE_API_KEY not found in environment variables")
                 return False
                 
-            self.pc = Pinecone(api_key=pinecone_api_key)
+            self.pc = Pinecone(api_key=pinecone_config.api_key)
             
             # Initialize OpenAI embeddings with 3072 dimensions
-            openai_config = self.settings.openai
+            openai_config = self.settings.ai
+            if not openai_config.openai_api_key or openai_config.openai_api_key == "sk-placeholder":
+                logger.error("OPENAI_API_KEY not found or invalid in environment variables")
+                return False
+                
             self.embeddings = OpenAIEmbeddings(
-                openai_api_key=openai_config.api_key,
+                openai_api_key=openai_config.openai_api_key,
                 model="text-embedding-3-large",
                 dimensions=3072
             )
@@ -139,9 +143,9 @@ class PineconeVectorService:
         """Check if vector service is available and can connect to Pinecone."""
         try:
             # Check basic requirements
-            if not (hasattr(self.settings, 'pinecone_api_key') and 
-                   self.settings.pinecone_api_key and
-                   self.settings.pinecone_api_key != "your-pinecone-api-key"):
+            pinecone_config = self.settings.pinecone
+            if not (pinecone_config.api_key and 
+                   pinecone_config.api_key != "your-pinecone-api-key"):
                 logger.warning("Pinecone API key not properly configured")
                 return False
             

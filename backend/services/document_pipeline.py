@@ -190,7 +190,8 @@ class DocumentProcessor:
                 )
             
             # Save extracted text to document
-            await self._document_service.update_document(context.document_id, {
+            db = await self._document_service._get_db()
+            await db.update_document(context.document_id, context.user_id, {
                 "extracted_text": context.extracted_text,
                 "text_extracted_at": datetime.utcnow().isoformat(),
                 "text_length": len(context.extracted_text)
@@ -265,7 +266,8 @@ class DocumentProcessor:
                 update_data["processing_error"] = error_message
                 update_data["failed_at"] = datetime.utcnow().isoformat()
             
-            await self._document_service.update_document(context.document_id, update_data)
+            db = await self._document_service._get_db()
+            await db.update_document(context.document_id, context.user_id, update_data)
             logger.info(f"Document {context.document_id} status updated to {status.value}")
             
         except Exception as e:
@@ -290,7 +292,8 @@ class DocumentProcessor:
                     "rag_processed_at": datetime.utcnow().isoformat()
                 })
             
-            await self._document_service.update_document(context.document_id, update_data)
+            db = await self._document_service._get_db()
+            await db.update_document(context.document_id, context.user_id, update_data)
             logger.info(f"Document {context.document_id} processing finalized")
             
         except Exception as e:

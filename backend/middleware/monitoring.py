@@ -271,9 +271,9 @@ class HealthChecker:
     def check_openai_health() -> Dict:
         """Check OpenAI API connectivity."""
         try:
-            from settings import get_settings
-            settings = get_settings()
-            api_key = settings.openai.api_key
+            from config.environments import get_environment_config
+            config = get_environment_config()
+            api_key = config.ai.openai_api_key
             if not api_key or api_key == "your-openai-api-key":
                 return {
                     "status": "unhealthy",
@@ -297,10 +297,10 @@ class HealthChecker:
     def check_email_health() -> Dict:
         """Check email service configuration."""
         try:
-            from settings import get_settings
-            settings = get_settings()
+            from config.environments import get_environment_config
+            config = get_environment_config()
             
-            if not all([settings.email.smtp_host, settings.email.smtp_port, settings.email.smtp_username, settings.email.smtp_password]):
+            if not all([config.email.smtp_host, config.email.smtp_port, config.email.smtp_username, config.email.smtp_password]):
                 return {
                     "status": "unhealthy",
                     "error": "Email configuration incomplete",
@@ -310,8 +310,8 @@ class HealthChecker:
             return {
                 "status": "healthy",
                 "type": "email",
-                "smtp_host": settings.email.smtp_host,
-                "smtp_port": settings.email.smtp_port
+                "smtp_host": config.email.smtp_host,
+                "smtp_port": config.email.smtp_port
             }
         except Exception as e:
             return {

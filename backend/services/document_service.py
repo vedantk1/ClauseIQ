@@ -5,12 +5,12 @@ import os
 import pdfplumber
 from typing import List, Tuple
 from fastapi import UploadFile, HTTPException
-from settings import get_settings
+from config.environments import get_environment_config
 from models.common import Clause, ClauseType, RiskLevel, ContractType
 
 
 # Get settings instance
-settings = get_settings()
+settings = get_environment_config()
 MAX_FILE_SIZE_BYTES = settings.file_upload.max_file_size_mb * 1024 * 1024
 
 

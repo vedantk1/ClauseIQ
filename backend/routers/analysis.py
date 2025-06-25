@@ -89,6 +89,13 @@ async def analyze_document(
                 extracted_text, file.filename, user_model
             )
             
+            # Calculate risk summary from clauses
+            risk_summary = {
+                "high": sum(1 for clause in clauses if clause.risk_level == RiskLevel.HIGH),
+                "medium": sum(1 for clause in clauses if clause.risk_level == RiskLevel.MEDIUM),
+                "low": sum(1 for clause in clauses if clause.risk_level == RiskLevel.LOW)
+            }
+            
             # Create document entry with clauses and contract type
             doc_id = str(uuid.uuid4())
             document_data = {
@@ -99,6 +106,7 @@ async def analyze_document(
                 "ai_full_summary": ai_summary,
                 "ai_structured_summary": ai_structured_summary,
                 "clauses": [clause.dict() for clause in clauses],
+                "risk_summary": risk_summary,
                 "contract_type": contract_type.value if contract_type else None,
                 "user_id": current_user["id"]
             }
@@ -118,9 +126,12 @@ async def analyze_document(
                 # Update document with RAG metadata
                 if rag_data:
                     document_data["rag_processed"] = True
-                    document_data["rag_vector_store_id"] = rag_data.get("vector_store_id")
-                    document_data["rag_file_id"] = rag_data.get("file_id")
-                    document_data["rag_chunk_count"] = rag_data.get("chunk_count", 0)
+                    document_data["pinecone_stored"] = rag_data.get("pinecone_stored", False)
+                    document_data["chunk_count"] = rag_data.get("chunk_count", 0)
+                    document_data["chunk_ids"] = rag_data.get("chunk_ids", [])
+                    document_data["embedding_model"] = rag_data.get("embedding_model")
+                    document_data["rag_processed_at"] = rag_data.get("processed_at")
+                    document_data["storage_service"] = rag_data.get("storage_service")
                     logger.info(f"Document {doc_id} processed for RAG successfully with {rag_data.get('chunk_count', 0)} chunks")
                 else:
                     logger.warning(f"RAG processing returned no data for document {doc_id}")
@@ -140,12 +151,17 @@ async def analyze_document(
                 logger.error(f"Failed to save document {doc_id}: {save_error}")
                 raise save_error
             
-            # Return response with clauses and summary
+            # Return response with ALL required fields for frontend
             response_data = {
                 "id": doc_id,
                 "filename": file.filename,
-                "clauses": clauses,
                 "summary": ai_summary,
+                "ai_structured_summary": ai_structured_summary,
+                "clauses": clauses,
+                "total_clauses": len(clauses),
+                "risk_summary": risk_summary,
+                "full_text": extracted_text,
+                "contract_type": contract_type.value if contract_type else None,
                 "message": "Document analyzed successfully"
             }
             
@@ -429,8 +445,7 @@ async def analyze_document_unified(
             # **ARCHITECTURAL FIX**: Automatically process document for RAG/Chat
             # This ensures every uploaded document is immediately ready for chat
             try:
-                from services.rag_service import RAGService
-                rag_service = RAGService()
+                rag_service = get_rag_service()
                 
                 # Process document for RAG (embeddings, chunking, etc.)
                 rag_result = await rag_service.process_document_for_rag(

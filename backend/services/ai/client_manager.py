@@ -25,10 +25,10 @@ def _initialize_client() -> None:
     
     try:
         from openai import AsyncOpenAI
-        from settings import get_settings
+        from config.environments import get_environment_config
         
-        settings = get_settings()
-        api_key = settings.openai.api_key
+        settings = get_environment_config()
+        api_key = settings.ai.openai_api_key
 
         if api_key and api_key != "your_api_key_here" and api_key.startswith("sk-"):
             _openai_client = AsyncOpenAI(api_key=api_key)

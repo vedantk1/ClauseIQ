@@ -343,10 +343,6 @@ class DocumentService:
         
         interaction["updated_at"] = datetime.now().isoformat()
         
-        # If no notes left and not flagged, remove the entire interaction
-        if len(interaction["notes"]) == 0 and not interaction["is_flagged"]:
-            del existing_interactions[clause_id]
-        
         # Save to database
         await db.save_user_interactions(document_id, user_id, existing_interactions)
         
@@ -421,10 +417,48 @@ class DocumentService:
         # For now, return empty list
         return []
     
+    async def get_all_documents_for_cleanup(self) -> List[Dict[str, Any]]:
+        """Get all documents for cleanup operations (admin use only)."""
+        db = await self._get_db()
+        # This is an admin operation, so we can access all documents
+        collection = db._get_collection("documents")
+        cursor = collection.find({})
+        documents = []
+        async for doc in cursor:
+            documents.append(doc)
+        return documents
+    
+    async def cleanup_document_sessions(self, doc_id: str) -> bool:
+        """Remove all chat sessions (legacy and foundational) from a document."""
+        db = await self._get_db()
+        collection = db._get_collection("documents")
+        
+        # Remove both chat_sessions array and chat_session object
+        result = await collection.update_one(
+            {"id": doc_id},
+            {
+                "$unset": {
+                    "chat_sessions": "",
+                    "chat_session": ""
+                }
+            }
+        )
+        
+        return result.modified_count > 0
+    
     # Health check
     async def get_database_info(self) -> Dict[str, Any]:
         """Get database information."""
         return await DatabaseFactory.health_check()
+    
+    async def update_document_data(self, document_id: str, user_id: str, update_data: Dict[str, Any]) -> bool:
+        """Update document data safely through the service layer."""
+        try:
+            db = await self._get_db()
+            return await db.update_document(document_id, user_id, update_data)
+        except Exception as e:
+            logger.error(f"Failed to update document {document_id}: {e}")
+            return False
 
 
 class CompatibilityService:

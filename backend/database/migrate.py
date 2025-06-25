@@ -179,7 +179,7 @@ class {name.replace(' ', '').replace('_', '')}Migration(Migration):
         try:
             logger.info("Applying {name} migration...")
             
-            # TODO: Implement migration logic here
+            # TEMPLATE: Implement migration logic here when creating actual migrations
             # Example:
             # await db.create_document({{
             #     "collection": "example",
@@ -198,7 +198,7 @@ class {name.replace(' ', '').replace('_', '')}Migration(Migration):
         try:
             logger.info("Rolling back {name} migration...")
             
-            # TODO: Implement rollback logic here
+            # TEMPLATE: Implement rollback logic here when creating actual migrations
             # Example:
             # await db.delete_document({{
             #     "collection": "example",

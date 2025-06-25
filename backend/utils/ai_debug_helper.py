@@ -91,10 +91,13 @@ class AIDebugLogger:
                              success: bool,
                              duration_ms: float,
                              details: Dict[str, Any],
-                             user_id: str,
-                             document_id: str,
-                             query: str) -> None:
-        """Log RAG pipeline steps for AI debugging."""
+                             user_id: Optional[str] = None,
+                             document_id: Optional[str] = None,
+                             query: Optional[str] = None) -> None:
+        """
+        Log RAG pipeline steps for AI debugging.
+        Supports flexible parameter patterns for different use cases.
+        """
         
         level = DebugLevel.INFO if success else DebugLevel.ERROR
         
@@ -102,10 +105,14 @@ class AIDebugLogger:
             "step_name": step_name,
             "success": success,
             "duration_ms": duration_ms,
-            "document_id": document_id,
-            "query": query[:100],  # Truncate for privacy
             "details": details
         }
+        
+        # Add optional parameters if provided
+        if document_id:
+            context["document_id"] = document_id
+        if query:
+            context["query"] = query[:100]  # Truncate for privacy
         
         message = f"RAG step '{step_name}' {'✅ succeeded' if success else '❌ failed'} in {duration_ms}ms"
         
@@ -118,23 +125,42 @@ class AIDebugLogger:
         )
     
     def log_api_error(self,
-                     endpoint: str,
-                     method: str,
-                     error: Exception,
+                     endpoint: Optional[str] = None,
+                     method: Optional[str] = None,
+                     error: Optional[Exception] = None,
                      user_id: Optional[str] = None,
-                     request_data: Optional[Dict] = None) -> None:
-        """Log API errors for AI troubleshooting."""
+                     request_data: Optional[Dict] = None,
+                     # Support additional calling patterns
+                     error_type: Optional[str] = None,
+                     message: Optional[str] = None,
+                     details: Optional[Dict] = None) -> None:
+        """
+        Log API errors for AI troubleshooting.
+        Supports multiple calling patterns for flexibility.
+        """
         
-        context = {
-            "endpoint": endpoint,
-            "method": method,
-            "request_data": request_data
-        }
+        # Handle different calling patterns
+        if error_type and message:
+            # Pattern: log_api_error(endpoint="chat", error_type="session_creation_failed", message="...", details={...})
+            context = {
+                "endpoint": endpoint,
+                "error_type": error_type,
+                "details": details or {}
+            }
+            log_message = message
+        else:
+            # Pattern: log_api_error(endpoint="...", method="POST", error=Exception, ...)
+            context = {
+                "endpoint": endpoint,
+                "method": method,
+                "request_data": request_data
+            }
+            log_message = f"API {method} {endpoint} failed: {str(error)}" if error else "API error occurred"
         
         self.log_system_event(
             event_type="API_ERROR",
             level=DebugLevel.ERROR,
-            message=f"API {method} {endpoint} failed: {str(error)}",
+            message=log_message,
             context=context,
             error=error,
             user_id=user_id
@@ -167,6 +193,80 @@ class AIDebugLogger:
             message=message,
             context=context,
             error=error
+        )
+    
+    def log_chat_error(self,
+                      error_type: str,
+                      document_id: str,
+                      user_id: str,
+                      details: str,
+                      session_id: Optional[str] = None,
+                      error: Optional[Exception] = None) -> None:
+        """Log chat service errors for AI troubleshooting."""
+        
+        context = {
+            "error_type": error_type,
+            "document_id": document_id,
+            "user_id": user_id,
+            "session_id": session_id,
+            "details": details
+        }
+        
+        self.log_system_event(
+            event_type="CHAT_ERROR",
+            level=DebugLevel.ERROR,
+            message=f"Chat error ({error_type}): {details}",
+            context=context,
+            error=error,
+            user_id=user_id
+        )
+    
+    def log_chat_session_created(self,
+                                session_id: str,
+                                document_id: str,
+                                user_id: str) -> None:
+        """Log chat session creation for audit and debugging."""
+        
+        context = {
+            "session_id": session_id,
+            "document_id": document_id,
+            "user_id": user_id
+        }
+        
+        self.log_system_event(
+            event_type="CHAT_SESSION_CREATED",
+            level=DebugLevel.INFO,
+            message=f"New chat session created for document {document_id}",
+            context=context,
+            user_id=user_id
+        )
+    
+    def log_chat_message_processed(self,
+                                  session_id: str,
+                                  document_id: str,
+                                  user_id: str,
+                                  message_length: int,
+                                  response_length: int,
+                                  sources_count: int,
+                                  processing_time_ms: Optional[float] = None) -> None:
+        """Log successful chat message processing for performance monitoring."""
+        
+        context = {
+            "session_id": session_id,
+            "document_id": document_id,
+            "user_id": user_id,
+            "message_length": message_length,
+            "response_length": response_length,
+            "sources_count": sources_count,
+            "processing_time_ms": processing_time_ms
+        }
+        
+        self.log_system_event(
+            event_type="CHAT_MESSAGE_PROCESSED",
+            level=DebugLevel.INFO,
+            message=f"Chat message processed successfully in session {session_id}",
+            context=context,
+            user_id=user_id
         )
 
 def get_system_diagnostics() -> Dict[str, Any]:

@@ -7,16 +7,16 @@ from jose import JWTError, jwt
 from pydantic import BaseModel, EmailStr, Field
 import secrets
 import re
-from settings import get_settings
+from config.environments import get_environment_config
 
 # Get settings instance
-settings = get_settings()
+config = get_environment_config()
 
 # Configuration
-SECRET_KEY = settings.jwt.secret_key
-ALGORITHM = settings.jwt.algorithm
-ACCESS_TOKEN_EXPIRE_MINUTES = settings.jwt.access_token_expire_minutes
-REFRESH_TOKEN_EXPIRE_DAYS = settings.jwt.refresh_token_expire_days
+SECRET_KEY = config.security.jwt_secret_key
+ALGORITHM = config.security.jwt_algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = config.security.access_token_expire_minutes
+REFRESH_TOKEN_EXPIRE_DAYS = config.security.refresh_token_expire_days
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -110,7 +110,7 @@ def verify_token(token: str) -> Optional[Dict[str, Any]]:
 def create_password_reset_token(email: str) -> str:
     """Create a password reset token."""
     to_encode = {"sub": email, "type": "password_reset"}
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.security.password_reset_token_expire_minutes)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=config.security.password_reset_token_expire_minutes)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt

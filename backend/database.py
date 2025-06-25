@@ -7,7 +7,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from pymongo import MongoClient, DESCENDING
 from pymongo.errors import ConnectionFailure, PyMongoError, DuplicateKeyError
-from settings import get_settings
+from config.environments import get_environment_config
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -3,15 +3,7 @@
  *
  * 🚀 FOUNDATIONAL ARCHITECTURE READY!
  *
- * This creates a bridge between raw fetch() and apiClient whil        console.log("📥 [Foundational] Messa        console.log("📚 [Foundational] History response:", {
-          ok: response.success,
-          status: response.success ? 200 : 400,
-          messageCount: (response.data as any)?.messages?.length || 0
-        });sponse:", {
-          ok: response.success,
-          status: response.success ? 200 : 400,
-          hasAiResponse: !!(response.data as any)?.ai_response
-        });ntaining
+ * This creates a bridge between raw fetch() and apiClient while maintaining
  * 100% backward compatibility with existing DocumentChat code.
  *
  * STRATEGY: Replace fetch calls one-by-one without changing any other logic.
@@ -43,7 +35,8 @@ export const createCompatibleDocumentChatClient = () => {
         endpoint
       );
 
-      const apiResponse = await apiClient.get(endpoint);
+      const chatEndpoint = `/chat${endpoint}`;
+      const apiResponse = await apiClient.get(chatEndpoint);
 
       // Create fetch-compatible response object
       return {
@@ -81,7 +74,8 @@ export const createCompatibleDocumentChatClient = () => {
         endpoint
       );
 
-      const apiResponse = await apiClient.post(endpoint, body);
+      const chatEndpoint = `/chat${endpoint}`;
+      const apiResponse = await apiClient.post(chatEndpoint, body);
 
       // Create fetch-compatible response object
       return {
@@ -138,7 +132,12 @@ export const createCompatibleDocumentChatClient = () => {
           ok: response.success,
           status: response.success ? 200 : 400,
           statusText: response.success ? "OK" : "Bad Request",
-          json: async () => response,
+          json: async () => {
+            // Wrap in the format DocumentChat expects: {data: actualData}
+            return {
+              data: response.data,
+            };
+          },
         };
       } catch (error) {
         console.error("💥 [Foundational] Session creation error:", error);
@@ -185,7 +184,12 @@ export const createCompatibleDocumentChatClient = () => {
           ok: response.success,
           status: response.success ? 200 : 400,
           statusText: response.success ? "OK" : "Bad Request",
-          json: async () => response,
+          json: async () => {
+            // Wrap in the format DocumentChat expects: {data: actualData}
+            return {
+              data: response.data,
+            };
+          },
         };
       } catch (error) {
         console.error("💥 [Foundational] Message send error:", error);
@@ -219,13 +223,21 @@ export const createCompatibleDocumentChatClient = () => {
           ok: response.success,
           status: response.success ? 200 : 400,
           hasData: !!response.data,
+          messageCount: Array.isArray((response.data as any)?.messages)
+            ? (response.data as any).messages.length
+            : 0,
         });
 
         return {
           ok: response.success,
           status: response.success ? 200 : 400,
           statusText: response.success ? "OK" : "Bad Request",
-          json: async () => response,
+          json: async () => {
+            // Wrap in the format DocumentChat expects: {data: actualData}
+            return {
+              data: response.data,
+            };
+          },
         };
       } catch (error) {
         console.error("💥 [Foundational] History retrieval error:", error);

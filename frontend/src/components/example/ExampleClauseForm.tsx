@@ -15,10 +15,6 @@ interface Clause {
   heading?: string;
 }
 
-interface ApiError {
-  message: string;
-}
-
 export function ExampleClauseForm() {
   const [clause, setClause] = useState<Clause | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,18 +24,26 @@ export function ExampleClauseForm() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Simple validation
       if (!clause?.clause_type || !clause?.text) {
         throw new Error("Please fill in all required fields");
       }
-      
+
       console.log("Submitting clause:", clause);
-      // TODO: Implement API call
-      
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
+
+      // DEMO: This is an example form for demonstration purposes
+      // In a real implementation, this would call the document analysis API
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+
+      alert(
+        "Demo form submitted successfully! This is for demonstration only."
+      );
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An error occurred";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -48,7 +52,7 @@ export function ExampleClauseForm() {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-6">Example Clause Form</h2>
-      
+
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {error}
@@ -57,25 +61,28 @@ export function ExampleClauseForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-2">
-            Clause Type:
-          </label>
+          <label className="block text-sm font-medium mb-2">Clause Type:</label>
           <input
             type="text"
             value={clause?.clause_type || ""}
-            onChange={(e) => setClause(prev => ({ ...prev, clause_type: e.target.value }))}
+            onChange={(e) =>
+              setClause((prev) => ({ ...prev, clause_type: e.target.value }))
+            }
             className="w-full p-2 border border-gray-300 rounded"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">
-            Risk Level:
-          </label>
+          <label className="block text-sm font-medium mb-2">Risk Level:</label>
           <select
             value={clause?.risk_level || ""}
-            onChange={(e) => setClause(prev => ({ ...prev, risk_level: e.target.value as "high" | "medium" | "low" }))}
+            onChange={(e) =>
+              setClause((prev) => ({
+                ...prev,
+                risk_level: e.target.value as "high" | "medium" | "low",
+              }))
+            }
             className="w-full p-2 border border-gray-300 rounded"
           >
             <option value="">Select Risk Level</option>
@@ -86,12 +93,12 @@ export function ExampleClauseForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">
-            Clause Text:
-          </label>
+          <label className="block text-sm font-medium mb-2">Clause Text:</label>
           <textarea
             value={clause?.text || ""}
-            onChange={(e) => setClause(prev => ({ ...prev, text: e.target.value }))}
+            onChange={(e) =>
+              setClause((prev) => ({ ...prev, text: e.target.value }))
+            }
             className="w-full p-2 border border-gray-300 rounded"
             rows={4}
             required

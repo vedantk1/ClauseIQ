@@ -315,6 +315,50 @@ class ValidationExceptionHandler:
         )
 
 
+# Request-aware response helpers for router endpoints
+def create_success_response_with_request(
+    data: T,
+    message: str = "Operation successful",
+    request: Optional[Request] = None,
+    meta: Optional[Dict[str, Any]] = None
+) -> APIResponse[T]:
+    """
+    Create standardized success response with request context.
+    Enterprise-grade helper for router endpoints.
+    """
+    correlation_id = get_correlation_id(request) if request else None
+    return create_success_response(
+        data=data,
+        meta={
+            "message": message,
+            **(meta or {})
+        },
+        correlation_id=correlation_id
+    )
+
+
+def create_error_response_with_request(
+    message: str,
+    request: Optional[Request] = None,
+    error_code: str = "BAD_REQUEST",
+    details: Optional[Dict[str, Any]] = None
+) -> APIResponse[None]:
+    """
+    Create standardized error response with request context.
+    Enterprise-grade helper for router endpoints.
+    
+    Note: HTTP status codes should be handled by raising HTTPException.
+    This function creates the error response structure.
+    """
+    correlation_id = get_correlation_id(request) if request else None
+    return create_error_response(
+        code=error_code,
+        message=message,
+        details=details,
+        correlation_id=correlation_id
+    )
+
+
 def get_correlation_id(request: Request) -> Optional[str]:
     """Get correlation ID from request."""
     return getattr(request.state, 'correlation_id', None)

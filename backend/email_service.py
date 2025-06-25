@@ -8,7 +8,7 @@ import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import List, Optional
-from settings import get_settings
+from config.environments import get_environment_config
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -18,7 +18,7 @@ class EmailService:
     """Email service for sending various types of emails."""
     
     def __init__(self):
-        settings = get_settings()
+        settings = get_environment_config()
         self.smtp_host = settings.email.smtp_host
         self.smtp_port = settings.email.smtp_port
         self.smtp_username = settings.email.smtp_username
