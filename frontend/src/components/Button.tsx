@@ -3,7 +3,7 @@ import React from "react";
 import clsx from "clsx";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "tertiary" | "danger";
+  variant?: "primary" | "secondary" | "tertiary" | "danger" | "ghost";
   size?: "sm" | "md" | "lg";
   loading?: boolean;
   children: React.ReactNode;
@@ -33,6 +33,8 @@ export default function Button({
         variant === "tertiary",
       "bg-accent-rose text-white hover:bg-red-600 shadow-sm":
         variant === "danger",
+      "text-text-secondary border border-border-muted hover:text-text-primary hover:bg-bg-elevated":
+        variant === "ghost",
 
       // Sizes
       "px-3 py-1.5 text-sm": size === "sm",
