@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
 import clsx from "clsx";
 
 const links = [
@@ -17,10 +18,19 @@ export default function NavBar() {
   const path = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     router.push("/login");
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
   };
 
   return (
@@ -95,8 +105,9 @@ export default function NavBar() {
             <div className="md:hidden">
               <button
                 type="button"
+                onClick={toggleMobileMenu}
                 className="text-text-secondary hover:text-text-primary p-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple"
-                aria-label="Open menu"
+                aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
               >
                 <svg
                   className="w-5 h-5"
@@ -104,12 +115,21 @@ export default function NavBar() {
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
+                  {isMobileMenuOpen ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  )}
                 </svg>
               </button>
             </div>
@@ -117,8 +137,8 @@ export default function NavBar() {
         </div>
       </div>
 
-      {/* Mobile Navigation - only show if authenticated */}
-      {isAuthenticated && (
+      {/* Mobile Navigation - only show if authenticated AND menu is open */}
+      {isAuthenticated && isMobileMenuOpen && (
         <div className="md:hidden border-t border-border-muted bg-bg-surface">
           <div className="px-6 py-3 space-y-1">
             {links.map(({ href, label }) => {
@@ -127,6 +147,7 @@ export default function NavBar() {
                 <Link
                   key={href}
                   href={href}
+                  onClick={closeMobileMenu}
                   className={clsx(
                     "block px-3 py-2 text-sm font-medium rounded-md transition-colors",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-2 focus-visible:ring-offset-bg-surface",
@@ -144,7 +165,10 @@ export default function NavBar() {
                 {user?.full_name || user?.email}
               </div>
               <button
-                onClick={handleLogout}
+                onClick={() => {
+                  handleLogout();
+                  closeMobileMenu();
+                }}
                 className="block w-full text-left px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-bg-elevated rounded-md transition-colors"
               >
                 Sign Out
