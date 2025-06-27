@@ -1,0 +1,131 @@
+"use client";
+import React from "react";
+import Button from "./Button";
+
+interface SidebarTab {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  content?: React.ReactNode;
+}
+
+interface ReviewSidebarProps {
+  activeTab: string | null;
+  onTabChange: (tabId: string | null) => void;
+  tabs: SidebarTab[];
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
+  className?: string;
+}
+
+export default function ReviewSidebar({
+  activeTab,
+  onTabChange,
+  tabs,
+  isCollapsed,
+  onToggleCollapse,
+  className = "",
+}: ReviewSidebarProps) {
+  const handleTabClick = (tabId: string) => {
+    if (activeTab === tabId) {
+      // If clicking the same tab, collapse the sidebar
+      onTabChange(null);
+    } else {
+      // If clicking a different tab, switch to it and ensure sidebar is expanded
+      onTabChange(tabId);
+    }
+  };
+
+  return (
+    <div className={`flex h-full ${className}`}>
+      {/* Tab Icons Column */}
+      <div className="w-16 bg-bg-secondary border-r border-border-light flex flex-col">
+        {/* Collapse/Expand Button */}
+        <div className="p-3 border-b border-border-light">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleCollapse}
+            className="w-full p-2"
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <svg
+              className={`w-4 h-4 transition-transform ${
+                isCollapsed ? "rotate-180" : ""
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+              />
+            </svg>
+          </Button>
+        </div>
+
+        {/* Tab Icons */}
+        <div className="flex-1 py-4">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabClick(tab.id)}
+              className={`w-full p-3 flex items-center justify-center rounded-lg mx-2 mb-2 transition-colors ${
+                activeTab === tab.id
+                  ? "bg-accent-purple/10 text-accent-purple"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"
+              }`}
+              title={tab.label}
+              aria-label={tab.label}
+            >
+              {tab.icon}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content Panel */}
+      {!isCollapsed && activeTab && (
+        <div className="w-80 bg-bg-primary border-r border-border-light flex flex-col">
+          {/* Tab Header */}
+          <div className="p-4 border-b border-border-light">
+            <div className="flex items-center justify-between">
+              <h2 className="font-heading text-lg text-text-primary">
+                {tabs.find((tab) => tab.id === activeTab)?.label}
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onTabChange(null)}
+                className="p-1"
+                aria-label="Close panel"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </Button>
+            </div>
+          </div>
+
+          {/* Tab Content */}
+          <div className="flex-1 overflow-hidden">
+            {tabs.find((tab) => tab.id === activeTab)?.content}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
