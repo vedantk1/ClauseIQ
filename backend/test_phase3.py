@@ -43,7 +43,7 @@ def test_token_utils() -> Tuple[bool, str]:
         truncated = truncate_text_by_tokens(test_text, 5)
         
         # Test token budget calculation
-        budget = calculate_token_budget("gpt-3.5-turbo", 1000)
+        budget = calculate_token_budget("gpt-4o", 1000)
         
         # Test optimal response tokens
         optimal = get_optimal_response_tokens("summary", "gpt-4")
@@ -82,16 +82,14 @@ def test_legacy_compatibility() -> Tuple[bool, str]:
         from services.ai_service import (
             generate_structured_document_summary,
             detect_contract_type,
-            extract_clauses_with_llm,
-            generate_contract_specific_summary
+            extract_clauses_with_llm
         )
         
         # Test that functions exist and are callable
         functions = [
             generate_structured_document_summary,
             detect_contract_type,
-            extract_clauses_with_llm,
-            generate_contract_specific_summary
+            extract_clauses_with_llm
         ]
         
         callable_count = sum(1 for f in functions if callable(f))

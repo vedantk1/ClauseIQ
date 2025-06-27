@@ -116,7 +116,7 @@ Each contract type receives specialized AI analysis with relevant clause extract
 **⚡ System Health**
 
 - **Uptime**: 99%+ (Vercel + Render)
-- **AI Models**: 5 available (GPT-3.5 to GPT-4o)
+- **AI Models**: 4 available (GPT-4.1 to GPT-4o)
 - **Processing Speed**: 30-60 seconds per document
 - **Chat Response**: 2-5 seconds per query
 

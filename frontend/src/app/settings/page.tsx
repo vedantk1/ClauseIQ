@@ -239,16 +239,16 @@ export default function Settings() {
               </p>
               <ul className="list-disc list-inside space-y-1 ml-4">
                 <li>
-                  <strong>GPT-3.5 Turbo:</strong> Fast and cost-effective for
-                  most document analysis tasks
-                </li>
-                <li>
-                  <strong>GPT-4 Models:</strong> More advanced reasoning
-                  capabilities for complex contract analysis
+                  <strong>GPT-4 Models:</strong> Advanced reasoning capabilities
+                  for complex contract analysis
                 </li>
                 <li>
                   <strong>GPT-4o Models:</strong> Optimized versions with
                   improved speed and efficiency
+                </li>
+                <li>
+                  <strong>GPT-4.1 Models:</strong> Latest models with enhanced
+                  performance and accuracy
                 </li>
               </ul>
               <p className="pt-2">

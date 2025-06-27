@@ -29,12 +29,6 @@ class AIModelConfig:
     # Available AI models with their descriptions
     _models = [
         AIModel(
-            id="gpt-3.5-turbo",
-            name="GPT-3.5 Turbo",
-            description="Fast and cost-effective for most tasks",
-            is_default=True
-        ),
-        AIModel(
             id="gpt-4.1-mini",
             name="GPT-4.1 Mini", 
             description="Balanced performance and accuracy"
@@ -52,7 +46,8 @@ class AIModelConfig:
         AIModel(
             id="gpt-4o",
             name="GPT-4o",
-            description="Most advanced model with superior accuracy"
+            description="Most advanced model with superior accuracy",
+            is_default=True
         )
     ]
     

@@ -12,10 +12,8 @@ try:
     # Check that expected functions exist
     expected_functions = [
         'generate_structured_document_summary',
-        'analyze_clause', 
         'detect_contract_type',
         'extract_clauses_with_llm',
-        'generate_contract_specific_summary',
         'is_ai_available'
     ]
     

@@ -46,7 +46,7 @@ ClauseIQ is an intelligent legal document analysis platform that helps users und
 - Automatically detects 10+ contract types (Employment, NDAs, Service Agreements, Leases, etc.)
 - Intelligent clause extraction using OpenAI GPT models
 - Context-aware legal risk assessment
-- Choose from 5 AI models (GPT-3.5-turbo to GPT-4o)
+- Choose from 4 AI models (GPT-4.1 to GPT-4o)
 
 💬 **Document Chat (RAG System)**
 
@@ -150,13 +150,12 @@ The chat feature uses RAG (Retrieval Augmented Generation) to provide accurate, 
 
 ### **AI Model Selection**
 
-Users can choose from 5 OpenAI models based on their needs:
+Users can choose from 4 OpenAI models based on their needs:
 
-- **GPT-3.5-turbo**: Fast, cost-effective for basic analysis
-- **GPT-4-turbo**: Balanced performance and accuracy
-- **GPT-4o**: Latest model with enhanced reasoning
-- **GPT-4o-mini**: Optimized for speed
-- **GPT-4**: Maximum accuracy for complex contracts
+- **GPT-4.1-nano**: Ultra lightweight and fast
+- **GPT-4.1-mini**: Balanced performance and accuracy
+- **GPT-4o-mini**: Optimized for speed and efficiency
+- **GPT-4o**: Most advanced model with superior accuracy
 
 ---
 

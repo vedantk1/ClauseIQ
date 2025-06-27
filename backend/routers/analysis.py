@@ -14,7 +14,7 @@ from middleware.api_standardization import APIResponse, create_success_response,
 from middleware.versioning import versioned_response, deprecated_endpoint
 from services.document_service import validate_file, process_document_with_llm, is_llm_processing_available
 # PHASE 3 MIGRATION: Main AI functions still from ai_service for stability
-from services.ai_service import generate_contract_specific_summary, generate_structured_document_summary
+from services.ai_service import generate_structured_document_summary
 # RAG integration for chat functionality
 from services.rag_service import get_rag_service
 from models.analysis import ClauseAnalysisResponse
@@ -79,14 +79,9 @@ async def analyze_document(
                 extracted_text, file.filename, user_model
             )
             
-            # Generate contract-specific document summary
-            ai_summary = await generate_contract_specific_summary(
-                extracted_text, contract_type, file.filename, user_model
-            )
-            
-            # Generate structured summary for improved UI display
+            # Generate contract-type-specific structured summary for improved UI display
             ai_structured_summary = await generate_structured_document_summary(
-                extracted_text, file.filename, user_model
+                extracted_text, file.filename, user_model, contract_type
             )
             
             # Calculate risk summary from clauses
@@ -103,7 +98,6 @@ async def analyze_document(
                 "filename": file.filename,
                 "upload_date": datetime.now().isoformat(),
                 "text": extracted_text,
-                "ai_full_summary": ai_summary,
                 "ai_structured_summary": ai_structured_summary,
                 "clauses": [clause.dict() for clause in clauses],
                 "risk_summary": risk_summary,
@@ -179,7 +173,7 @@ async def analyze_document(
             response_data = {
                 "id": doc_id,
                 "filename": file.filename,
-                "summary": ai_summary,
+                "summary": ai_structured_summary.get("overview", "Document processed successfully") if ai_structured_summary else "Document processed successfully",
                 "ai_structured_summary": ai_structured_summary,
                 "clauses": clauses,
                 "total_clauses": len(clauses),
@@ -431,14 +425,9 @@ async def analyze_document_unified(
                 extracted_text, file.filename, user_model
             )
             
-            # Generate contract-specific summary
-            ai_summary = await generate_contract_specific_summary(
-                extracted_text, contract_type, file.filename, user_model
-            )
-            
-            # Generate structured summary for improved UI display
+            # Generate contract-type-specific structured summary for improved UI display
             ai_structured_summary = await generate_structured_document_summary(
-                extracted_text, file.filename, user_model
+                extracted_text, file.filename, user_model, contract_type
             )
             
             # Calculate risk summary
@@ -455,7 +444,6 @@ async def analyze_document_unified(
                 "filename": file.filename,
                 "upload_date": datetime.now().isoformat(),
                 "text": extracted_text,
-                "ai_full_summary": ai_summary,
                 "ai_structured_summary": ai_structured_summary,
                 "clauses": [clause.dict() for clause in analyzed_clauses],
                 "risk_summary": risk_summary,
@@ -505,7 +493,7 @@ async def analyze_document_unified(
                 id=doc_id,
                 filename=file.filename,
                 full_text=extracted_text[:500] + "..." if len(extracted_text) > 500 else extracted_text,
-                summary=ai_summary,
+                summary=ai_structured_summary.get("overview", "Document processed successfully") if ai_structured_summary else "Document processed successfully",
                 ai_structured_summary=ai_structured_summary,
                 clauses=analyzed_clauses,
                 total_clauses=len(analyzed_clauses),

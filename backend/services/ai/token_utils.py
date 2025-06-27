@@ -25,7 +25,7 @@ def _map_model_for_tokenization(model: str) -> str:
     return model_mapping.get(model, model)
 
 
-def get_token_count(text: str, model: str = "gpt-3.5-turbo") -> int:
+def get_token_count(text: str, model: str = "gpt-4o") -> int:
     """
     Get accurate token count for text using tiktoken.
     
@@ -53,7 +53,7 @@ def get_token_count(text: str, model: str = "gpt-3.5-turbo") -> int:
             return len(text) // 4
 
 
-def truncate_text_by_tokens(text: str, max_tokens: int, model: str = "gpt-3.5-turbo", preserve_sentences: bool = True) -> str:
+def truncate_text_by_tokens(text: str, max_tokens: int, model: str = "gpt-4o", preserve_sentences: bool = True) -> str:
     """
     Truncate text to stay within token limit while preserving sentence boundaries when possible.
     
@@ -119,7 +119,7 @@ def truncate_text_by_tokens(text: str, max_tokens: int, model: str = "gpt-3.5-tu
     return result.strip()
 
 
-def calculate_token_budget(model: str = "gpt-3.5-turbo", response_tokens: int = 1000, safety_margin: int = None) -> int:
+def calculate_token_budget(model: str = "gpt-4o", response_tokens: int = 1000, safety_margin: int = None) -> int:
     """
     Calculate maximum input tokens based on model context window and required response tokens.
     
@@ -133,9 +133,9 @@ def calculate_token_budget(model: str = "gpt-3.5-turbo", response_tokens: int = 
     """
     # Model context windows
     context_windows = {
-        "gpt-3.5-turbo": 16384,
-        "gpt-3.5-turbo-16k": 16384,
         "gpt-4": 8192,
+        "gpt-4.1-nano": 8192,  # ADDED
+        "gpt-4.1-mini": 8192,  # ADDED
         "gpt-4-32k": 32768,
         "gpt-4-turbo": 128000,
         "gpt-4o": 128000,
@@ -154,7 +154,7 @@ def calculate_token_budget(model: str = "gpt-3.5-turbo", response_tokens: int = 
     return max(available_tokens, 100)  # Ensure minimum 100 tokens
 
 
-def get_optimal_response_tokens(use_case: str, model: str = "gpt-3.5-turbo") -> int:
+def get_optimal_response_tokens(use_case: str, model: str = "gpt-4o") -> int:
     """
     Get optimal response token allocation for different use cases.
     Maximizes output quality for billion-dollar legal analysis.
@@ -164,30 +164,33 @@ def get_optimal_response_tokens(use_case: str, model: str = "gpt-3.5-turbo") -> 
         model: Model being used
     
     Returns:
-        Optimal response token count
+        Optimal response token count (respects model limits)
     """
     # Base allocations by use case
     base_allocations = {
         "classification": 50,      # Simple classification tasks
         "summary": 2000,          # Comprehensive document summaries  
-        "extraction": 8000,       # Detailed clause extraction with relationships
-        "analysis": 5000,         # Deep legal analysis and risk assessment
-        "structured": 3000,       # Structured JSON responses
+        "extraction": 8000,       # Detailed clause extraction with relationships (RESTORED)
+        "analysis": 5000,         # Deep legal analysis and risk assessment (RESTORED)
+        "structured": 3000,       # Structured JSON responses (RESTORED)
     }
     
     base_tokens = base_allocations.get(use_case, 1000)
     
-    # Model multipliers - modern models can provide much richer analysis
-    context_windows = {
-        "gpt-3.5-turbo": 16384,
-        "gpt-4": 8192, 
-        "gpt-4-32k": 32768,
-        "gpt-4-turbo": 128000,
-        "gpt-4o": 128000,
-        "gpt-4o-mini": 128000,
+    # Model context windows and MAX COMPLETION TOKENS
+    model_limits = {
+        "gpt-4": {"context": 8192, "max_completion": 4096}, 
+        "gpt-4.1-nano": {"context": 8192, "max_completion": 4096},  # ADDED
+        "gpt-4.1-mini": {"context": 8192, "max_completion": 4096},  # ADDED
+        "gpt-4-32k": {"context": 32768, "max_completion": 4096},
+        "gpt-4-turbo": {"context": 128000, "max_completion": 4096},
+        "gpt-4o": {"context": 128000, "max_completion": 16384},
+        "gpt-4o-mini": {"context": 128000, "max_completion": 16384},
     }
     
-    model_context = context_windows.get(model, 8192)
+    model_info = model_limits.get(model, {"context": 8192, "max_completion": 4096})
+    model_context = model_info["context"]
+    max_completion = model_info["max_completion"]
     
     # Scale up response tokens for high-capacity models
     if model_context >= 128000:  # Modern high-capacity
@@ -197,7 +200,10 @@ def get_optimal_response_tokens(use_case: str, model: str = "gpt-3.5-turbo") -> 
     else:  # Legacy models
         multiplier = 1.0
     
-    return int(base_tokens * multiplier)
+    optimal_tokens = int(base_tokens * multiplier)
+    
+    # ENFORCE MODEL COMPLETION LIMITS
+    return min(optimal_tokens, max_completion)
 
 
 def get_model_capabilities(model: str = "gpt-4o") -> Dict[str, Any]:
@@ -234,7 +240,7 @@ def get_model_capabilities(model: str = "gpt-4o") -> Dict[str, Any]:
 
 def print_model_comparison():
     """Print a comparison of model capabilities for strategic planning"""
-    models = ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]
+    models = ["gpt-4", "gpt-4o", "gpt-4o-mini"]
     
     print("\n🚀 ClauseIQ Model Capabilities Analysis")
     print("=" * 80)

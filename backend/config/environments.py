@@ -63,7 +63,7 @@ class SecurityConfig(BaseModel):
 class AIConfig(BaseModel):
     """AI service configuration with validation."""
     openai_api_key: str = Field(..., description="OpenAI API key")
-    default_model: str = Field(default="gpt-3.5-turbo", description="Default AI model")
+    default_model: str = Field(default="gpt-4o", description="Default AI model")
     max_tokens: int = Field(default=4000, ge=1, description="Maximum tokens per request")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0, description="AI temperature")
     
@@ -158,7 +158,7 @@ class EnvironmentConfig(BaseSettings):
     
     # AI
     openai_api_key: str = Field(default="sk-placeholder", description="OpenAI API key")
-    openai_default_model: str = Field(default="gpt-3.5-turbo", description="Default AI model")
+    openai_default_model: str = Field(default="gpt-4o", description="Default AI model")
     openai_max_tokens: int = Field(default=4000, description="Maximum tokens per request")
     openai_temperature: float = Field(default=0.7, description="AI temperature")
     

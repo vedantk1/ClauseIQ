@@ -697,16 +697,30 @@ Get list of available AI models.
   "data": {
     "models": [
       {
-        "id": "gpt-3.5-turbo",
-        "name": "GPT-3.5 Turbo",
-        "description": "Fast and efficient for most tasks",
+        "id": "gpt-4.1-mini",
+        "name": "GPT-4.1 Mini",
+        "description": "Balanced performance and accuracy",
+        "cost_tier": "medium",
+        "max_tokens": 8192
+      },
+      {
+        "id": "gpt-4.1-nano",
+        "name": "GPT-4.1 Nano",
+        "description": "Ultra lightweight and fast",
         "cost_tier": "low",
         "max_tokens": 4096
       },
       {
+        "id": "gpt-4o-mini",
+        "name": "GPT-4o Mini",
+        "description": "Optimized for speed and efficiency",
+        "cost_tier": "medium",
+        "max_tokens": 8192
+      },
+      {
         "id": "gpt-4o",
         "name": "GPT-4o",
-        "description": "Latest model with enhanced reasoning",
+        "description": "Most advanced model with superior accuracy",
         "cost_tier": "high",
         "max_tokens": 128000
       }
