@@ -38,8 +38,8 @@ export default function ReviewSidebar({
 
   return (
     <div className={`flex h-full ${className}`}>
-      {/* Tab Icons Column */}
-      <div className="w-16 bg-bg-secondary border-r border-border-light flex flex-col">
+      {/* Tab Icons Column - Fixed width */}
+      <div className="w-16 bg-bg-secondary border-r border-border-light flex flex-col flex-shrink-0">
         {/* Collapse/Expand Button */}
         <div className="p-3 border-b border-border-light">
           <Button
@@ -87,9 +87,9 @@ export default function ReviewSidebar({
         </div>
       </div>
 
-      {/* Content Panel */}
+      {/* Content Panel - Let parent control width */}
       {!isCollapsed && activeTab && (
-        <div className="w-80 bg-bg-primary border-r border-border-light flex flex-col">
+        <div className="flex-1 bg-bg-primary border-r border-border-light flex flex-col min-w-0">
           {/* Tab Header */}
           <div className="p-4 border-b border-border-light">
             <div className="flex items-center justify-between">
