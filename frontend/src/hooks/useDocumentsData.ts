@@ -81,7 +81,7 @@ export const useDocumentsData = () => {
   };
 
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading && isAuthenticated) {
       fetchDocuments();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
