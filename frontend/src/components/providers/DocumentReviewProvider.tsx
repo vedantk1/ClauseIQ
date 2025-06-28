@@ -19,7 +19,6 @@ import React, { useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAnalysis } from "@/context/AnalysisContext";
 import { useAuth } from "@/context/AuthContext";
-import { documentService } from "@/services/documentService";
 import toast from "react-hot-toast";
 
 interface DocumentReviewProviderProps {
@@ -40,7 +39,12 @@ export default function DocumentReviewProvider({
   useEffect(() => {
     const loadDocumentIfNeeded = async () => {
       // Wait for auth to complete
-      if (authLoading) return;
+      if (authLoading) {
+        console.log(
+          `🔄 [DocumentReviewProvider] Auth still loading, waiting...`
+        );
+        return;
+      }
 
       // Redirect if not authenticated
       if (!isAuthenticated) {
@@ -67,29 +71,11 @@ export default function DocumentReviewProvider({
           `📄 [DocumentReviewProvider] Loading document ${documentId}`
         );
 
-        // Use the new document service for loading
-        const result = await documentService.loadDocument(documentId);
-
-        if (result.success && result.document) {
-          // Use existing context method to set the document
-          await loadDocument(documentId);
-          console.log(
-            `✅ [DocumentReviewProvider] Document ${documentId} loaded successfully`
-          );
-        } else {
-          const errorMessage =
-            result.error?.message || "Failed to load document";
-          console.error(
-            `❌ [DocumentReviewProvider] Failed to load document ${documentId}:`,
-            result.error
-          );
-
-          setDocumentError(errorMessage);
-          toast.error(errorMessage);
-
-          // Redirect to documents page on error
-          router.push("/documents");
-        }
+        // Use only the AnalysisContext method - avoid duplicate API calls
+        await loadDocument(documentId);
+        console.log(
+          `✅ [DocumentReviewProvider] Document ${documentId} loaded successfully`
+        );
       } catch (error) {
         const errorMessage =
           error instanceof Error

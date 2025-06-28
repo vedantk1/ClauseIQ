@@ -15,8 +15,6 @@
 
 import React from "react";
 import { notFound } from "next/navigation";
-import { AnalysisProvider } from "@/context/AnalysisContext";
-import { AuthProvider } from "@/context/AuthContext";
 import ReviewErrorBoundary from "@/components/error-boundaries/ReviewErrorBoundary";
 import DocumentReviewProvider from "@/components/providers/DocumentReviewProvider";
 import ReviewLayout from "@/components/review/ReviewLayout";
@@ -40,15 +38,11 @@ export default function ReviewPage({ params }: ReviewPageProps) {
   }
 
   return (
-    <AuthProvider>
-      <AnalysisProvider>
-        <ReviewErrorBoundary documentId={documentId}>
-          <DocumentReviewProvider documentId={documentId}>
-            <ReviewLayout />
-          </DocumentReviewProvider>
-        </ReviewErrorBoundary>
-      </AnalysisProvider>
-    </AuthProvider>
+    <ReviewErrorBoundary documentId={documentId}>
+      <DocumentReviewProvider documentId={documentId}>
+        <ReviewLayout />
+      </DocumentReviewProvider>
+    </ReviewErrorBoundary>
   );
 }
 

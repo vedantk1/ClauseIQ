@@ -174,9 +174,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
               "[AUTH INIT] Profile verification failed:",
               profileError
             );
-            // Don't immediately clear tokens - might be network issue
-            // Just set loading to false and let user try manually
-            dispatch({ type: "AUTH_SET_LOADING", payload: false });
+
+            // If we get a network error, don't clear tokens - might be temporary
+            // If we get auth error (401/403), clear tokens
+            if (profileError instanceof Error) {
+              const errorMessage = profileError.message.toLowerCase();
+              if (
+                errorMessage.includes("401") ||
+                errorMessage.includes("403") ||
+                errorMessage.includes("unauthorized")
+              ) {
+                console.log("[AUTH INIT] Auth error detected, clearing tokens");
+                clearTokens();
+              } else {
+                console.log(
+                  "[AUTH INIT] Network error, keeping tokens for retry"
+                );
+                // Just set loading to false and let user try manually
+                dispatch({ type: "AUTH_SET_LOADING", payload: false });
+              }
+            } else {
+              // Unknown error, clear tokens to be safe
+              clearTokens();
+            }
           }
         } else {
           console.log("[AUTH INIT] No token found, starting unauthenticated");
