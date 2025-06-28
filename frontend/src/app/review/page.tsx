@@ -1,7 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAnalysis } from "@/context/AnalysisContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useUserInteractions } from "@/hooks/useUserInteractions";
 import { useClauseFiltering } from "@/hooks/useClauseFiltering";
@@ -21,8 +21,52 @@ import apiClient from "@/lib/api";
 
 export default function ReviewWorkspace() {
   const { isAuthenticated, isLoading } = useAuthRedirect();
-  const { currentDocument, setSelectedClause } = useAnalysis();
+  const { currentDocument, setSelectedClause, loadDocument } = useAnalysis();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [documentLoading, setDocumentLoading] = useState(false);
+
+  // Load document when component mounts or documentId changes
+  useEffect(() => {
+    const loadDocumentIfNeeded = async () => {
+      if (!isAuthenticated || isLoading) return;
+
+      const documentId = searchParams.get("documentId");
+
+      // If no document ID in URL, redirect to documents page
+      if (!documentId) {
+        console.log("📄 No document ID in URL, redirecting to documents page");
+        router.push("/documents");
+        return;
+      }
+
+      // If no document is loaded or a different document is loaded, load the requested one
+      if (!currentDocument.id || currentDocument.id !== documentId) {
+        try {
+          setDocumentLoading(true);
+          console.log(`📄 Loading document ${documentId} for review page`);
+          await loadDocument(documentId);
+          console.log(`✅ Document ${documentId} loaded successfully`);
+        } catch (error) {
+          console.error(`❌ Failed to load document ${documentId}:`, error);
+          toast.error("Failed to load document. Please try again.");
+          // Redirect back to documents page on error
+          router.push("/documents");
+        } finally {
+          setDocumentLoading(false);
+        }
+      }
+    };
+
+    loadDocumentIfNeeded();
+  }, [
+    searchParams,
+    isAuthenticated,
+    isLoading,
+    currentDocument.id,
+    loadDocument,
+    router,
+  ]);
 
   // Extract data from currentDocument for easier access
   const {

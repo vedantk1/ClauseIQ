@@ -12,9 +12,9 @@ describe("NavBar Component", () => {
 
     // Check for links that should be present (using getAllByText to handle duplicates for mobile/desktop)
     expect(screen.getAllByText("Upload")).toHaveLength(2); // Desktop + Mobile
-    expect(screen.getAllByText("Review")).toHaveLength(2); // Desktop + Mobile
     expect(screen.getAllByText("Documents")).toHaveLength(2); // Desktop + Mobile
     expect(screen.getAllByText("Analytics")).toHaveLength(2); // Desktop + Mobile
+    expect(screen.getAllByText("Settings")).toHaveLength(2); // Desktop + Mobile
     expect(screen.getAllByText("About")).toHaveLength(2); // Desktop + Mobile
     expect(screen.getByText("ClauseIQ")).toBeTruthy(); // Logo
   });
@@ -30,7 +30,7 @@ describe("NavBar Component", () => {
     render(<NavBar />);
 
     const links = screen.getAllByRole("link");
-    // Logo + 5 nav links * 2 (desktop + mobile) = 11 total links
+    // Logo (1) + 5 nav links * 2 (desktop + mobile) = 11 total links
     expect(links).toHaveLength(11);
   });
 });

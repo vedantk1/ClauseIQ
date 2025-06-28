@@ -4,7 +4,6 @@
  */
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAnalysis } from "@/context/AnalysisContext";
 import { useApiCall } from "@/lib/apiUtils";
 import toast from "react-hot-toast";
@@ -25,7 +24,6 @@ export const useDocumentOperations = ({
   setSelectedDocuments,
   setIsSelectMode,
 }: UseDocumentOperationsProps) => {
-  const router = useRouter();
   const { loadDocument } = useAnalysis();
   const apiCall = useApiCall();
   const [loadingDocId, setLoadingDocId] = useState<string | null>(null);
@@ -37,7 +35,7 @@ export const useDocumentOperations = ({
       setLoadingDocId(documentId);
       // Use the AnalysisContext loadDocument method
       await loadDocument(documentId);
-      router.push("/review");
+      window.open(`/review?documentId=${documentId}`, "_blank");
       toast.success("Document loaded successfully!");
     } catch (err) {
       console.error("Failed to fetch document:", err);

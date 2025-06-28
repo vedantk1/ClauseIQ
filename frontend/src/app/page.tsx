@@ -267,9 +267,17 @@ export default function Home() {
       console.log("📄 [DEBUG] Starting document analysis");
       await analyzeDocument(file);
       console.log(
-        "✅ [DEBUG] Document analysis completed successfully, navigating to review"
+        "✅ [DEBUG] Document analysis completed successfully, opening review in new tab"
       );
-      router.push("/review");
+      // Get the document ID from the analysis result
+      const documentId = currentDocument.id;
+      if (documentId) {
+        window.open(`/review?documentId=${documentId}`, "_blank");
+      } else {
+        console.error("❌ [DEBUG] No document ID available after analysis");
+        const toast = (await import("react-hot-toast")).toast;
+        toast.error("Document processed but unable to open review page.");
+      }
     } catch (error) {
       console.error("❌ [DEBUG] Document analysis failed:", {
         error: error instanceof Error ? error.message : error,

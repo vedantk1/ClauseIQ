@@ -81,16 +81,7 @@ const updatePdfViewerStyles = (scaleFactor: number) => {
   styleElement.textContent = createPdfViewerStyles(scaleFactor);
 };
 
-// 🎯 CRITICAL: Set global CSS variable immediately on module load
-if (typeof document !== "undefined") {
-  // Set global CSS variable immediately on document root
-  document.documentElement.style.setProperty("--scale-factor", "1");
-  // Update styles
-  updatePdfViewerStyles(1);
-  console.log(
-    "🎯 CRITICAL: Set initial --scale-factor=1 globally on document root"
-  );
-}
+// 🎯 CRITICAL: Global CSS variable will be set in useEffect to avoid SSR hydration mismatch
 
 // 🎨 Separate component for highlight content to avoid hook issues
 const HighlightContentForm: React.FC<{
@@ -202,6 +193,16 @@ const InteractivePDFViewer: React.FC<InteractivePDFViewerProps> = ({
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [currentScale, setCurrentScale] = useState(1);
   const pdfContainerRef = useRef<HTMLDivElement>(null);
+
+  // 🎯 CRITICAL: Initialize global CSS variable on client side only to prevent SSR hydration mismatch
+  useEffect(() => {
+    // Set initial global CSS variable immediately on component mount (client-side only)
+    document.documentElement.style.setProperty("--scale-factor", "1");
+    updatePdfViewerStyles(1);
+    console.log(
+      "🎯 CRITICAL: Set initial --scale-factor=1 globally on client mount"
+    );
+  }, []); // Empty dependency array = runs once on mount
 
   // 🎯 CRITICAL: Set CSS variable immediately when container is created
   const setPdfContainerRef = useCallback(
