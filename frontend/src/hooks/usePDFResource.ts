@@ -76,9 +76,9 @@ export function usePDFResource({
       // Get API base URL from config
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-      // Fetch PDF from backend
+      // Fetch PDF from backend - FIXED: Use documents endpoint for original PDF
       const response = await fetch(
-        `${apiUrl}/api/v1/reports/documents/${documentId}/pdf`,
+        `${apiUrl}/api/v1/documents/${documentId}/pdf`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
