@@ -15,6 +15,13 @@ const nextConfig: NextConfig = {
   // Enable experimental features for better performance
   experimental: {
     optimizePackageImports: ["react-hot-toast", "clsx"],
+    turbo: {
+      rules: {
+        "**/*.worker.js": {
+          loaders: ["file-loader"],
+        },
+      },
+    },
   },
 
   // Images configuration for containerized deployment
