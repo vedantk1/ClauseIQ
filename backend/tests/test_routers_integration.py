@@ -6,7 +6,7 @@ import json
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch, MagicMock
 from backend.main import app
-from backend.shared.clauseiq_types.common import Document, DocumentStatus
+from clauseiq_types.common import Document, DocumentStatus
 
 client = TestClient(app)
 

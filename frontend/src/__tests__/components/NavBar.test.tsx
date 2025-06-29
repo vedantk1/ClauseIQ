@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import NavBar from "@/components/NavBar.v2";
+import NavBar from "@/components/NavBar";
 
 // Mock Next.js navigation hook
 jest.mock("next/navigation", () => ({
