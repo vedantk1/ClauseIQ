@@ -23,6 +23,13 @@ class DatabaseConfig(BaseModel):
     database: str = Field(..., description="Database name")
     collection: str = Field(default="documents", description="Default collection name")
     
+    # Connection pool settings
+    max_pool_size: int = Field(default=20, ge=1, le=100, description="Maximum connection pool size")
+    min_pool_size: int = Field(default=5, ge=0, le=50, description="Minimum connection pool size")
+    max_idle_time_ms: int = Field(default=600000, ge=10000, description="Max idle time in milliseconds (10 minutes)")
+    wait_queue_timeout_ms: int = Field(default=30000, ge=1000, description="Wait queue timeout in milliseconds")
+    server_selection_timeout_ms: int = Field(default=30000, ge=1000, description="Server selection timeout in milliseconds")
+    
     @validator('uri')
     def validate_uri(cls, v):
         if not v.startswith(('mongodb://', 'mongodb+srv://')):
@@ -142,6 +149,13 @@ class EnvironmentConfig(BaseSettings):
     mongodb_database: str = Field(default="legal_ai", description="MongoDB database name")
     mongodb_collection: str = Field(default="documents", description="MongoDB collection name")
     
+    # Database connection pool settings
+    mongodb_max_pool_size: int = Field(default=20, description="MongoDB maximum connection pool size")
+    mongodb_min_pool_size: int = Field(default=5, description="MongoDB minimum connection pool size") 
+    mongodb_max_idle_time_ms: int = Field(default=600000, description="MongoDB max idle time in milliseconds")
+    mongodb_wait_queue_timeout_ms: int = Field(default=30000, description="MongoDB wait queue timeout in milliseconds")
+    mongodb_server_selection_timeout_ms: int = Field(default=30000, description="MongoDB server selection timeout in milliseconds")
+    
     # Server
     host: str = Field(default="localhost", description="Server host")
     port: int = Field(default=8000, description="Server port")
@@ -195,7 +209,12 @@ class EnvironmentConfig(BaseSettings):
         return DatabaseConfig(
             uri=self.mongodb_uri,
             database=self.mongodb_database,
-            collection=self.mongodb_collection
+            collection=self.mongodb_collection,
+            max_pool_size=self.mongodb_max_pool_size,
+            min_pool_size=self.mongodb_min_pool_size,
+            max_idle_time_ms=self.mongodb_max_idle_time_ms,
+            wait_queue_timeout_ms=self.mongodb_wait_queue_timeout_ms,
+            server_selection_timeout_ms=self.mongodb_server_selection_timeout_ms
         )
     
     @property

@@ -24,9 +24,16 @@ class ConnectionConfig:
     uri: str
     database: str
     collection_prefix: str = ""
-    pool_size: int = 10
+    pool_size: int = 10  # Backwards compatibility (same as max_pool_size)
     timeout: int = 30
     retry_attempts: int = 3
+    
+    # Enhanced connection pool settings
+    max_pool_size: int = 20
+    min_pool_size: int = 5
+    max_idle_time_ms: int = 600000  # 10 minutes
+    wait_queue_timeout_ms: int = 30000  # 30 seconds
+    server_selection_timeout_ms: int = 30000  # 30 seconds
 
 
 class DatabaseError(Exception):
@@ -128,6 +135,17 @@ class DatabaseInterface(ABC):
     @abstractmethod
     async def delete_document(self, document_id: str, user_id: str) -> bool:
         """Delete document."""
+        pass
+    
+    # Atomic operations for race condition prevention
+    @abstractmethod
+    async def create_or_get_chat_session(self, document_id: str, user_id: str, session_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Atomically create chat session if it doesn't exist, or return existing session."""
+        pass
+    
+    @abstractmethod
+    async def add_chat_message_atomic(self, document_id: str, user_id: str, message: Dict[str, Any]) -> bool:
+        """Atomically add a message to the chat session."""
         pass
     
     # Analytics operations

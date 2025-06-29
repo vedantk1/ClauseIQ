@@ -25,7 +25,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime
 
-# Lazy imports for OpenAI
+# Lazy imports for OpenAI with rate limiting
 def _get_openai_client():
     """Lazy import OpenAI client."""
     try:
@@ -34,6 +34,24 @@ def _get_openai_client():
         return get_openai_client()
     except ImportError as e:
         logger.warning(f"Failed to import OpenAI client: {e}")
+        return None
+
+def _get_rate_limited_embedding_call():
+    """Lazy import rate-limited embedding call."""
+    try:
+        from .ai.client_manager import safe_embedding_call
+        return safe_embedding_call
+    except ImportError as e:
+        logger.warning(f"Failed to import rate-limited embedding call: {e}")
+        return None
+
+def _get_rate_limited_openai_call():
+    """Lazy import rate-limited OpenAI call."""
+    try:
+        from .ai.client_manager import safe_openai_call
+        return safe_openai_call
+    except ImportError as e:
+        logger.warning(f"Failed to import rate-limited OpenAI call: {e}")
         return None
 
 logger = logging.getLogger(__name__)
@@ -226,7 +244,14 @@ class RAGService:
             return chunks
         
         try:
-            client = _get_openai_client()
+            safe_embedding_call = _get_rate_limited_embedding_call()
+            if not safe_embedding_call:
+                logger.warning("Rate-limited embedding call not available, skipping embedding generation")
+                return chunks
+            
+            # Define the embedding API call function
+            async def make_embedding_call(client, model, input_texts):
+                return await client.embeddings.create(model=model, input=input_texts)
             
             # Batch embeddings for efficiency (max 2048 inputs per request)
             batch_size = 100  # Conservative batch size
@@ -234,10 +259,16 @@ class RAGService:
                 batch = chunks[i:i + batch_size]
                 texts = [chunk.text for chunk in batch]
                 
-                response = await client.embeddings.create(
-                    model=self.embedding_model,
-                    input=texts
+                # Use rate-limited embedding call
+                response = await safe_embedding_call(
+                    make_embedding_call,
+                    self.embedding_model,
+                    texts
                 )
+                
+                if response is None:
+                    logger.warning(f"Failed to generate embeddings for batch {i//batch_size + 1}")
+                    continue
                 
                 # Assign embeddings to chunks
                 for j, embedding_data in enumerate(response.data):
@@ -337,8 +368,9 @@ class RAGService:
     async def _needs_conversation_context(self, query: str) -> bool:
         """Gate: Determine if query needs conversation context using gpt-4o-mini."""
         try:
-            client = _get_openai_client()
-            if not client:
+            safe_openai_call = _get_rate_limited_openai_call()
+            if not safe_openai_call:
+                logger.warning("Rate-limited OpenAI call not available for context gate")
                 return False
             
             gate_prompt = """Analyze if this user question requires previous conversation context to be understood correctly.
@@ -355,12 +387,26 @@ Question: "{query}"
 
 Response (YES or NO only):"""
 
-            response = await client.chat.completions.create(
-                model=self.gate_model,
-                messages=[{"role": "user", "content": gate_prompt.format(query=query)}],
-                max_tokens=10,
-                temperature=0.0
+            # Define the chat completion call function
+            async def make_gate_call(client, model, messages, max_tokens, temperature):
+                return await client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature
+                )
+
+            response = await safe_openai_call(
+                make_gate_call,
+                self.gate_model,
+                [{"role": "user", "content": gate_prompt.format(query=query)}],
+                10,
+                0.0
             )
+            
+            if response is None:
+                logger.warning("Failed to get context gate response")
+                return False
             
             result = response.choices[0].message.content.strip().upper()
             needs_context = result == "YES"
@@ -376,8 +422,9 @@ Response (YES or NO only):"""
     async def _rewrite_query_with_context(self, query: str, conversation_history: List[Dict[str, Any]]) -> str:
         """Rewrite query using conversation context to resolve references."""
         try:
-            client = _get_openai_client()
-            if not client:
+            safe_openai_call = _get_rate_limited_openai_call()
+            if not safe_openai_call:
+                logger.warning("Rate-limited OpenAI call not available for query rewriting")
                 return query
             
             # Use last N messages max to avoid token limits (from config)
@@ -409,12 +456,26 @@ Examples:
 
 REWRITTEN QUESTION:"""
 
-            response = await client.chat.completions.create(
-                model=self.rewrite_model,
-                messages=[{"role": "user", "content": rewrite_prompt}],
-                max_tokens=100,
-                temperature=0.1
+            # Define the chat completion call function for rewriting
+            async def make_rewrite_call(client, model, messages, max_tokens, temperature):
+                return await client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature
+                )
+
+            response = await safe_openai_call(
+                make_rewrite_call,
+                self.rewrite_model,
+                [{"role": "user", "content": rewrite_prompt}],
+                100,
+                0.1
             )
+            
+            if response is None:
+                logger.warning("Failed to get query rewrite response, using original")
+                return query
             
             rewritten_query = response.choices[0].message.content.strip()
             
@@ -666,14 +727,28 @@ RESPONSE:"""
             return []
         
         try:
-            client = _get_openai_client()
-            
-            # Generate embedding for the query
-            response = await client.embeddings.create(
-                model=self.embedding_model,
-                input=[query]
-            )
-            query_embedding = response.data[0].embedding
+            safe_embedding_call = _get_rate_limited_embedding_call()
+            if not safe_embedding_call:
+                logger.warning("Rate-limited embedding call not available, falling back to text matching")
+                # Skip embedding and fall back to text matching below
+                query_embedding = None
+            else:
+                # Define the embedding API call function
+                async def make_query_embedding_call(client, model, input_texts):
+                    return await client.embeddings.create(model=model, input=input_texts)
+                
+                # Generate embedding for the query using rate-limited call
+                response = await safe_embedding_call(
+                    make_query_embedding_call,
+                    self.embedding_model,
+                    [query]
+                )
+                
+                if response is None:
+                    logger.warning("Failed to generate query embedding, falling back to text matching")
+                    query_embedding = None
+                else:
+                    query_embedding = response.data[0].embedding
             
             # Calculate similarities with stored chunks
             chunk_similarities = []

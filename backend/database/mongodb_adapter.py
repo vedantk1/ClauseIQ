@@ -32,13 +32,19 @@ class MongoDBAdapter(DatabaseInterface):
         self.database: Optional[AsyncIOMotorDatabase] = None
         
     async def connect(self) -> None:
-        """Establish MongoDB connection."""
+        """Establish MongoDB connection with enhanced pool configuration."""
         try:
             self.client = AsyncIOMotorClient(
                 self.config.uri,
-                maxPoolSize=self.config.pool_size,
-                serverSelectionTimeoutMS=self.config.timeout * 1000,
-                retryWrites=True
+                maxPoolSize=self.config.max_pool_size,
+                minPoolSize=self.config.min_pool_size,
+                maxIdleTimeMS=self.config.max_idle_time_ms,
+                waitQueueTimeoutMS=self.config.wait_queue_timeout_ms,
+                serverSelectionTimeoutMS=self.config.server_selection_timeout_ms,
+                retryWrites=True,
+                retryReads=True,
+                heartbeatFrequencyMS=10000,  # 10 seconds heartbeat
+                connectTimeoutMS=20000  # 20 seconds connection timeout
             )
             
             # Test connection
@@ -250,6 +256,71 @@ class MongoDBAdapter(DatabaseInterface):
         except Exception as e:
             logger.error(f"Error updating document: {e}")
             raise DatabaseError(f"Failed to update document: {e}")
+    
+    async def create_or_get_chat_session(self, document_id: str, user_id: str, session_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Atomically create chat session if it doesn't exist, or return existing session."""
+        try:
+            documents_collection = self._get_collection("documents")
+            
+            # Use findOneAndUpdate with upsert to atomically check and create session
+            result = await documents_collection.find_one_and_update(
+                {
+                    "id": document_id,
+                    "user_id": user_id,
+                    "chat_session": {"$exists": False}  # Only update if no session exists
+                },
+                {
+                    "$set": {
+                        "chat_session": session_data,
+                        "updated_at": datetime.utcnow().isoformat()
+                    }
+                },
+                return_document=True  # Return the updated document
+            )
+            
+            if result:
+                # Session was created successfully
+                return {"created": True, "session": result.get("chat_session")}
+            else:
+                # Session already exists, get the existing one
+                existing_doc = await documents_collection.find_one(
+                    {"id": document_id, "user_id": user_id}
+                )
+                if existing_doc and "chat_session" in existing_doc:
+                    return {"created": False, "session": existing_doc["chat_session"]}
+                else:
+                    # Document doesn't exist or other error
+                    return None
+                    
+        except Exception as e:
+            logger.error(f"Error in atomic chat session operation: {e}")
+            raise DatabaseError(f"Failed to create or get chat session: {e}")
+    
+    async def add_chat_message_atomic(self, document_id: str, user_id: str, message: Dict[str, Any]) -> bool:
+        """Atomically add a message to the chat session."""
+        try:
+            documents_collection = self._get_collection("documents")
+            
+            result = await documents_collection.update_one(
+                {
+                    "id": document_id,
+                    "user_id": user_id,
+                    "chat_session": {"$exists": True}
+                },
+                {
+                    "$push": {"chat_session.messages": message},
+                    "$set": {
+                        "chat_session.updated_at": datetime.utcnow().isoformat(),
+                        "updated_at": datetime.utcnow().isoformat()
+                    }
+                }
+            )
+            
+            return result.modified_count > 0
+            
+        except Exception as e:
+            logger.error(f"Error adding chat message atomically: {e}")
+            raise DatabaseError(f"Failed to add chat message: {e}")
     
     async def delete_document(self, document_id: str, user_id: str) -> bool:
         """Delete document."""

@@ -38,14 +38,19 @@ class DatabaseFactory:
         """
         settings = get_environment_config()
         
-        # Create connection config
+        # Create connection config with enhanced pool settings
         config = ConnectionConfig(
             backend=DatabaseBackend.MONGODB,
             uri=settings.database.uri,
             database=settings.database.database,
             collection_prefix=getattr(settings.database, 'collection_prefix', ''),
-            pool_size=getattr(settings.database, 'pool_size', 10),
-            timeout=getattr(settings.database, 'timeout', 30)
+            pool_size=settings.database.max_pool_size,  # Backwards compatibility
+            timeout=30,
+            max_pool_size=settings.database.max_pool_size,
+            min_pool_size=settings.database.min_pool_size,
+            max_idle_time_ms=settings.database.max_idle_time_ms,
+            wait_queue_timeout_ms=settings.database.wait_queue_timeout_ms,
+            server_selection_timeout_ms=settings.database.server_selection_timeout_ms
         )
         
         # Currently only MongoDB is supported

@@ -575,6 +575,17 @@ class DocumentService:
             logger.error(f"Failed to check PDF file for document {document_id}: {e}")
             return False
     
+    # Atomic operations for race condition prevention
+    async def create_or_get_chat_session(self, document_id: str, user_id: str, session_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Atomically create chat session if it doesn't exist, or return existing session."""
+        db = await self._get_db()
+        return await db.create_or_get_chat_session(document_id, user_id, session_data)
+    
+    async def add_chat_message_atomic(self, document_id: str, user_id: str, message: Dict[str, Any]) -> bool:
+        """Atomically add a message to the chat session."""
+        db = await self._get_db()
+        return await db.add_chat_message_atomic(document_id, user_id, message)
+
     # Note: Document-based PDF methods are above in the "PDF File Operations" section
     # The methods below provide direct file storage access if needed
 

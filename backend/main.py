@@ -92,8 +92,48 @@ async def lifespan(app: FastAPI):
         message="ClauseIQ backend shutdown initiated"
     )
     logger.info("Shutting down ClauseIQ Legal AI Backend...")
-    await db_factory.close()
-    logger.info("Database connections closed")
+    
+    # Enhanced connection lifecycle management
+    try:
+        # Close database connections with timeout
+        await asyncio.wait_for(db_factory.close(), timeout=5)
+        logger.info("Database connections closed successfully")
+        
+        ai_debug.log_system_event(
+            event_type="DATABASE_SHUTDOWN",
+            level=DebugLevel.INFO,
+            message="Database connections closed successfully"
+        )
+    except asyncio.TimeoutError:
+        logger.warning("Database shutdown timed out after 5 seconds")
+        ai_debug.log_system_event(
+            event_type="DATABASE_SHUTDOWN",
+            level=DebugLevel.WARNING,
+            message="Database shutdown timed out - forced cleanup"
+        )
+    except Exception as e:
+        logger.error(f"Error during database shutdown: {e}")
+        ai_debug.log_system_event(
+            event_type="DATABASE_SHUTDOWN",
+            level=DebugLevel.ERROR,
+            message="Error occurred during database shutdown",
+            error=e
+        )
+    
+    # Reset OpenAI client to clean up any connections
+    try:
+        from services.ai.client_manager import reset_client
+        reset_client()
+        logger.info("AI client connections reset")
+    except Exception as e:
+        logger.warning(f"Error resetting AI client: {e}")
+    
+    ai_debug.log_system_event(
+        event_type="BACKEND_SHUTDOWN_COMPLETE",
+        level=DebugLevel.INFO,
+        message="ClauseIQ backend shutdown completed"
+    )
+    logger.info("ClauseIQ shutdown completed")
 
 # Create FastAPI app
 app = FastAPI(

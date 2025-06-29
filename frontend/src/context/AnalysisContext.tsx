@@ -3,7 +3,7 @@
  */
 
 "use client";
-import React, { createContext, useContext, ReactNode } from "react";
+import React, { createContext, useContext, ReactNode, useCallback, useRef } from "react";
 import { useAppState } from "../store/appState";
 import { apiClient, handleAPIError, handleAPISuccess } from "../lib/api";
 import type { Clause, RiskSummary, Document } from "@shared/common_generated";
@@ -56,6 +56,9 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const { state, dispatch } = useAppState();
   const analysisState = state.analysis;
+  
+  // API call deduplication to prevent duplicate requests
+  const activeRequests = useRef<Map<string, Promise<void>>>(new Map());
 
   // Action implementations
   const analyzeDocument = async (file: File): Promise<void> => {
@@ -207,7 +210,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const loadDocuments = async (): Promise<void> => {
+  const loadDocuments = useCallback(async (): Promise<void> => {
     try {
       dispatch({ type: "ANALYSIS_SET_LOADING", payload: true });
 
@@ -223,79 +226,109 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
     } finally {
       dispatch({ type: "ANALYSIS_SET_LOADING", payload: false });
     }
-  };
+  }, [dispatch]);
 
-  const loadDocument = async (documentId: string): Promise<void> => {
-    try {
-      dispatch({ type: "ANALYSIS_SET_LOADING", payload: true });
+  const loadDocument = useCallback(async (documentId: string): Promise<void> => {
+    // Skip if already loading this document or document already loaded
+    if (analysisState.currentDocument.id === documentId) {
+      console.log(`📄 Document ${documentId} already loaded, skipping`);
+      return;
+    }
 
-      const response = await apiClient.get<{
-        id: string;
-        filename: string;
-        contract_type?: string;
-        text: string;
-        ai_full_summary: string;
-        ai_structured_summary?: StructuredSummary;
-        clauses: Clause[];
-        risk_summary: RiskSummary;
-      }>(`/documents/${documentId}`);
+    // Check for existing active request to prevent duplicates
+    const requestKey = `load-document-${documentId}`;
+    const existingRequest = activeRequests.current.get(requestKey);
+    if (existingRequest) {
+      console.log(`🔄 Document ${documentId} already being loaded, waiting for existing request`);
+      return existingRequest;
+    }
 
-      if (response.success && response.data) {
-        const {
-          id,
-          filename,
-          contract_type,
-          text,
-          ai_full_summary,
-          ai_structured_summary,
-          clauses,
-          risk_summary,
-        } = response.data;
+    // Create new request and store it for deduplication
+    const loadRequest = async (): Promise<void> => {
+      try {
+        dispatch({ type: "ANALYSIS_SET_LOADING", payload: true });
 
-        dispatch({
-          type: "ANALYSIS_SET_CURRENT_DOCUMENT",
-          payload: {
+        console.log(`📄 Loading document ${documentId} for review page`);
+
+        const response = await apiClient.get<{
+          id: string;
+          filename: string;
+          contract_type?: string;
+          text: string;
+          ai_full_summary: string;
+          ai_structured_summary?: StructuredSummary;
+          clauses: Clause[];
+          risk_summary: RiskSummary;
+        }>(`/documents/${documentId}`);
+
+        if (response.success && response.data) {
+          const {
             id,
             filename,
             contract_type,
-            fullText: text,
-            summary: ai_full_summary,
-            structuredSummary: ai_structured_summary || null,
-            clauses: clauses || [],
-            riskSummary: risk_summary || { high: 0, medium: 0, low: 0 },
-            selectedClause: null,
-          },
-        });
-      } else {
+            text,
+            ai_full_summary,
+            ai_structured_summary,
+            clauses,
+            risk_summary,
+          } = response.data;
+
+          dispatch({
+            type: "ANALYSIS_SET_CURRENT_DOCUMENT",
+            payload: {
+              id,
+              filename,
+              contract_type,
+              fullText: text,
+              summary: ai_full_summary,
+              structuredSummary: ai_structured_summary || null,
+              clauses: clauses || [],
+              riskSummary: risk_summary || { high: 0, medium: 0, low: 0 },
+              selectedClause: null,
+            },
+          });
+
+          console.log(`✅ Document ${documentId} loaded successfully`);
+        } else {
+          const errorMessage =
+            response.error?.message || "Failed to load document";
+          dispatch({ type: "ANALYSIS_SET_ERROR", payload: errorMessage });
+          handleAPIError(response, "Failed to load document");
+        }
+      } catch (error) {
         const errorMessage =
-          response.error?.message || "Failed to load document";
+          error instanceof Error ? error.message : "Unknown error occurred";
         dispatch({ type: "ANALYSIS_SET_ERROR", payload: errorMessage });
-        handleAPIError(response, "Failed to load document");
+        throw error;
+      } finally {
+        dispatch({ type: "ANALYSIS_SET_LOADING", payload: false });
+        // Clean up the active request
+        activeRequests.current.delete(requestKey);
       }
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred";
-      dispatch({ type: "ANALYSIS_SET_ERROR", payload: errorMessage });
-    } finally {
-      dispatch({ type: "ANALYSIS_SET_LOADING", payload: false });
-    }
-  };
+    };
 
-  const setSelectedClause = (clause: Clause | null) => {
+    // Store and execute the request
+    const promise = loadRequest();
+    activeRequests.current.set(requestKey, promise);
+    
+    return promise;
+  }, [analysisState.currentDocument.id, dispatch]);
+
+  const setSelectedClause = useCallback((clause: Clause | null) => {
     dispatch({ type: "ANALYSIS_SET_SELECTED_CLAUSE", payload: clause });
-  };
+  }, [dispatch]);
 
-  const clearError = () => {
+  const clearError = useCallback(() => {
     dispatch({ type: "ANALYSIS_SET_ERROR", payload: null });
-  };
+  }, [dispatch]);
 
-  const resetAnalysis = () => {
+  const resetAnalysis = useCallback(() => {
     console.log("🔄 [DEBUG] Analysis state reset initiated:", {
       timestamp: new Date().toISOString(),
     });
     dispatch({ type: "ANALYSIS_RESET" });
     console.log("✅ [DEBUG] Analysis state reset completed");
-  };
+  }, [dispatch]);
 
   const contextValue: AnalysisContextType = {
     // State from store

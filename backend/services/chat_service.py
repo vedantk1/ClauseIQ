@@ -80,16 +80,7 @@ class ChatService:
                     "error": "Document is not ready for chat. Please wait for processing to complete."
                 }
             
-            # 🎯 FOUNDATIONAL: Get or create THE session
-            existing_session = document.get("chat_session")
-            if existing_session:
-                logger.info(f"🎯 FOUNDATIONAL: Retrieved existing session for document {document_id}")
-                return {
-                    "success": True,
-                    "session": existing_session
-                }
-            
-            # Create THE session - the one and only!
+            # 🎯 FOUNDATIONAL: Atomically get or create THE session (race condition free!)
             session_id = str(uuid.uuid4())
             now = datetime.utcnow().isoformat()
             
@@ -102,18 +93,16 @@ class ChatService:
                 "updated_at": now
             }
             
-            # Save THE session to document
-            update_result = await self.doc_service.update_document_data(
-                document_id, 
-                user_id, 
-                {"chat_session": session_data}
+            # Use atomic operation to prevent race conditions
+            session_result = await self.doc_service.create_or_get_chat_session(
+                document_id, user_id, session_data
             )
             
-            if not update_result:
+            if not session_result:
                 ai_debug.log_api_error(
                     endpoint="chat_session",
                     error_type="session_creation_failed",
-                    message="Failed to save session to document",
+                    message="Failed to create or get chat session",
                     details={
                         "document_id": document_id,
                         "user_id": user_id
@@ -124,7 +113,13 @@ class ChatService:
                     "error": "Failed to create chat session"
                 }
             
-            logger.info(f"🎯 FOUNDATIONAL: Created new session {session_id} for document {document_id}")
+            # Check if session was created or already existed
+            if session_result["created"]:
+                logger.info(f"🎯 FOUNDATIONAL: Created new session {session_id} for document {document_id}")
+            else:
+                logger.info(f"🎯 FOUNDATIONAL: Retrieved existing session for document {document_id}")
+                
+            session = session_result["session"]
             ai_debug.log_system_event(
                 event_type="CHAT_SESSION_CREATED",
                 level=DebugLevel.INFO,
@@ -138,7 +133,7 @@ class ChatService:
             
             return {
                 "success": True,
-                "session": session_data
+                "session": session
             }
             
         except Exception as e:
@@ -239,8 +234,8 @@ class ChatService:
                 "timestamp": datetime.utcnow().isoformat()
             }
             
-            # Add user message to session
-            session["messages"].append(user_message)
+            # Add user message to session atomically
+            await self.doc_service.add_chat_message_atomic(document_id, user_id, user_message)
             
             # 🚀 STEP 1: Service Availability Check
             step_start = time.time()
@@ -374,20 +369,11 @@ class ChatService:
                         "sources": []
                     }
             
-            # Add assistant message to session
-            session["messages"].append(assistant_message)
-            session["updated_at"] = datetime.utcnow().isoformat()
-            
-            # Save updated session to document
-            db = await self.doc_service._get_db()
-            update_result = await db.update_document(
-                document_id,
-                user_id,
-                {"chat_session": session}
-            )
+            # Add assistant message to session atomically
+            update_result = await self.doc_service.add_chat_message_atomic(document_id, user_id, assistant_message)
             
             if not update_result:
-                logger.warning(f"Failed to save session update for document {document_id}")
+                logger.warning(f"Failed to save assistant message for document {document_id}")
             
             # Log successful chat completion
             ai_debug.log_chat_message_processed(
