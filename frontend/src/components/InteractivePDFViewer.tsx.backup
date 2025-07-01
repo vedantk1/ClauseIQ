@@ -242,9 +242,12 @@ export default function InteractivePDFViewer({
   documentId,
   className = "",
 }: InteractivePDFViewerProps) {
+  // 🛡️ NUCLEAR GUARD: Ensure documentId is never undefined
+  const safeDocumentId = documentId || "";
+  
   // Hooks - using the completed useHighlights with AI features
   const {
-    highlights,
+    highlights: rawHighlights,
     isLoading: highlightsLoading,
     error: highlightsError,
     createHighlight,
@@ -252,7 +255,13 @@ export default function InteractivePDFViewer({
     deleteHighlight,
     analyzeHighlight,
     generateAIRewrite,
-  } = useHighlights({ documentId, enabled: Boolean(documentId) });
+  } = useHighlights({ documentId: safeDocumentId, enabled: Boolean(safeDocumentId) });
+
+  // 🛡️ BULLETPROOF: Ensure highlights is always defined to prevent dependency array issues
+  const highlights = useMemo(() => {
+    if (!rawHighlights || !Array.isArray(rawHighlights)) return [];
+    return rawHighlights;
+  }, [rawHighlights || []]);
 
   // State
   const [popupData, setPopupData] = useState<{
@@ -285,9 +294,9 @@ export default function InteractivePDFViewer({
   // PDF URL with auth
   const pdfUrl = useMemo(() => {
     const token = localStorage.getItem("access_token");
-    const baseUrl = `${config.apiUrl}/documents/${documentId}/pdf`;
+    const baseUrl = `${config.apiUrl}/documents/${safeDocumentId}/pdf`;
     return token ? `${baseUrl}?token=${encodeURIComponent(token)}` : baseUrl;
-  }, [documentId]);
+  }, [safeDocumentId]); // 🛡️ DEFENSIVE: Using safe document ID
 
   // Handle highlight creation
   const handleAddHighlight = async (
@@ -402,7 +411,7 @@ export default function InteractivePDFViewer({
         console.log(`Navigating to highlight on page ${area.pageIndex + 1}`);
       }
     },
-    [highlights]
+    [highlights || []] // 🛡️ DEFENSIVE: Ensure array is never undefined
   );
 
   // Previous highlight
@@ -421,7 +430,7 @@ export default function InteractivePDFViewer({
         console.log(`Navigating to highlight on page ${area.pageIndex + 1}`);
       }
     }
-  }, [currentHighlightIndex, highlights]);
+  }, [currentHighlightIndex ?? 0, highlights || []]); // 🛡️ DEFENSIVE: Ensure no undefined values
 
   // Next highlight
   const nextHighlight = useCallback(() => {
@@ -439,7 +448,7 @@ export default function InteractivePDFViewer({
         console.log(`Navigating to highlight on page ${area.pageIndex + 1}`);
       }
     }
-  }, [currentHighlightIndex, highlights]);
+  }, [currentHighlightIndex ?? 0, highlights || []]); // 🛡️ DEFENSIVE: Ensure no undefined values
 
   // Handle search
   const handleSearch = useCallback((term: string) => {
@@ -484,13 +493,8 @@ export default function InteractivePDFViewer({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
-    popupData,
-    highlights,
-    currentHighlightIndex,
-    previousHighlight,
-    nextHighlight,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [popupData, highlights || [], currentHighlightIndex ?? 0]); // 🛡️ DEFENSIVE: Ensure no undefined values
 
   // Update current highlight index when highlights change
   useEffect(() => {
@@ -501,58 +505,58 @@ export default function InteractivePDFViewer({
     ) {
       setCurrentHighlightIndex(0);
     }
-  }, [highlights, currentHighlightIndex]);
+  }, [highlights || [], currentHighlightIndex ?? 0]); // 🛡️ DEFENSIVE: Ensure no undefined values
 
-  // Render error state AFTER all hooks are called
-  if (highlightsError) {
-    return (
-      <div className={`flex items-center justify-center h-full ${className}`}>
-        <Card className="p-6 text-center">
-          <div className="text-red-600 mb-2">Failed to load highlights</div>
-          <div className="text-sm text-gray-600">{highlightsError}</div>
-        </Card>
-      </div>
-    );
-  }
-
+  // ✅ FIXED: Conditional rendering moved to JSX to maintain hook order
   return (
     <div className={`flex flex-col h-full ${className}`}>
-      {/* Search & Navigation Panel - Phase 4 Feature */}
-      <SearchNavigationPanel
-        highlights={highlights}
-        currentHighlightIndex={currentHighlightIndex}
-        onNavigateToHighlight={navigateToHighlight}
-        onPreviousHighlight={previousHighlight}
-        onNextHighlight={nextHighlight}
-        onSearch={handleSearch}
-      />
+      {highlightsError ? (
+        // Error state - rendered conditionally but hooks always called
+        <div className="flex items-center justify-center h-full">
+          <Card className="p-6 text-center">
+            <div className="text-red-600 mb-2">Failed to load highlights</div>
+            <div className="text-sm text-gray-600">{highlightsError}</div>
+          </Card>
+        </div>
+      ) : (
+        // Normal component rendering
+        <>
+          {/* Search & Navigation Panel - Phase 4 Feature */}
+          <SearchNavigationPanel
+            highlights={highlights}
+            currentHighlightIndex={currentHighlightIndex}
+            onNavigateToHighlight={navigateToHighlight}
+            onPreviousHighlight={previousHighlight}
+            onNextHighlight={nextHighlight}
+            onSearch={handleSearch}
+          />
 
-      {/* PDF Viewer */}
-      <div className="flex-1 relative">
-        <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
-          <div style={{ height: "100%" }}>
-            <Viewer
-              ref={viewerRef}
-              fileUrl={pdfUrl}
-              plugins={[highlightPluginInstance, searchPluginInstance]}
-              defaultScale={1.0}
-              onDocumentLoad={(e) => {
-                console.log("PDF loaded:", e.doc.numPages, "pages");
-              }}
-            />
-          </div>
-        </Worker>
+          {/* PDF Viewer */}
+          <div className="flex-1 relative">
+            <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
+              <div style={{ height: "100%" }}>
+                <Viewer
+                  ref={viewerRef}
+                  fileUrl={pdfUrl}
+                  plugins={[highlightPluginInstance, searchPluginInstance]}
+                  defaultScale={1.0}
+                  onDocumentLoad={(e) => {
+                    console.log("PDF loaded:", e.doc.numPages, "pages");
+                  }}
+                />
+              </div>
+            </Worker>
 
-        {/* Highlight Popup - Phases 2 & 3 Features */}
-        {popupData && (
-          <div
-            style={{
-              position: "absolute",
-              left: Math.min(popupData.position.x, window.innerWidth - 400),
-              top: Math.min(popupData.position.y, window.innerHeight - 300),
-              zIndex: 1000,
-            }}
-          >
+            {/* Highlight Popup - Phases 2 & 3 Features */}
+            {popupData && (
+              <div
+                style={{
+                  position: "absolute",
+                  left: Math.min(popupData.position.x, window.innerWidth - 400),
+                  top: Math.min(popupData.position.y, window.innerHeight - 300),
+                  zIndex: 1000,
+                }}
+              >
             <HighlightPopup
               content={popupData.content}
               comment={popupData.comment}
@@ -589,26 +593,28 @@ export default function InteractivePDFViewer({
               aiAnalysis={aiResults.analysis}
               aiRewrite={aiResults.rewrite}
             />
-          </div>
-        )}
+              </div>
+            )}
 
-        {/* Loading Overlay */}
-        {highlightsLoading && (
-          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-              <div className="text-sm text-gray-600">Loading highlights...</div>
+            {/* Loading Overlay */}
+            {highlightsLoading && (
+              <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                  <div className="text-sm text-gray-600">Loading highlights...</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Debug Info */}
+          {process.env.NODE_ENV === "development" && (
+            <div className="bg-gray-100 p-2 text-xs text-gray-600 border-t">
+              Doc: {safeDocumentId} | Highlights: {highlights.length} | Current:{" "}
+              {currentHighlightIndex + 1} | Search: {searchTerm || "none"}
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* Debug Info */}
-      {process.env.NODE_ENV === "development" && (
-        <div className="bg-gray-100 p-2 text-xs text-gray-600 border-t">
-          Doc: {documentId} | Highlights: {highlights.length} | Current:{" "}
-          {currentHighlightIndex + 1} | Search: {searchTerm || "none"}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -5,10 +5,12 @@ import os
 import tempfile
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Response
+from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Response, Query
 from fastapi.responses import StreamingResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from typing import Optional
 import pdfplumber
-from auth import get_current_user
+from auth import get_current_user, verify_token
 from database.service import get_document_service
 from middleware.api_standardization import APIResponse, ErrorResponse
 from middleware.versioning import versioned_response
@@ -20,6 +22,57 @@ from models.document import (
 
 
 router = APIRouter(tags=["documents"])
+
+# Custom authentication for PDF viewing (supports query parameter)
+async def get_current_user_for_pdf(
+    token: Optional[str] = Query(None),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))
+):
+    """Get current user for PDF viewing - supports both header and query parameter authentication."""
+    from database.service import get_document_service
+    
+    print(f"🔍 PDF Auth - Query token: {'Yes' if token else 'No'}, Header creds: {'Yes' if credentials else 'No'}")
+    
+    # Try to get token from query parameter first, then from header
+    auth_token = token
+    if not auth_token and credentials:
+        auth_token = credentials.credentials
+    
+    print(f"🔍 PDF Auth - Final token exists: {'Yes' if auth_token else 'No'}")
+    
+    if not auth_token:
+        print("❌ PDF Auth - No authentication token provided")
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required. Provide token as query parameter or Authorization header."
+        )
+    
+    # Verify token
+    payload = verify_token(auth_token)
+    if payload is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authentication token"
+        )
+    
+    user_id = payload.get("sub")
+    if user_id is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token payload"
+        )
+    
+    # Get user from database
+    service = get_document_service()
+    user = await service.get_user_by_id(user_id)
+    
+    if user is None:
+        raise HTTPException(
+            status_code=401,
+            detail="User not found"
+        )
+    
+    return user
 
 
 @router.post("/extract-text/", response_model=APIResponse[dict])
@@ -202,8 +255,12 @@ async def delete_all_documents(current_user: dict = Depends(get_current_user)):
 # PDF File Operations
 
 @router.get("/documents/{document_id}/pdf")
-async def download_pdf(document_id: str, current_user: dict = Depends(get_current_user)):
+async def download_pdf(
+    document_id: str,
+    current_user: dict = Depends(get_current_user_for_pdf)
+):
     """Download the original PDF file for a document."""
+    print(f"🔍 PDF Request - Document ID: {document_id}, User ID: {current_user.get('id')}")
     try:
         service = get_document_service()
         
