@@ -2,6 +2,7 @@
 Shared types for ClauseIQ.
 """
 from .common import *
+from .highlights import *
 
 __all__ = [
     'ClauseType', 
@@ -11,5 +12,12 @@ __all__ = [
     'RiskSummary',
     'User',
     'UserPreferences',
-    'AvailableModel'
+    'AvailableModel',
+    # Highlight types
+    'HighlightArea',
+    'Highlight',
+    'CreateHighlightRequest',
+    'UpdateHighlightRequest',
+    'HighlightResponse',
+    'HighlightListResponse'
 ]
