@@ -56,13 +56,13 @@ export default function ContinuousScrollPDFViewer({
     setScale(newScale);
     zoomTo(newScale);
   };
-  
+
   const zoomOut = () => {
     const newScale = Math.max(scale - 0.2, 0.5);
     setScale(newScale);
     zoomTo(newScale);
   };
-  
+
   const resetZoom = () => {
     setScale(1.0);
     zoomTo(1.0);
