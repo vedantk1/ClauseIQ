@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useMemo } from "react";
-import { Worker, Viewer } from "@react-pdf-viewer/core";
+import React, { useState, useMemo, useEffect } from "react";
+import { Worker, Viewer, ScrollMode } from "@react-pdf-viewer/core";
 import { zoomPlugin } from "@react-pdf-viewer/zoom";
 import "@react-pdf-viewer/core/lib/styles/index.css";
 import "../styles/pdf-viewer.css";
@@ -25,6 +25,8 @@ export default function ContinuousScrollPDFViewer({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState<"single" | "continuous">("single");
 
   // Create zoom plugin instance
   const zoomPluginInstance = zoomPlugin();
@@ -42,7 +44,14 @@ export default function ContinuousScrollPDFViewer({
 
   // Handle document load
   const handleDocumentLoad = (e: { doc: { numPages: number } }) => {
-    console.log("✅ PDF LOADED:", e.doc.numPages, "pages");
+    console.log("✅ [DEBUG] PDF LOADED:", {
+      numPages: e.doc.numPages,
+      currentViewMode: viewMode,
+      currentPage: currentPage,
+      scale: scale,
+      viewerKey: `pdf-viewer-${viewMode}-${currentPage}`,
+      timestamp: new Date().toISOString(),
+    });
     setNumPages(e.doc.numPages);
     setIsLoading(false);
     setError(null);
@@ -50,7 +59,34 @@ export default function ContinuousScrollPDFViewer({
     zoomTo(scale);
   };
 
-  // Zoom controls
+  // Debug: Monitor state changes
+  useEffect(() => {
+    console.log("🔄 [DEBUG] ViewMode changed to:", viewMode);
+  }, [viewMode]);
+
+  useEffect(() => {
+    console.log(
+      "🔄 [DEBUG] CurrentPage changed to:",
+      currentPage,
+      "of",
+      numPages
+    );
+  }, [currentPage, numPages]);
+
+  useEffect(() => {
+    console.log("🔄 [DEBUG] Scale changed to:", scale);
+  }, [scale]);
+
+  useEffect(() => {
+    console.log("🖥️ [DEBUG] Viewer props changed:", {
+      viewMode,
+      scrollMode: viewMode === "single" ? "Page" : "Vertical",
+      currentPage,
+      initialPage: currentPage - 1,
+      scale,
+      numPages,
+    });
+  }, [viewMode, currentPage, scale, numPages]); // Zoom controls
   const zoomIn = () => {
     const newScale = Math.min(scale + 0.2, 3.0);
     setScale(newScale);
@@ -66,6 +102,53 @@ export default function ContinuousScrollPDFViewer({
   const resetZoom = () => {
     setScale(1.0);
     zoomTo(1.0);
+  };
+
+  // Page navigation controls
+  const goToNextPage = () => {
+    console.log("🔄 [DEBUG] goToNextPage called:", {
+      currentPage,
+      numPages,
+      viewMode,
+    });
+    if (numPages && currentPage < numPages) {
+      const newPage = currentPage + 1;
+      console.log("📄 [DEBUG] Setting currentPage to:", newPage);
+      setCurrentPage(newPage);
+    } else {
+      console.log(
+        "🚫 [DEBUG] Cannot go to next page - at boundary or no pages"
+      );
+    }
+  };
+
+  const goToPrevPage = () => {
+    console.log("🔄 [DEBUG] goToPrevPage called:", {
+      currentPage,
+      numPages,
+      viewMode,
+    });
+    if (currentPage > 1) {
+      const newPage = currentPage - 1;
+      console.log("📄 [DEBUG] Setting currentPage to:", newPage);
+      setCurrentPage(newPage);
+    } else {
+      console.log("🚫 [DEBUG] Cannot go to previous page - already at page 1");
+    }
+  };
+
+  // View mode toggle
+  const toggleViewMode = () => {
+    console.log("🔄 [DEBUG] toggleViewMode called, current mode:", viewMode);
+    const newMode = viewMode === "single" ? "continuous" : "single";
+    console.log("📄 [DEBUG] ViewMode changing from", viewMode, "to", newMode);
+    setViewMode(newMode);
+    if (viewMode === "continuous") {
+      console.log(
+        "📄 [DEBUG] Resetting to page 1 when switching to single mode"
+      );
+      setCurrentPage(1); // Reset to first page when switching to single mode
+    }
   };
 
   // Show error state if there's an error
@@ -110,30 +193,75 @@ export default function ContinuousScrollPDFViewer({
           )}
         </div>
 
-        {/* Zoom Controls - ClauseIQ Button Styling */}
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={zoomOut}
-            size="sm"
-            variant="secondary"
-            disabled={scale <= 0.5}
-          >
-            🔍−
-          </Button>
-          <span className="text-sm text-slate-600 min-w-12 text-center font-medium">
-            {Math.round(scale * 100)}%
-          </span>
-          <Button
-            onClick={zoomIn}
-            size="sm"
-            variant="secondary"
-            disabled={scale >= 3.0}
-          >
-            🔍+
-          </Button>
-          <Button onClick={resetZoom} size="sm" variant="secondary">
-            Reset
-          </Button>
+        {/* Controls Section - View Mode, Page Navigation & Zoom */}
+        <div className="flex items-center gap-4">
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={toggleViewMode}
+              size="sm"
+              variant={viewMode === "single" ? "primary" : "secondary"}
+              title={`Switch to ${
+                viewMode === "single" ? "continuous" : "single-page"
+              } view`}
+            >
+              {viewMode === "single" ? "📄" : "📜"}
+            </Button>
+            <span className="text-xs text-slate-500">
+              {viewMode === "single" ? "Single" : "Scroll"}
+            </span>
+          </div>
+
+          {/* Page Navigation (only in single-page mode) */}
+          {viewMode === "single" && numPages && (
+            <div className="flex items-center gap-2 border-l border-gray-300 pl-4">
+              <Button
+                onClick={goToPrevPage}
+                size="sm"
+                variant="secondary"
+                disabled={currentPage <= 1}
+              >
+                ←
+              </Button>
+              <span className="text-sm text-slate-600 min-w-16 text-center font-medium">
+                {currentPage} / {numPages}
+              </span>
+              <Button
+                onClick={goToNextPage}
+                size="sm"
+                variant="secondary"
+                disabled={currentPage >= numPages}
+              >
+                →
+              </Button>
+            </div>
+          )}
+
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-2 border-l border-gray-300 pl-4">
+            <Button
+              onClick={zoomOut}
+              size="sm"
+              variant="secondary"
+              disabled={scale <= 0.5}
+            >
+              🔍−
+            </Button>
+            <span className="text-sm text-slate-600 min-w-12 text-center font-medium">
+              {Math.round(scale * 100)}%
+            </span>
+            <Button
+              onClick={zoomIn}
+              size="sm"
+              variant="secondary"
+              disabled={scale >= 3.0}
+            >
+              🔍+
+            </Button>
+            <Button onClick={resetZoom} size="sm" variant="secondary">
+              Reset
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -155,9 +283,15 @@ export default function ContinuousScrollPDFViewer({
         <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
           <div style={{ height: "100%" }} className="pdf-viewer-container">
             <Viewer
+              key={`pdf-viewer-${viewMode}-${currentPage}`} // Force re-render on view mode or page change
               fileUrl={pdfUrl}
               onDocumentLoad={handleDocumentLoad}
               plugins={[zoomPluginInstance]}
+              scrollMode={
+                viewMode === "single" ? ScrollMode.Page : ScrollMode.Vertical
+              }
+              initialPage={currentPage - 1}
+              defaultScale={scale}
             />
           </div>
         </Worker>
@@ -169,6 +303,24 @@ export default function ContinuousScrollPDFViewer({
           <span className="inline-flex items-center gap-1 text-emerald-600">
             ✅ <span className="font-medium">Ready</span>
           </span>
+          <span className="text-slate-400">•</span>
+          <span>
+            Mode:{" "}
+            <span className="font-medium">
+              {viewMode === "single" ? "Single Page" : "Continuous"}
+            </span>
+          </span>
+          {viewMode === "single" && numPages && (
+            <>
+              <span className="text-slate-400">•</span>
+              <span>
+                Page:{" "}
+                <span className="font-medium">
+                  {currentPage} of {numPages}
+                </span>
+              </span>
+            </>
+          )}
           <span className="text-slate-400">•</span>
           <span>
             Scale:{" "}
