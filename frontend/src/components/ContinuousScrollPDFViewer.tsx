@@ -2,7 +2,9 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Worker, Viewer, ScrollMode } from "@react-pdf-viewer/core";
 import { zoomPlugin } from "@react-pdf-viewer/zoom";
+import { pageNavigationPlugin } from "@react-pdf-viewer/page-navigation";
 import "@react-pdf-viewer/core/lib/styles/index.css";
+import "@react-pdf-viewer/page-navigation/lib/styles/index.css";
 import "../styles/pdf-viewer.css";
 
 import Card from "./Card";
@@ -32,6 +34,10 @@ export default function ContinuousScrollPDFViewer({
   const zoomPluginInstance = zoomPlugin();
   const { zoomTo } = zoomPluginInstance;
 
+  // Create page navigation plugin instance
+  const pageNavigationPluginInstance = pageNavigationPlugin();
+  const { jumpToPage } = pageNavigationPluginInstance;
+
   // PDF URL with authentication
   const pdfUrl = useMemo(() => {
     const token = localStorage.getItem("access_token");
@@ -51,6 +57,8 @@ export default function ContinuousScrollPDFViewer({
       scale: scale,
       viewerKey: `pdf-viewer-${viewMode}-${currentPage}`,
       timestamp: new Date().toISOString(),
+      jumpToPageFunction:
+        typeof jumpToPage === "function" ? "available" : "not available",
     });
     setNumPages(e.doc.numPages);
     setIsLoading(false);
@@ -85,8 +93,9 @@ export default function ContinuousScrollPDFViewer({
       initialPage: currentPage - 1,
       scale,
       numPages,
+      jumpToPageAvailable: typeof jumpToPage === "function",
     });
-  }, [viewMode, currentPage, scale, numPages]); // Zoom controls
+  }, [viewMode, currentPage, scale, numPages, jumpToPage]); // Zoom controls
   const zoomIn = () => {
     const newScale = Math.min(scale + 0.2, 3.0);
     setScale(newScale);
@@ -115,6 +124,14 @@ export default function ContinuousScrollPDFViewer({
       const newPage = currentPage + 1;
       console.log("📄 [DEBUG] Setting currentPage to:", newPage);
       setCurrentPage(newPage);
+      // Use jumpToPage for proper navigation in single-page mode
+      if (viewMode === "single") {
+        console.log(
+          "🎯 [DEBUG] Using jumpToPage for navigation to page:",
+          newPage - 1
+        );
+        jumpToPage(newPage - 1); // jumpToPage uses 0-based indexing
+      }
     } else {
       console.log(
         "🚫 [DEBUG] Cannot go to next page - at boundary or no pages"
@@ -132,6 +149,14 @@ export default function ContinuousScrollPDFViewer({
       const newPage = currentPage - 1;
       console.log("📄 [DEBUG] Setting currentPage to:", newPage);
       setCurrentPage(newPage);
+      // Use jumpToPage for proper navigation in single-page mode
+      if (viewMode === "single") {
+        console.log(
+          "🎯 [DEBUG] Using jumpToPage for navigation to page:",
+          newPage - 1
+        );
+        jumpToPage(newPage - 1); // jumpToPage uses 0-based indexing
+      }
     } else {
       console.log("🚫 [DEBUG] Cannot go to previous page - already at page 1");
     }
@@ -286,7 +311,7 @@ export default function ContinuousScrollPDFViewer({
               key={`pdf-viewer-${viewMode}-${currentPage}`} // Force re-render on view mode or page change
               fileUrl={pdfUrl}
               onDocumentLoad={handleDocumentLoad}
-              plugins={[zoomPluginInstance]}
+              plugins={[zoomPluginInstance, pageNavigationPluginInstance]}
               scrollMode={
                 viewMode === "single" ? ScrollMode.Page : ScrollMode.Vertical
               }
