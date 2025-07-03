@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useMemo } from "react";
 import { Worker, Viewer } from "@react-pdf-viewer/core";
+import { zoomPlugin } from "@react-pdf-viewer/zoom";
 import "@react-pdf-viewer/core/lib/styles/index.css";
 import "../styles/pdf-viewer.css";
 
@@ -25,6 +26,10 @@ export default function ContinuousScrollPDFViewer({
   const [error, setError] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
 
+  // Create zoom plugin instance
+  const zoomPluginInstance = zoomPlugin();
+  const { zoomTo } = zoomPluginInstance;
+
   // PDF URL with authentication
   const pdfUrl = useMemo(() => {
     const token = localStorage.getItem("access_token");
@@ -41,12 +46,27 @@ export default function ContinuousScrollPDFViewer({
     setNumPages(e.doc.numPages);
     setIsLoading(false);
     setError(null);
+    // Set initial zoom level
+    zoomTo(scale);
   };
 
   // Zoom controls
-  const zoomIn = () => setScale((prev) => Math.min(prev + 0.2, 3.0));
-  const zoomOut = () => setScale((prev) => Math.max(prev - 0.2, 0.5));
-  const resetZoom = () => setScale(1.0);
+  const zoomIn = () => {
+    const newScale = Math.min(scale + 0.2, 3.0);
+    setScale(newScale);
+    zoomTo(newScale);
+  };
+  
+  const zoomOut = () => {
+    const newScale = Math.max(scale - 0.2, 0.5);
+    setScale(newScale);
+    zoomTo(newScale);
+  };
+  
+  const resetZoom = () => {
+    setScale(1.0);
+    zoomTo(1.0);
+  };
 
   // Show error state if there's an error
   if (error) {
@@ -134,7 +154,11 @@ export default function ContinuousScrollPDFViewer({
         )}
         <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
           <div style={{ height: "100%" }} className="pdf-viewer-container">
-            <Viewer fileUrl={pdfUrl} onDocumentLoad={handleDocumentLoad} />
+            <Viewer
+              fileUrl={pdfUrl}
+              onDocumentLoad={handleDocumentLoad}
+              plugins={[zoomPluginInstance]}
+            />
           </div>
         </Worker>
       </div>
