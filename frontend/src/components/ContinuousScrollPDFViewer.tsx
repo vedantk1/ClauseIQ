@@ -1,11 +1,13 @@
 "use client";
 import React, { useState, useMemo } from "react";
-import { Worker, Viewer, ScrollMode } from "@react-pdf-viewer/core";
+import { Worker, Viewer } from "@react-pdf-viewer/core";
 import "@react-pdf-viewer/core/lib/styles/index.css";
+import "../styles/pdf-viewer.css";
 
 import Card from "./Card";
 import Button from "./Button";
 import config from "@/config/config";
+import "../utils/pdfConsoleFilter";
 
 interface ContinuousScrollPDFViewerProps {
   documentId: string;
@@ -26,68 +28,87 @@ export default function ContinuousScrollPDFViewer({
   // PDF URL with authentication
   const pdfUrl = useMemo(() => {
     const token = localStorage.getItem("access_token");
-    
-    // 🔥 EMERGENCY TEST: Use the document ID that we KNOW works
-    const workingDocId = "06162a2d-f8d8-4b53-85eb-7657f9e18cdd";
-    const currentDocId = documentId;
-    const testDocId = workingDocId; // Force use working doc
-    
-    console.log("🔥 EMERGENCY TEST:");
-    console.log("  Current doc ID:", currentDocId);
-    console.log("  Working doc ID:", workingDocId);
-    console.log("  Using doc ID:", testDocId);
-    
-    const baseUrl = `${config.apiUrl}/api/v1/documents/${testDocId}/pdf`;
-    const finalUrl = token ? `${baseUrl}?token=${encodeURIComponent(token)}` : baseUrl;
-    console.log("🔍 PDF URL:", finalUrl);
+    const baseUrl = `${config.apiUrl}/api/v1/documents/${documentId}/pdf`;
+    const finalUrl = token
+      ? `${baseUrl}?token=${encodeURIComponent(token)}`
+      : baseUrl;
     return finalUrl;
   }, [documentId]);
 
   // Handle document load
   const handleDocumentLoad = (e: { doc: { numPages: number } }) => {
     console.log("✅ PDF LOADED:", e.doc.numPages, "pages");
-    alert("🎉 PDF LOADED: " + e.doc.numPages + " pages!");
     setNumPages(e.doc.numPages);
     setIsLoading(false);
     setError(null);
   };
 
-  // Handle document load error
-  const handleDocumentLoadError = (error: { message?: string }) => {
-    console.error("❌ PDF LOAD ERROR:", error);
-    alert("💥 PDF FAILED: " + (error.message || "Unknown error"));
-    setError(`Failed to load PDF: ${error.message || 'Unknown error'}`);
-    setIsLoading(false);
-  };
-
   // Zoom controls
-  const zoomIn = () => setScale(prev => Math.min(prev + 0.2, 3.0));
-  const zoomOut = () => setScale(prev => Math.max(prev - 0.2, 0.5));
+  const zoomIn = () => setScale((prev) => Math.min(prev + 0.2, 3.0));
+  const zoomOut = () => setScale((prev) => Math.max(prev - 0.2, 0.5));
   const resetZoom = () => setScale(1.0);
 
-  // 🔥 EMERGENCY: REMOVE ALL CONDITIONAL RENDERING
-  console.log("🔥 Component state - isLoading:", isLoading, "error:", error, "numPages:", numPages);
+  // Show error state if there's an error
+  if (error) {
+    return (
+      <Card
+        className={`h-full flex flex-col shadow-lg rounded-lg border border-red-200 ${className}`}
+      >
+        <div className="flex items-center justify-center h-full p-8">
+          <div className="text-center">
+            <div className="text-red-600 text-lg font-semibold mb-2">
+              Failed to Load PDF
+            </div>
+            <div className="text-slate-600 text-sm mb-4">{error}</div>
+            <Button
+              onClick={() => window.location.reload()}
+              size="sm"
+              variant="secondary"
+            >
+              Retry
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
-    <Card className={`h-full flex flex-col ${className}`}>
-      {/* Header with controls */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+    <Card
+      className={`h-full flex flex-col shadow-lg rounded-lg border border-gray-200 ${className}`}
+    >
+      {/* Header with controls - ClauseIQ Professional Styling */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-slate-50 to-gray-50">
         <div className="flex items-center gap-3">
-          <h3 className="text-lg font-semibold text-gray-800">📄 {fileName}</h3>
+          <h3 className="text-lg font-semibold text-slate-800">
+            📄 {fileName}
+          </h3>
           {numPages && (
-            <span className="text-sm text-gray-500">({numPages} pages)</span>
+            <span className="text-sm text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
+              {numPages} pages
+            </span>
           )}
         </div>
 
-        {/* Zoom Controls */}
+        {/* Zoom Controls - ClauseIQ Button Styling */}
         <div className="flex items-center gap-2">
-          <Button onClick={zoomOut} size="sm" variant="secondary" disabled={scale <= 0.5}>
+          <Button
+            onClick={zoomOut}
+            size="sm"
+            variant="secondary"
+            disabled={scale <= 0.5}
+          >
             🔍−
           </Button>
-          <span className="text-sm text-gray-600 min-w-12 text-center">
+          <span className="text-sm text-slate-600 min-w-12 text-center font-medium">
             {Math.round(scale * 100)}%
           </span>
-          <Button onClick={zoomIn} size="sm" variant="secondary" disabled={scale >= 3.0}>
+          <Button
+            onClick={zoomIn}
+            size="sm"
+            variant="secondary"
+            disabled={scale >= 3.0}
+          >
             🔍+
           </Button>
           <Button onClick={resetZoom} size="sm" variant="secondary">
@@ -96,22 +117,42 @@ export default function ContinuousScrollPDFViewer({
         </div>
       </div>
 
-      {/* 🎯 CONTINUOUS SCROLL PDF VIEWER */}
-      <div className="flex-1 bg-gray-100" style={{ height: 'calc(100vh - 200px)' }}>
+      {/* 🎯 CONTINUOUS SCROLL PDF VIEWER - ClauseIQ Professional Background */}
+      <div
+        className="flex-1 bg-slate-100 relative"
+        style={{ height: "calc(100vh - 200px)" }}
+      >
+        {isLoading && (
+          <div className="absolute inset-0 bg-slate-100 flex items-center justify-center z-10">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+              <div className="text-sm text-slate-600 font-medium">
+                Loading PDF...
+              </div>
+            </div>
+          </div>
+        )}
         <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
-          <div style={{ height: '100%' }}>
-            <Viewer
-              fileUrl={pdfUrl}
-              onDocumentLoad={handleDocumentLoad}
-              onDocumentLoadError={handleDocumentLoadError}
-            />
+          <div style={{ height: "100%" }} className="pdf-viewer-container">
+            <Viewer fileUrl={pdfUrl} onDocumentLoad={handleDocumentLoad} />
           </div>
         </Worker>
       </div>
 
-      {/* Status Bar */}
-      <div className="px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs text-gray-600">
-        ✅ Continuous scroll enabled • Scale: {Math.round(scale * 100)}%
+      {/* Status Bar - ClauseIQ Professional Styling */}
+      <div className="px-4 py-2 bg-slate-50 border-t border-gray-200 text-xs text-slate-600">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 text-emerald-600">
+            ✅ <span className="font-medium">Ready</span>
+          </span>
+          <span className="text-slate-400">•</span>
+          <span>
+            Scale:{" "}
+            <span className="font-medium">{Math.round(scale * 100)}%</span>
+          </span>
+          <span className="text-slate-400">•</span>
+          <span>ClauseIQ Legal AI</span>
+        </div>
       </div>
     </Card>
   );
