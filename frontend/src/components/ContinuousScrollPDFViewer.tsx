@@ -1,9 +1,8 @@
 "use client";
 import React, { useState, useMemo } from "react";
-import { Worker, Viewer, ScrollMode } from "@react-pdf-viewer/core";
+import { Worker, Viewer, ScrollMode, PageChangeEvent } from "@react-pdf-viewer/core";
 import { zoomPlugin } from "@react-pdf-viewer/zoom";
 import { pageNavigationPlugin } from "@react-pdf-viewer/page-navigation";
-import type {} from "@react-pdf-viewer/page-navigation";
 import "@react-pdf-viewer/core/lib/styles/index.css";
 import "@react-pdf-viewer/page-navigation/lib/styles/index.css";
 import "../styles/pdf-viewer.css";
@@ -28,17 +27,20 @@ export default function ContinuousScrollPDFViewer({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState<number>(0);
 
-  // Create zoom plugin instance
+  // Create plugin instances - removed useMemo to avoid hooks rule violation
   const zoomPluginInstance = zoomPlugin();
   const { zoomTo } = zoomPluginInstance;
 
-  // Create page navigation plugin instance
   const pageNavigationPluginInstance = pageNavigationPlugin();
-  const { jumpToPage } = pageNavigationPluginInstance;
+  const { 
+    GoToPreviousPage, 
+    GoToNextPage, 
+    CurrentPageLabel 
+  } = pageNavigationPluginInstance;
 
-  // PDF URL with authentication
+  // PDF URL with authentication - fixed dependency array
   const pdfUrl = useMemo(() => {
     const token = localStorage.getItem("access_token");
     const baseUrl = `${config.apiUrl}/api/v1/documents/${documentId}/pdf`;
@@ -63,9 +65,12 @@ export default function ContinuousScrollPDFViewer({
     zoomTo(scale);
   };
 
-  // Handle page change events from the viewer
-  const handlePageChange = (e: { currentPage: number }) => {
-    console.log("📄 [DEBUG] Page changed by viewer:", e.currentPage);
+  // Handle page change - sync with library's internal state
+  const handlePageChange = (e: PageChangeEvent) => {
+    console.log("📄 [DEBUG] Page changed:", {
+      currentPage: e.currentPage,
+      timestamp: new Date().toISOString(),
+    });
     setCurrentPage(e.currentPage);
   };
 
@@ -89,41 +94,6 @@ export default function ContinuousScrollPDFViewer({
     console.log("🔍 [DEBUG] Resetting zoom to 1.0");
     setScale(1.0);
     zoomTo(1.0);
-  };
-
-  // Manual navigation functions with proper async handling
-  const goToPreviousPage = async () => {
-    console.log("🔙 [DEBUG] Manual previous page called");
-    if (currentPage > 0) {
-      const newPage = currentPage - 1;
-      console.log("🔙 [DEBUG] Attempting to jump to page:", newPage);
-      try {
-        await jumpToPage(newPage);
-        console.log("🔙 [DEBUG] Successfully jumped to page:", newPage);
-        // Don't manually set state - let the page change event handle it
-      } catch (error) {
-        console.error("🔙 [ERROR] Failed to jump to page:", error);
-        // Fallback: set state manually if plugin fails
-        setCurrentPage(newPage);
-      }
-    }
-  };
-
-  const goToNextPage = async () => {
-    console.log("🔜 [DEBUG] Manual next page called");
-    if (numPages && currentPage < numPages - 1) {
-      const newPage = currentPage + 1;
-      console.log("🔜 [DEBUG] Attempting to jump to page:", newPage);
-      try {
-        await jumpToPage(newPage);
-        console.log("🔜 [DEBUG] Successfully jumped to page:", newPage);
-        // Don't manually set state - let the page change event handle it
-      } catch (error) {
-        console.error("🔜 [ERROR] Failed to jump to page:", error);
-        // Fallback: set state manually if plugin fails
-        setCurrentPage(newPage);
-      }
-    }
   };
 
   // Show error state if there's an error
@@ -173,29 +143,41 @@ export default function ContinuousScrollPDFViewer({
           {/* Page Navigation */}
           {numPages && (
             <div className="flex items-center gap-2 border-l border-gray-300 pl-4">
-              <Button
-                onClick={goToPreviousPage}
-                size="sm"
-                variant="secondary"
-                disabled={currentPage <= 0}
-                title="Previous page"
-              >
-                ←
-              </Button>
+              <GoToPreviousPage>
+                {(props) => (
+                  <Button
+                    onClick={props.onClick}
+                    size="sm"
+                    variant="secondary"
+                    disabled={props.isDisabled}
+                    title="Previous page"
+                  >
+                    ←
+                  </Button>
+                )}
+              </GoToPreviousPage>
 
-              <span className="text-sm text-slate-600 min-w-16 text-center font-medium">
-                {currentPage + 1} / {numPages}
-              </span>
+              <CurrentPageLabel>
+                {(props) => (
+                  <span className="text-sm text-slate-600 min-w-16 text-center font-medium">
+                    {props.currentPage + 1} / {props.numberOfPages}
+                  </span>
+                )}
+              </CurrentPageLabel>
 
-              <Button
-                onClick={goToNextPage}
-                size="sm"
-                variant="secondary"
-                disabled={!numPages || currentPage >= numPages - 1}
-                title="Next page"
-              >
-                →
-              </Button>
+              <GoToNextPage>
+                {(props) => (
+                  <Button
+                    onClick={props.onClick}
+                    size="sm"
+                    variant="secondary"
+                    disabled={props.isDisabled}
+                    title="Next page"
+                  >
+                    →
+                  </Button>
+                )}
+              </GoToNextPage>
             </div>
           )}
 
@@ -250,7 +232,7 @@ export default function ContinuousScrollPDFViewer({
               onPageChange={handlePageChange}
               plugins={[zoomPluginInstance, pageNavigationPluginInstance]}
               scrollMode={ScrollMode.Page}
-              defaultScale={scale}
+              initialPage={0}
             />
           </div>
         </Worker>
@@ -271,9 +253,13 @@ export default function ContinuousScrollPDFViewer({
               <span className="text-slate-400">•</span>
               <span>
                 Page:{" "}
-                <span className="font-medium">
-                  {currentPage + 1} of {numPages}
-                </span>
+                <CurrentPageLabel>
+                  {(props) => (
+                    <span className="font-medium">
+                      {props.currentPage + 1} of {props.numberOfPages}
+                    </span>
+                  )}
+                </CurrentPageLabel>
               </span>
             </>
           )}
