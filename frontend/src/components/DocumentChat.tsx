@@ -369,7 +369,7 @@ export default function DocumentChat({
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Messages container */}
-      <div className="bg-bg-elevated rounded-lg p-4 min-h-96 max-h-96 overflow-y-auto">
+      <div className="bg-bg-elevated rounded-lg p-4 min-h-[600px] max-h-[700px] overflow-y-auto">
         <div className="space-y-4">
           {messages.length === 0 ? (
             <div className="text-center py-8">
