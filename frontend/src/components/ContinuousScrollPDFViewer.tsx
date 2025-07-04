@@ -1,8 +1,9 @@
 "use client";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { Worker, Viewer, ScrollMode } from "@react-pdf-viewer/core";
 import { zoomPlugin } from "@react-pdf-viewer/zoom";
 import { pageNavigationPlugin } from "@react-pdf-viewer/page-navigation";
+import type {} from "@react-pdf-viewer/page-navigation";
 import "@react-pdf-viewer/core/lib/styles/index.css";
 import "@react-pdf-viewer/page-navigation/lib/styles/index.css";
 import "../styles/pdf-viewer.css";
@@ -27,8 +28,7 @@ export default function ContinuousScrollPDFViewer({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState<"single" | "continuous">("single");
+  const [currentPage, setCurrentPage] = useState(0);
 
   // Create zoom plugin instance
   const zoomPluginInstance = zoomPlugin();
@@ -52,127 +52,77 @@ export default function ContinuousScrollPDFViewer({
   const handleDocumentLoad = (e: { doc: { numPages: number } }) => {
     console.log("✅ [DEBUG] PDF LOADED:", {
       numPages: e.doc.numPages,
-      currentViewMode: viewMode,
-      currentPage: currentPage,
       scale: scale,
-      viewerKey: `pdf-viewer-${viewMode}-${currentPage}`,
       timestamp: new Date().toISOString(),
-      jumpToPageFunction:
-        typeof jumpToPage === "function" ? "available" : "not available",
     });
     setNumPages(e.doc.numPages);
     setIsLoading(false);
     setError(null);
+
     // Set initial zoom level
     zoomTo(scale);
   };
 
+  // Handle page change events from the viewer
+  const handlePageChange = (e: { currentPage: number }) => {
+    console.log("📄 [DEBUG] Page changed by viewer:", e.currentPage);
+    setCurrentPage(e.currentPage);
+  };
+
   // Debug: Monitor state changes
-  useEffect(() => {
-    console.log("🔄 [DEBUG] ViewMode changed to:", viewMode);
-  }, [viewMode]);
-
-  useEffect(() => {
-    console.log(
-      "🔄 [DEBUG] CurrentPage changed to:",
-      currentPage,
-      "of",
-      numPages
-    );
-  }, [currentPage, numPages]);
-
-  useEffect(() => {
-    console.log("🔄 [DEBUG] Scale changed to:", scale);
-  }, [scale]);
-
-  useEffect(() => {
-    console.log("🖥️ [DEBUG] Viewer props changed:", {
-      viewMode,
-      scrollMode: viewMode === "single" ? "Page" : "Vertical",
-      currentPage,
-      initialPage: currentPage - 1,
-      scale,
-      numPages,
-      jumpToPageAvailable: typeof jumpToPage === "function",
-    });
-  }, [viewMode, currentPage, scale, numPages, jumpToPage]); // Zoom controls
+  // Zoom controls
   const zoomIn = () => {
     const newScale = Math.min(scale + 0.2, 3.0);
+    console.log("🔍 [DEBUG] Zooming in to:", newScale);
     setScale(newScale);
     zoomTo(newScale);
   };
 
   const zoomOut = () => {
     const newScale = Math.max(scale - 0.2, 0.5);
+    console.log("🔍 [DEBUG] Zooming out to:", newScale);
     setScale(newScale);
     zoomTo(newScale);
   };
 
   const resetZoom = () => {
+    console.log("🔍 [DEBUG] Resetting zoom to 1.0");
     setScale(1.0);
     zoomTo(1.0);
   };
 
-  // Page navigation controls
-  const goToNextPage = () => {
-    console.log("🔄 [DEBUG] goToNextPage called:", {
-      currentPage,
-      numPages,
-      viewMode,
-    });
-    if (numPages && currentPage < numPages) {
-      const newPage = currentPage + 1;
-      console.log("📄 [DEBUG] Setting currentPage to:", newPage);
-      setCurrentPage(newPage);
-      // Use jumpToPage for proper navigation in single-page mode
-      if (viewMode === "single") {
-        console.log(
-          "🎯 [DEBUG] Using jumpToPage for navigation to page:",
-          newPage - 1
-        );
-        jumpToPage(newPage - 1); // jumpToPage uses 0-based indexing
-      }
-    } else {
-      console.log(
-        "🚫 [DEBUG] Cannot go to next page - at boundary or no pages"
-      );
-    }
-  };
-
-  const goToPrevPage = () => {
-    console.log("🔄 [DEBUG] goToPrevPage called:", {
-      currentPage,
-      numPages,
-      viewMode,
-    });
-    if (currentPage > 1) {
+  // Manual navigation functions with proper async handling
+  const goToPreviousPage = async () => {
+    console.log("🔙 [DEBUG] Manual previous page called");
+    if (currentPage > 0) {
       const newPage = currentPage - 1;
-      console.log("📄 [DEBUG] Setting currentPage to:", newPage);
-      setCurrentPage(newPage);
-      // Use jumpToPage for proper navigation in single-page mode
-      if (viewMode === "single") {
-        console.log(
-          "🎯 [DEBUG] Using jumpToPage for navigation to page:",
-          newPage - 1
-        );
-        jumpToPage(newPage - 1); // jumpToPage uses 0-based indexing
+      console.log("🔙 [DEBUG] Attempting to jump to page:", newPage);
+      try {
+        await jumpToPage(newPage);
+        console.log("🔙 [DEBUG] Successfully jumped to page:", newPage);
+        // Don't manually set state - let the page change event handle it
+      } catch (error) {
+        console.error("🔙 [ERROR] Failed to jump to page:", error);
+        // Fallback: set state manually if plugin fails
+        setCurrentPage(newPage);
       }
-    } else {
-      console.log("🚫 [DEBUG] Cannot go to previous page - already at page 1");
     }
   };
 
-  // View mode toggle
-  const toggleViewMode = () => {
-    console.log("🔄 [DEBUG] toggleViewMode called, current mode:", viewMode);
-    const newMode = viewMode === "single" ? "continuous" : "single";
-    console.log("📄 [DEBUG] ViewMode changing from", viewMode, "to", newMode);
-    setViewMode(newMode);
-    if (viewMode === "continuous") {
-      console.log(
-        "📄 [DEBUG] Resetting to page 1 when switching to single mode"
-      );
-      setCurrentPage(1); // Reset to first page when switching to single mode
+  const goToNextPage = async () => {
+    console.log("🔜 [DEBUG] Manual next page called");
+    if (numPages && currentPage < numPages - 1) {
+      const newPage = currentPage + 1;
+      console.log("🔜 [DEBUG] Attempting to jump to page:", newPage);
+      try {
+        await jumpToPage(newPage);
+        console.log("🔜 [DEBUG] Successfully jumped to page:", newPage);
+        // Don't manually set state - let the page change event handle it
+      } catch (error) {
+        console.error("🔜 [ERROR] Failed to jump to page:", error);
+        // Fallback: set state manually if plugin fails
+        setCurrentPage(newPage);
+      }
     }
   };
 
@@ -218,44 +168,31 @@ export default function ContinuousScrollPDFViewer({
           )}
         </div>
 
-        {/* Controls Section - View Mode, Page Navigation & Zoom */}
+        {/* Controls Section - Page Navigation & Zoom */}
         <div className="flex items-center gap-4">
-          {/* View Mode Toggle */}
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={toggleViewMode}
-              size="sm"
-              variant={viewMode === "single" ? "primary" : "secondary"}
-              title={`Switch to ${
-                viewMode === "single" ? "continuous" : "single-page"
-              } view`}
-            >
-              {viewMode === "single" ? "📄" : "📜"}
-            </Button>
-            <span className="text-xs text-slate-500">
-              {viewMode === "single" ? "Single" : "Scroll"}
-            </span>
-          </div>
-
-          {/* Page Navigation (only in single-page mode) */}
-          {viewMode === "single" && numPages && (
+          {/* Page Navigation */}
+          {numPages && (
             <div className="flex items-center gap-2 border-l border-gray-300 pl-4">
               <Button
-                onClick={goToPrevPage}
+                onClick={goToPreviousPage}
                 size="sm"
                 variant="secondary"
-                disabled={currentPage <= 1}
+                disabled={currentPage <= 0}
+                title="Previous page"
               >
                 ←
               </Button>
+
               <span className="text-sm text-slate-600 min-w-16 text-center font-medium">
-                {currentPage} / {numPages}
+                {currentPage + 1} / {numPages}
               </span>
+
               <Button
                 onClick={goToNextPage}
                 size="sm"
                 variant="secondary"
-                disabled={currentPage >= numPages}
+                disabled={!numPages || currentPage >= numPages - 1}
+                title="Next page"
               >
                 →
               </Button>
@@ -308,14 +245,11 @@ export default function ContinuousScrollPDFViewer({
         <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
           <div style={{ height: "100%" }} className="pdf-viewer-container">
             <Viewer
-              key={`pdf-viewer-${viewMode}-${currentPage}`} // Force re-render on view mode or page change
               fileUrl={pdfUrl}
               onDocumentLoad={handleDocumentLoad}
+              onPageChange={handlePageChange}
               plugins={[zoomPluginInstance, pageNavigationPluginInstance]}
-              scrollMode={
-                viewMode === "single" ? ScrollMode.Page : ScrollMode.Vertical
-              }
-              initialPage={currentPage - 1}
+              scrollMode={ScrollMode.Page}
               defaultScale={scale}
             />
           </div>
@@ -330,18 +264,15 @@ export default function ContinuousScrollPDFViewer({
           </span>
           <span className="text-slate-400">•</span>
           <span>
-            Mode:{" "}
-            <span className="font-medium">
-              {viewMode === "single" ? "Single Page" : "Continuous"}
-            </span>
+            Mode: <span className="font-medium">Single Page</span>
           </span>
-          {viewMode === "single" && numPages && (
+          {numPages && (
             <>
               <span className="text-slate-400">•</span>
               <span>
                 Page:{" "}
                 <span className="font-medium">
-                  {currentPage} of {numPages}
+                  {currentPage + 1} of {numPages}
                 </span>
               </span>
             </>
