@@ -27,13 +27,8 @@ export default function ReviewSidebar({
   className = "",
 }: ReviewSidebarProps) {
   const handleTabClick = (tabId: string) => {
-    if (activeTab === tabId) {
-      // If clicking the same tab, collapse the sidebar
-      onTabChange(null);
-    } else {
-      // If clicking a different tab, switch to it and ensure sidebar is expanded
-      onTabChange(tabId);
-    }
+    // Always switch to the clicked tab (no toggle behavior)
+    onTabChange(tabId);
   };
 
   return (
@@ -92,31 +87,10 @@ export default function ReviewSidebar({
         <div className="flex-1 bg-bg-primary border-r border-border-light flex flex-col min-w-0">
           {/* Tab Header */}
           <div className="p-4 border-b border-border-light">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center">
               <h2 className="font-heading text-lg text-text-primary">
                 {tabs.find((tab) => tab.id === activeTab)?.label}
               </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onTabChange(null)}
-                className="p-1"
-                aria-label="Close panel"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </Button>
             </div>
           </div>
 
