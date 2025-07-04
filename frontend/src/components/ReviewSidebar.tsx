@@ -15,6 +15,7 @@ interface ReviewSidebarProps {
   tabs: SidebarTab[];
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  onExpandAndSelectTab: (tabId: string) => void; // Made required to test
   className?: string;
 }
 
@@ -24,11 +25,37 @@ export default function ReviewSidebar({
   tabs,
   isCollapsed,
   onToggleCollapse,
+  onExpandAndSelectTab,
   className = "",
 }: ReviewSidebarProps) {
+  console.log(
+    "🚨 ReviewSidebar RENDER - onExpandAndSelectTab:",
+    !!onExpandAndSelectTab
+  );
+
   const handleTabClick = (tabId: string) => {
-    // Always switch to the clicked tab (no toggle behavior)
-    onTabChange(tabId);
+    console.log("🔍 Tab clicked:", {
+      tabId,
+      isCollapsed,
+      onExpandAndSelectTab: !!onExpandAndSelectTab,
+    });
+
+    if (isCollapsed) {
+      console.log(
+        "🎯 Sidebar is collapsed, attempting to expand and select tab"
+      );
+      // When collapsed, expand and select the tab
+      if (onExpandAndSelectTab) {
+        console.log("✅ Calling onExpandAndSelectTab");
+        onExpandAndSelectTab(tabId);
+      } else {
+        console.error("❌ onExpandAndSelectTab is undefined!");
+      }
+    } else {
+      console.log("📋 Sidebar is expanded, switching tabs normally");
+      // When expanded, just switch to the clicked tab
+      onTabChange(tabId);
+    }
   };
 
   return (
