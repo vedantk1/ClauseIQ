@@ -8,6 +8,7 @@ interface CollapsibleSectionProps {
   children: React.ReactNode;
   defaultExpanded?: boolean;
   className?: string;
+  previewText?: string; // New prop for preview text
 }
 
 export default function CollapsibleSection({
@@ -16,6 +17,7 @@ export default function CollapsibleSection({
   children,
   defaultExpanded = true,
   className = "",
+  previewText,
 }: CollapsibleSectionProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [height, setHeight] = useState<number | undefined>(
@@ -38,22 +40,32 @@ export default function CollapsibleSection({
   }, [isExpanded]);
 
   return (
-    <Card className={className}>
-      <div className="mb-6">
+    <Card className={`${isExpanded ? "" : "!p-3"} ${className}`}>
+      <div className={isExpanded ? "mb-6" : "mb-0"}>
         {/* Header with toggle button */}
         <button
           onClick={toggleExpanded}
-          className="flex items-center gap-2 mb-3 w-full text-left group hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-accent-blue/20 rounded-md p-1 -m-1"
+          className={`flex items-center gap-2 w-full text-left group hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-accent-blue/20 rounded-md p-1 -m-1 ${
+            isExpanded ? "mb-3" : "mb-0"
+          }`}
           aria-expanded={isExpanded}
           aria-controls={`section-${title.replace(/\s+/g, "-").toLowerCase()}`}
           type="button"
         >
           {icon}
-          <h2 className="font-heading text-heading-sm text-text-primary flex-1">
-            {title}
-          </h2>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-heading text-heading-sm text-text-primary">
+              {title}
+            </h2>
+            {/* Preview text when collapsed */}
+            {!isExpanded && previewText && (
+              <p className="text-xs text-text-secondary mt-1 truncate">
+                {previewText}
+              </p>
+            )}
+          </div>
           <svg
-            className={`w-4 h-4 text-text-secondary transition-transform duration-200 ${
+            className={`w-4 h-4 text-text-secondary transition-transform duration-200 flex-shrink-0 ${
               isExpanded ? "rotate-90" : ""
             }`}
             fill="none"

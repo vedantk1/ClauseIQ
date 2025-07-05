@@ -8,6 +8,27 @@ interface StructuredSummaryProps {
   fallbackSummary?: string;
 }
 
+// Utility function to create preview text
+const createPreviewText = (
+  content: string | string[],
+  type: "text" | "list" = "text"
+): string => {
+  if (type === "list" && Array.isArray(content)) {
+    if (content.length === 0) return "";
+    if (content.length === 1) return content[0];
+    return `${content[0]}, ${content[1]}${
+      content.length > 2 ? `, +${content.length - 2} more` : ""
+    }`;
+  }
+
+  if (typeof content === "string") {
+    // Truncate to ~80 characters for preview
+    return content.length > 80 ? content.substring(0, 77) + "..." : content;
+  }
+
+  return "";
+};
+
 export default function StructuredSummary({
   structuredSummary,
   fallbackSummary,
@@ -38,6 +59,7 @@ export default function StructuredSummary({
         <CollapsibleSection
           title="Document Overview"
           defaultExpanded={true}
+          previewText={createPreviewText(structuredSummary.overview)}
           icon={
             <svg
               className="w-5 h-5 text-accent-blue"
@@ -66,6 +88,10 @@ export default function StructuredSummary({
           <CollapsibleSection
             title="Key Parties"
             defaultExpanded={false}
+            previewText={createPreviewText(
+              structuredSummary.key_parties,
+              "list"
+            )}
             icon={
               <svg
                 className="w-5 h-5 text-accent-purple"
@@ -101,6 +127,10 @@ export default function StructuredSummary({
           <CollapsibleSection
             title="Important Dates"
             defaultExpanded={false}
+            previewText={createPreviewText(
+              structuredSummary.important_dates,
+              "list"
+            )}
             icon={
               <svg
                 className="w-5 h-5 text-accent-amber"
@@ -137,6 +167,10 @@ export default function StructuredSummary({
           <CollapsibleSection
             title="Major Obligations"
             defaultExpanded={false}
+            previewText={createPreviewText(
+              structuredSummary.major_obligations,
+              "list"
+            )}
             icon={
               <svg
                 className="w-5 h-5 text-accent-blue"
@@ -172,6 +206,10 @@ export default function StructuredSummary({
           <CollapsibleSection
             title="Risk Highlights"
             defaultExpanded={true}
+            previewText={createPreviewText(
+              structuredSummary.risk_highlights,
+              "list"
+            )}
             icon={
               <svg
                 className="w-5 h-5 text-accent-rose"
@@ -224,6 +262,10 @@ export default function StructuredSummary({
           <CollapsibleSection
             title="Key Insights"
             defaultExpanded={false}
+            previewText={createPreviewText(
+              structuredSummary.key_insights,
+              "list"
+            )}
             icon={
               <svg
                 className="w-5 h-5 text-accent-green"
