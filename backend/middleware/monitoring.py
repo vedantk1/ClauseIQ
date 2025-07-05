@@ -244,21 +244,22 @@ class HealthChecker:
     """Health check utilities for monitoring service status."""
     
     @staticmethod
-    def check_database_health() -> Dict:
+    async def check_database_health() -> Dict:
         """Check database connectivity and performance."""
         try:
-            from database import get_mongo_storage
-            storage = get_mongo_storage()
+            from database.service import get_document_service
+            service = get_document_service()
             
             start_time = time.time()
-            # Simple connectivity test
-            storage.get_database_info()
+            # Simple connectivity test using new async system
+            db_info = await service.get_database_info()
             duration = time.time() - start_time
             
             return {
                 "status": "healthy",
                 "response_time_ms": round(duration * 1000, 2),
-                "type": "mongodb"
+                "type": "mongodb",
+                "info": db_info
             }
         except Exception as e:
             return {
@@ -321,10 +322,10 @@ class HealthChecker:
             }
     
     @classmethod
-    def get_comprehensive_health(cls) -> Dict:
+    async def get_comprehensive_health(cls) -> Dict:
         """Get comprehensive health check results."""
         health_checks = {
-            "database": cls.check_database_health(),
+            "database": await cls.check_database_health(),
             "openai": cls.check_openai_health(),
             "email": cls.check_email_health()
         }

@@ -1,7 +1,6 @@
 """
 Service layer for database operations.
-Provides backward compatibility with existing MongoDocumentStorage interface
-while using the new database abstraction layer.
+Provides async document and user management operations using the database abstraction layer.
 """
 import asyncio
 import logging
@@ -589,119 +588,7 @@ class DocumentService:
     # Note: Document-based PDF methods are above in the "PDF File Operations" section
     # The methods below provide direct file storage access if needed
 
-class CompatibilityService:
-    """
-    Backward compatibility service that provides synchronous interface
-    to the async DocumentService for existing code.
-    """
-    
-    def __init__(self):
-        self._doc_service = DocumentService()
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
-    
-    def _get_loop(self) -> asyncio.AbstractEventLoop:
-        """Get or create event loop."""
-        try:
-            return asyncio.get_event_loop()
-        except RuntimeError:
-            # Create new loop if none exists
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            return loop
-    
-    def _run_async(self, coro):
-        """Run async function synchronously."""
-        loop = self._get_loop()
-        if loop.is_running():
-            # If we're already in an async context, we can't use run()
-            # Create a task and get the result
-            task = asyncio.create_task(coro)
-            # This is a workaround - in production, the calling code should be async
-            return asyncio.run_coroutine_threadsafe(coro, loop).result()
-        else:
-            return loop.run_until_complete(coro)
-    
-    # Synchronous wrappers for all methods
-    def save_document(self, document_dict: Dict[str, Any]) -> str:
-        return self._run_async(self._doc_service.save_document(document_dict))
-    
-    def save_document_for_user(self, document_dict: Dict[str, Any], user_id: str) -> str:
-        return self._run_async(self._doc_service.save_document_for_user(document_dict, user_id))
-    
-    def get_document(self, doc_id: str) -> Optional[Dict[str, Any]]:
-        return self._run_async(self._doc_service.get_document(doc_id))
-    
-    def get_document_for_user(self, doc_id: str, user_id: str) -> Optional[Dict[str, Any]]:
-        return self._run_async(self._doc_service.get_document_for_user(doc_id, user_id))
-    
-    def get_documents_for_user(self, user_id: str) -> List[Dict[str, Any]]:
-        return self._run_async(self._doc_service.get_documents_for_user(user_id))
-    
-    def get_all_documents(self) -> List[Dict[str, Any]]:
-        """Get all documents - deprecated."""
-        logger.warning("get_all_documents is deprecated")
-        return []
-    
-    def delete_document(self, doc_id: str) -> bool:
-        return self._run_async(self._doc_service.delete_document(doc_id))
-    
-    def delete_document_for_user(self, doc_id: str, user_id: str) -> bool:
-        return self._run_async(self._doc_service.delete_document_for_user(doc_id, user_id))
-    
-    def delete_all_documents_for_user(self, user_id: str) -> int:
-        return self._run_async(self._doc_service.delete_all_documents_for_user(user_id))
-    
-    def get_documents_count(self) -> int:
-        return self._run_async(self._doc_service.get_documents_count())
-    
-    def create_user(self, user_data: Dict[str, Any]) -> str:
-        return self._run_async(self._doc_service.create_user(user_data))
-    
-    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
-        return self._run_async(self._doc_service.get_user_by_email(email))
-    
-    def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
-        return self._run_async(self._doc_service.get_user_by_id(user_id))
-    
-    def update_user(self, user_id: str, update_data: Dict[str, Any]) -> bool:
-        return self._run_async(self._doc_service.update_user(user_id, update_data))
-    
-    def update_user_password(self, email: str, new_hashed_password: str) -> bool:
-        return self._run_async(self._doc_service.update_user_password(email, new_hashed_password))
-    
-    def update_user_preferences(self, user_id: str, preferences: Dict[str, Any]) -> bool:
-        return self._run_async(self._doc_service.update_user_preferences(user_id, preferences))
-    
-    def get_user_preferred_model(self, user_id: str) -> str:
-        return self._run_async(self._doc_service.get_user_preferred_model(user_id))
-    
-    # PDF File Operations (document-based)
-    def store_pdf_file_for_document(self, document_id: str, user_id: str, file_data: bytes, 
-                                   filename: str, content_type: str = "application/pdf") -> bool:
-        return self._run_async(self._doc_service.store_pdf_file(document_id, user_id, file_data, filename, content_type))
-    
-    def get_pdf_file_for_document(self, document_id: str, user_id: str) -> Optional[Dict[str, Any]]:
-        return self._run_async(self._doc_service.get_pdf_file(document_id, user_id))
-    
-    def has_pdf_file(self, document_id: str, user_id: str) -> bool:
-        return self._run_async(self._doc_service.has_pdf_file(document_id, user_id))
-
-    def get_database_info(self) -> Dict[str, Any]:
-        return self._run_async(self._doc_service.get_database_info())
-
-
-# Global service instance for backward compatibility
-_compatibility_service: Optional[CompatibilityService] = None
-
 
 def get_document_service() -> DocumentService:
     """Get async document service instance."""
     return DocumentService()
-
-
-def get_compatibility_service() -> CompatibilityService:
-    """Get compatibility service for synchronous access."""
-    global _compatibility_service
-    if _compatibility_service is None:
-        _compatibility_service = CompatibilityService()
-    return _compatibility_service

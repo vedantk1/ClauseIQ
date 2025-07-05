@@ -86,31 +86,37 @@ def auth_headers():
     """Provide mock authorization headers for API requests."""
     return {"Authorization": "Bearer mock-jwt-token"}
 
-# Mock MongoDB storage for tests
+# Mock Database Service for tests (NEW SYSTEM)
 @pytest.fixture
-def mock_mongo_storage():
-    """Mock MongoDB storage operations for tests."""
-    with patch('database.get_mongo_storage') as mock_storage, \
-         patch('routers.documents.get_mongo_storage') as mock_router_storage:
+def mock_document_service():
+    """Mock DocumentService operations for tests using the new async system."""
+    with patch('database.service.get_document_service') as mock_service:
         
-        mock_storage_instance = MagicMock()
+        mock_service_instance = MagicMock()
         
-        # Configure methods for user-specific operations
-        mock_storage_instance.get_documents_for_user.return_value = []
-        mock_storage_instance.get_document_for_user.return_value = None
-        mock_storage_instance.delete_document_for_user.return_value = True
-        mock_storage_instance.delete_all_documents_for_user.return_value = 0
-        mock_storage_instance.save_document_for_user.return_value = "test-doc-id"
+        # Configure async methods for user-specific operations
+        async def mock_get_documents_for_user(user_id: str, limit: int = 50, offset: int = 0):
+            return []
         
-        # Configure common storage methods for backward compatibility
-        mock_storage_instance.save_document.return_value = True
-        mock_storage_instance.get_document.return_value = None
-        mock_storage_instance.get_all_documents.return_value = []
-        mock_storage_instance.delete_document.return_value = True
-        mock_storage_instance.get_documents_count.return_value = 0
+        async def mock_get_document_for_user(doc_id: str, user_id: str):
+            return None
         
-        # Both patches return the same mock instance
-        mock_storage.return_value = mock_storage_instance
-        mock_router_storage.return_value = mock_storage_instance
+        async def mock_delete_document_for_user(doc_id: str, user_id: str):
+            return True
         
-        yield mock_storage_instance
+        async def mock_delete_all_documents_for_user(user_id: str):
+            return 0
+        
+        async def mock_save_document_for_user(document_dict: dict, user_id: str):
+            return "test-doc-id"
+        
+        # Configure the mock methods
+        mock_service_instance.get_documents_for_user = mock_get_documents_for_user
+        mock_service_instance.get_document_for_user = mock_get_document_for_user
+        mock_service_instance.delete_document_for_user = mock_delete_document_for_user
+        mock_service_instance.delete_all_documents_for_user = mock_delete_all_documents_for_user
+        mock_service_instance.save_document_for_user = mock_save_document_for_user
+        
+        mock_service.return_value = mock_service_instance
+        
+        yield mock_service_instance
