@@ -16,6 +16,7 @@ interface DocumentStatsBarProps {
   clauseCount?: number;
   riskSummary?: RiskSummary;
   clauses?: Clause[];
+  onClausesClick?: () => void;
 }
 
 export default function DocumentStatsBar({
@@ -23,6 +24,7 @@ export default function DocumentStatsBar({
   clauseCount = 0,
   riskSummary = { high: 0, medium: 0, low: 0 },
   clauses = [],
+  onClausesClick,
 }: DocumentStatsBarProps) {
   // Document statistics
   const wordCount = fullText
@@ -85,19 +87,43 @@ export default function DocumentStatsBar({
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-      <div className="p-3 bg-bg-elevated rounded-xl border border-border-muted text-center hover:border-accent-blue/30 transition-colors">
+      <div
+        className={`p-3 bg-bg-elevated rounded-xl border border-border-muted text-center relative ${
+          onClausesClick
+            ? "cursor-pointer hover:bg-bg-surface hover:border-accent-blue/30 hover:shadow-sm transition-all duration-200"
+            : ""
+        }`}
+        onClick={onClausesClick}
+      >
         <div className="text-lg font-bold text-text-primary mb-1">
           {clauseCount}
         </div>
-        <div className="text-xs text-text-secondary font-medium">Clauses</div>
+        <div className="text-xs text-text-secondary font-medium flex items-center justify-center gap-1">
+          Clauses
+          {onClausesClick && (
+            <svg
+              className="w-3 h-3 text-text-secondary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          )}
+        </div>
       </div>
-      <div className="p-3 bg-bg-elevated rounded-xl border border-border-muted text-center hover:border-accent-green/30 transition-colors">
+      <div className="p-3 bg-bg-elevated rounded-xl border border-border-muted text-center">
         <div className="text-lg font-bold text-text-primary mb-1">
           {wordCount.toLocaleString()}
         </div>
         <div className="text-xs text-text-secondary font-medium">Words</div>
       </div>
-      <div className="p-3 bg-bg-elevated rounded-xl border border-border-muted text-center hover:border-accent-amber/30 transition-colors">
+      <div className="p-3 bg-bg-elevated rounded-xl border border-border-muted text-center">
         <div className="text-lg font-bold text-text-primary mb-1">
           {complexity}
         </div>
@@ -105,7 +131,7 @@ export default function DocumentStatsBar({
           Complexity
         </div>
       </div>
-      <div className="p-3 bg-bg-elevated rounded-xl border border-border-muted text-center hover:border-accent-purple/30 transition-colors">
+      <div className="p-3 bg-bg-elevated rounded-xl border border-border-muted text-center">
         <div className="text-lg font-bold text-text-primary mb-1">
           {getLastViewed()}
         </div>

@@ -11,6 +11,7 @@ interface SummaryContentProps {
   fullText?: string;
   clauses?: Clause[];
   riskSummary: { high: number; medium: number; low: number };
+  onClausesClick?: () => void;
 }
 
 export default function SummaryContent({
@@ -19,6 +20,7 @@ export default function SummaryContent({
   fullText,
   clauses,
   riskSummary,
+  onClausesClick,
 }: SummaryContentProps) {
   return (
     <div className="h-full overflow-y-auto">
@@ -29,6 +31,7 @@ export default function SummaryContent({
           clauseCount={clauses?.length || 0}
           riskSummary={riskSummary}
           clauses={clauses}
+          onClausesClick={onClausesClick}
         />
 
         {/* Structured Summary */}
