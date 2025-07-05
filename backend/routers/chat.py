@@ -14,7 +14,7 @@ SECURITY:
 - User can only access their own documents and chat sessions
 - Proper error handling and validation
 """
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, Field
@@ -43,6 +43,7 @@ class ChatMessageResponse(BaseModel):
     timestamp: str
     id: str
     sources: list = []
+    model_used: Optional[str] = None  # Add model_used field
 
 class SendMessageResponse(BaseModel):
     """Response for sending a message."""
@@ -170,7 +171,8 @@ async def send_message(
                 content=message["content"],
                 timestamp=message["timestamp"],
                 id=message["id"],
-                sources=message.get("sources", [])
+                sources=message.get("sources", []),
+                model_used=message.get("model_used")  # Include model_used field
             ),
             session_id=result["session_id"]
         )

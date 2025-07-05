@@ -572,6 +572,7 @@ REWRITTEN QUESTION:"""
             return {
                 "response": "I'm sorry, but the AI service is currently unavailable. Please try again later.",
                 "sources": [],
+                "model": model if model else "unknown",
                 "error": "AI service unavailable"
             }
         
@@ -581,12 +582,16 @@ REWRITTEN QUESTION:"""
                 from config.environments import get_environment_config
                 config = get_environment_config()
                 model = config.ai.default_model
+                logger.info(f"Using default AI model for RAG response: {model}")
+            else:
+                logger.info(f"Using user-specified AI model for RAG response: {model}")
             
             client = _get_openai_client()
             if not client:
                 return {
                     "response": "I'm sorry, but the AI service is currently unavailable. Please try again later.",
                     "sources": [],
+                    "model": model if model else "unknown",
                     "error": "OpenAI client not available"
                 }
             
@@ -645,6 +650,7 @@ RESPONSE:"""
             return {
                 "response": f"I'm sorry, but I encountered an error while processing your question: {str(e)}",
                 "sources": [],
+                "model": model if model else "unknown",
                 "error": str(e)
             }
     

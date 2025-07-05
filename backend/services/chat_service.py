@@ -28,8 +28,10 @@ class ChatService:
     """Service for managing document chat functionality."""
     
     def __init__(self):
+        print("🚨 [INIT DEBUG] ChatService initializing...")
         self.doc_service = get_document_service()
         self.rag_service = RAGService()
+        print("🚨 [INIT DEBUG] ChatService initialized successfully")
     
     async def is_available(self) -> bool:
         """Check if chat service is available."""
@@ -226,6 +228,12 @@ class ChatService:
             document_id = document["id"]
             session_id = session["session_id"]
             
+            # Get user's preferred model early for use throughout the process
+            user_preferred_model = await self.doc_service.get_user_preferred_model(user_id)
+            print(f"🚨 [URGENT DEBUG] User preferred model fetched: {user_preferred_model}")
+            logger.info(f"🎯 [CHAT MODEL] User {user_id} preferred model: {user_preferred_model}")
+            logger.info(f"🚨 [DEBUG] chat_service.py _process_message_foundational - CODE UPDATE APPLIED!")
+            
             # Create user message
             user_message = {
                 "id": str(uuid.uuid4()),
@@ -311,7 +319,8 @@ class ChatService:
                     "role": "assistant",
                     "content": "I couldn't find relevant information in the document to answer your question. Please try rephrasing your question or asking about a different topic covered in the document.",
                     "timestamp": datetime.utcnow().isoformat(),
-                    "sources": []
+                    "sources": [],
+                    "model_used": user_preferred_model  # Add model info to fallback response
                 }
             else:
                 relevant_chunks = rag_result["chunks"]
@@ -331,10 +340,11 @@ class ChatService:
                 
                 # 🚀 STEP 4: LLM Response Generation
                 step_start = time.time()
-                response_result = await self._generate_ai_response(document, message, conversation_history, relevant_chunks, enhanced_query)
+                response_result = await self._generate_ai_response(document, message, conversation_history, relevant_chunks, enhanced_query, user_preferred_model)
                 generation_time = round((time.time() - step_start) * 1000, 2)
                 
                 if response_result.get("success", False):
+                    model_used = response_result.get("model", user_preferred_model or "unknown")  # Fallback to user_preferred_model
                     ai_debug.log_rag_pipeline_step(
                         step_name="llm_generation",
                         success=True,
@@ -342,17 +352,25 @@ class ChatService:
                         details={
                             "response_length": len(response_result["content"]),
                             "sources_included": len(response_result.get("sources", [])),
-                            "model": response_result.get("model", "unknown")
+                            "model": model_used
                         }
                     )
+                    
+                    # Enhanced logging for model visibility
+                    logger.info(f"🤖 AI Response generated using model: {model_used}")
+                    logger.info(f"🚨 [DEBUG] About to create assistant_message with model_used: {model_used}")
+                    print(f"🚨 [CONSOLE DEBUG] Creating assistant message with model_used: {model_used}")
                     
                     assistant_message = {
                         "id": str(uuid.uuid4()),
                         "role": "assistant",
                         "content": response_result["content"],
                         "timestamp": datetime.utcnow().isoformat(),
-                        "sources": response_result.get("sources", [])
+                        "sources": response_result.get("sources", []),
+                        "model_used": model_used  # Add model info to the response
                     }
+                    logger.info(f"🚨 [DEBUG] Created assistant_message keys: {list(assistant_message.keys())}")
+                    print(f"🚨 [CONSOLE DEBUG] Assistant message keys: {list(assistant_message.keys())}")
                 else:
                     ai_debug.log_rag_pipeline_step(
                         step_name="llm_generation",
@@ -366,7 +384,8 @@ class ChatService:
                         "role": "assistant",
                         "content": "I apologize, but I'm having trouble generating a response right now. Please try again later.",
                         "timestamp": datetime.utcnow().isoformat(),
-                        "sources": []
+                        "sources": [],
+                        "model_used": user_preferred_model  # Add model info to error response
                     }
             
             # Add assistant message to session atomically
@@ -404,7 +423,7 @@ class ChatService:
                 "error": "Failed to process message"
             }
 
-    async def _generate_ai_response(self, document: dict, message: str, conversation_history: list, relevant_chunks: list, enhanced_query: str = None) -> dict:
+    async def _generate_ai_response(self, document: dict, message: str, conversation_history: list, relevant_chunks: list, enhanced_query: str = None, user_preferred_model: str = None) -> dict:
         """Generate AI response using the RAG service."""
         try:
             # Format context from relevant chunks
@@ -433,12 +452,20 @@ User Question: {message}
 
 Please provide a clear, helpful answer based on the document content. If the context doesn't contain enough information to answer the question, say so clearly."""
             
-            # Get AI response from RAG service
+            # Get AI response from RAG service with user's preferred model
+            logger.info(f"🎯 [CHAT MODEL] Using AI model '{user_preferred_model}' for chat response")
+            
             ai_response = await self.rag_service.generate_rag_response(
                 query=message,
                 relevant_chunks=relevant_chunks,
-                enhanced_query=enhanced_query
+                enhanced_query=enhanced_query,
+                model=user_preferred_model
             )
+            
+            # Debug log the AI response structure
+            logger.info(f"🔍 [DEBUG] RAG response structure: {ai_response.keys() if ai_response else 'None'}")
+            if ai_response:
+                logger.info(f"🔍 [DEBUG] Model in response: {ai_response.get('model', 'NOT_FOUND')}")
             
             if ai_response and ai_response.get("response"):
                 # Format sources for transparency
@@ -454,11 +481,12 @@ Please provide a clear, helpful answer based on the document content. If the con
                     "success": True,
                     "content": ai_response["response"],
                     "sources": sources,
-                    "model": ai_response.get("model", "unknown")
+                    "model": ai_response.get("model", user_preferred_model or "unknown")
                 }
             else:
                 return {
                     "success": False,
+                    "model": user_preferred_model or "unknown",
                     "error": ai_response.get("error", "Failed to generate response") if ai_response else "No response from AI service"
                 }
                 
@@ -466,6 +494,7 @@ Please provide a clear, helpful answer based on the document content. If the con
             logger.error(f"Error generating AI response: {e}")
             return {
                 "success": False,
+                "model": user_preferred_model or "unknown",
                 "error": str(e)
             }
 

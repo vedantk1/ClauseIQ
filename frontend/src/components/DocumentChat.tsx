@@ -9,6 +9,7 @@ interface ChatMessage {
   content: string;
   sources?: string[];
   timestamp: string;
+  model_used?: string; // Add model info to the interface
 }
 
 interface ChatSession {
@@ -220,7 +221,15 @@ export default function DocumentChat({
           hasSources: !!aiMessage.sources && aiMessage.sources.length > 0,
           sourceCount: aiMessage.sources?.length || 0,
           timestamp: aiMessage.timestamp,
+          modelUsed: aiMessage.model_used || "unknown",
         });
+
+        // Prominent model logging
+        if (aiMessage.model_used) {
+          console.log(
+            `🎯 [AI MODEL] Chat response generated using: ${aiMessage.model_used}`
+          );
+        }
 
         if (aiMessage.sources && aiMessage.sources.length > 0) {
           console.log("📚 [Foundational] Sources found:", aiMessage.sources);
