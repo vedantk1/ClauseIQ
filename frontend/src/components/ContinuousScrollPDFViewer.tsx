@@ -1,6 +1,11 @@
 "use client";
 import React, { useState, useMemo } from "react";
-import { Worker, Viewer, ScrollMode, PageChangeEvent } from "@react-pdf-viewer/core";
+import {
+  Worker,
+  Viewer,
+  ScrollMode,
+  PageChangeEvent,
+} from "@react-pdf-viewer/core";
 import { zoomPlugin } from "@react-pdf-viewer/zoom";
 import { pageNavigationPlugin } from "@react-pdf-viewer/page-navigation";
 import "@react-pdf-viewer/core/lib/styles/index.css";
@@ -34,11 +39,8 @@ export default function ContinuousScrollPDFViewer({
   const { zoomTo } = zoomPluginInstance;
 
   const pageNavigationPluginInstance = pageNavigationPlugin();
-  const { 
-    GoToPreviousPage, 
-    GoToNextPage, 
-    CurrentPageLabel 
-  } = pageNavigationPluginInstance;
+  const { GoToPreviousPage, GoToNextPage, CurrentPageLabel } =
+    pageNavigationPluginInstance;
 
   // PDF URL with authentication - fixed dependency array
   const pdfUrl = useMemo(() => {
@@ -189,10 +191,10 @@ export default function ContinuousScrollPDFViewer({
               variant="secondary"
               disabled={scale <= 0.5}
             >
-              🔍−
+              −
             </Button>
             <span className="text-sm text-slate-600 min-w-12 text-center font-medium">
-              {Math.round(scale * 100)}%
+              🔍{Math.round(scale * 100)}%
             </span>
             <Button
               onClick={zoomIn}
@@ -200,7 +202,7 @@ export default function ContinuousScrollPDFViewer({
               variant="secondary"
               disabled={scale >= 3.0}
             >
-              🔍+
+              +
             </Button>
             <Button onClick={resetZoom} size="sm" variant="secondary">
               Reset
