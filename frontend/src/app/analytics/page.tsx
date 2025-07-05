@@ -19,6 +19,7 @@ import {
   Zap,
   ChevronDown,
 } from "lucide-react";
+import config from "@/config/config";
 
 interface AnalyticsData {
   totalDocuments: number;
@@ -103,7 +104,7 @@ export default function AnalyticsDashboard() {
         }
 
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/analytics/dashboard`,
+          `${config.apiUrl}/api/v1/analytics/dashboard`,
           {
             method: "GET",
             headers: {
