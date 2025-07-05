@@ -322,22 +322,6 @@ class LegalReportPDF(FPDF):
         except Exception:
             return "N/A"
     
-    def format_list_section(self, items: List[str], description: str) -> str:
-        """Format a list of items into a well-structured section - now handled by add_professional_list."""
-        # This method is now deprecated in favor of add_professional_list
-        # but kept for compatibility
-        if not items:
-            return "No items identified in this category."
-            
-        formatted_text = f"{description}:\n\n"
-        
-        for i, item in enumerate(items, 1):
-            clean_item = item.strip()
-            if clean_item:
-                formatted_text += f"{i}. {clean_item}\n\n"
-        
-        return formatted_text.strip()
-    
     def add_clause_overview_section(self, clauses: List[Dict[str, Any]]):
         """Add a clause overview section with risk breakdown."""
         self.add_page()

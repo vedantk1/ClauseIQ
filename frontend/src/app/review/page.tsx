@@ -339,15 +339,9 @@ export default function ReviewWorkspace() {
 
   // Handler functions for ClauseDetailsPanel
   const handleAddNote = async (clause: { id?: string }, noteText?: string) => {
-    let note = noteText;
-    if (!note) {
-      // Fallback to prompt for backward compatibility (though we'll always pass noteText now)
-      const promptResult = prompt("Add a note for this clause:");
-      note = promptResult || undefined;
-    }
-    if (note && clause.id) {
+    if (noteText && clause.id) {
       try {
-        await addNote(clause.id, note);
+        await addNote(clause.id, noteText);
       } catch {
         // Error handling is done in the hook
       }
@@ -379,22 +373,14 @@ export default function ReviewWorkspace() {
       const notes = getAllNotes(clause.id);
       const targetNote = noteId ? notes.find((n) => n.id === noteId) : notes[0];
 
-      if (targetNote) {
-        let updatedNote = editedText;
-        if (!updatedNote) {
-          // Fallback to prompt for backward compatibility (though we'll always pass editedText now)
-          const promptResult = prompt("Edit your note:", targetNote.text);
-          updatedNote = promptResult || undefined;
-        }
-        if (updatedNote && updatedNote !== targetNote.text) {
-          if (updatedNote.trim() === "") {
-            await handleDeleteNote(clause, targetNote.id);
-          } else {
-            try {
-              await editNote(clause.id, targetNote.id, updatedNote);
-            } catch {
-              // Error handling is done in the hook
-            }
+      if (targetNote && editedText && editedText !== targetNote.text) {
+        if (editedText.trim() === "") {
+          await handleDeleteNote(clause, targetNote.id);
+        } else {
+          try {
+            await editNote(clause.id, targetNote.id, editedText);
+          } catch {
+            // Error handling is done in the hook
           }
         }
       }

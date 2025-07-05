@@ -42,38 +42,6 @@ def versioned_response(version: Optional[str] = None):
     return decorator
 
 
-def deprecated_endpoint(message: str = "This endpoint is deprecated", version: Optional[str] = None):
-    """
-    Decorator to mark endpoints as deprecated.
-    
-    Args:
-        message: Deprecation message
-        version: Version when the endpoint was deprecated
-    """
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            # Add deprecation warning to response headers
-            result = await func(*args, **kwargs)
-            if hasattr(result, 'headers'):
-                result.headers["X-Deprecated"] = "true"
-                result.headers["X-Deprecation-Message"] = message
-                if version:
-                    result.headers["X-Deprecated-Since"] = version
-            
-            # Log deprecation warning
-            logger.warning(f"Deprecated endpoint called: {func.__name__} - {message}")
-            return result
-        
-        # Store deprecation info on the function
-        wrapper.__deprecated__ = True
-        wrapper.__deprecation_message__ = message
-        wrapper.__deprecated_since__ = version
-        return wrapper
-    
-    return decorator
-
-
 class APIVersion(str, Enum):
     """Supported API versions."""
     V1 = "v1"

@@ -11,7 +11,7 @@ import pdfplumber
 from auth import get_current_user
 from database.service import get_document_service
 from middleware.api_standardization import APIResponse, create_success_response, create_error_response
-from middleware.versioning import versioned_response, deprecated_endpoint
+from middleware.versioning import versioned_response
 from services.document_service import validate_file, process_document_with_llm, is_llm_processing_available
 # PHASE 3 MIGRATION: Main AI functions still from ai_service for stability
 from services.ai_service import generate_structured_document_summary

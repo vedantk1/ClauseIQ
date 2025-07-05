@@ -44,7 +44,6 @@ class DatabaseFactory:
             uri=settings.database.uri,
             database=settings.database.database,
             collection_prefix=getattr(settings.database, 'collection_prefix', ''),
-            pool_size=settings.database.max_pool_size,  # Backwards compatibility
             timeout=30,
             max_pool_size=settings.database.max_pool_size,
             min_pool_size=settings.database.min_pool_size,

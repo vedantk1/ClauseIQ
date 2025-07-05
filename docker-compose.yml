@@ -46,7 +46,7 @@ services:
       MAX_FILE_SIZE_MB: 10
       ALLOWED_FILE_TYPES: .pdf
 
-      # Storage configuration (kept for backward compatibility)
+      # Storage configuration
       STORAGE_DIR: /app/documents_storage
     volumes:
       - documents_storage:/app/documents_storage

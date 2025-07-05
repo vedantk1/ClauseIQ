@@ -5,7 +5,7 @@ import uuid
 from fastapi import APIRouter, HTTPException, Depends, Request
 from database.service import get_document_service
 from middleware.api_standardization import APIResponse, ErrorResponse, create_error_response
-from middleware.versioning import versioned_response, deprecated_endpoint
+from middleware.versioning import versioned_response
 from email_service import send_password_reset_email
 from auth import (
     create_access_token,

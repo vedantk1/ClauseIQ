@@ -96,7 +96,7 @@ class AIModelConfig:
         ]
 
 
-# Convenience exports for backward compatibility
+# Module-level exports for convenient access
 AVAILABLE_MODELS = AIModelConfig.get_model_ids()
 DEFAULT_MODEL = AIModelConfig.get_default_model()
 MODEL_DESCRIPTIONS = {model.id: model.description for model in AIModelConfig.get_available_models()}
