@@ -30,6 +30,85 @@
 
 ## 🔄 **RECENT CHANGES**
 
+### **[2025-07-05] - API DOCUMENTATION MAJOR UPDATE & CODEBASE CLEANUP**
+
+**Type**: Documentation + Codebase Cleanup  
+**Impact**: Documentation, API Reference  
+**Agent**: GitHub Copilot
+
+**Changes:**
+
+- ✅ **API Documentation Overhaul**: Fixed major discrepancies between documented and actual API endpoints
+- ✅ **Chat API Correction**: Updated documentation to reflect single-session-per-document architecture vs. documented multi-session system
+- ✅ **Missing Endpoints Added**: Documented highlights, analytics, extract-text, and additional document endpoints
+- ✅ **URL Structure Fixed**: Corrected endpoint paths to match actual router implementations
+- ✅ **Version Update**: Updated API version to 3.1 and last updated date to July 5, 2025
+- ✅ **Response Format Consistency**: Ensured all examples match actual APIResponse wrapper structure
+
+**Critical Issues Resolved:**
+
+1. **Chat API Architecture Mismatch**:
+
+   - **Before**: `/api/v1/chat/{document_id}/chat/sessions` and `/api/v1/chat/{document_id}/chat/{session_id}/messages`
+   - **After**: `/api/v1/chat/{document_id}/session` and `/api/v1/chat/{document_id}/message`
+   - **Impact**: Prevents incorrect API integrations
+
+2. **Missing Feature Documentation**:
+
+   - Added 7 highlights endpoints (`/highlights/*`)
+   - Added analytics dashboard endpoint (`/analytics/dashboard`)
+   - Added document text extraction (`/extract-text/`)
+   - Added PDF download and metadata endpoints
+
+3. **Outdated Information**:
+   - Updated last modified date from June 22 → July 5, 2025
+   - Updated version from 3.0 → 3.1
+   - Fixed response format examples
+
+**Technical Details:**
+
+- **File**: `docs/API.md`
+- **Endpoints Documented**: 35+ endpoints (vs. ~20 previously)
+- **New Sections Added**: Highlights API, Analytics API, Additional Document endpoints
+- **Architecture Corrections**: Chat system, document management flow
+- **Response Format**: Standardized with actual APIResponse wrapper
+
+**Documentation Quality Improvements:**
+
+- ✅ All endpoint paths verified against actual router implementations
+- ✅ Request/response examples updated to match real API behavior
+- ✅ Added missing error codes and status responses
+- ✅ Corrected HTTP methods and authentication requirements
+- ✅ Updated cURL and JavaScript examples
+
+**Impact Assessment:**
+
+- **Developers**: Can now build accurate integrations with the ClauseIQ API
+- **Maintenance**: API documentation reflects actual implementation
+- **Debugging**: Accurate reference for troubleshooting API issues
+- **Future Development**: Solid foundation for API evolution
+
+**Related Documentation:**
+
+- API.md: Comprehensive rewrite with current implementation
+- No breaking changes to actual API - documentation now matches reality
+
+**Validation:**
+
+- ✅ Cross-referenced all endpoints with backend router files
+- ✅ Verified request/response formats against actual implementations
+- ✅ Tested endpoint paths and authentication requirements
+- ✅ Confirmed all examples use correct URL structures
+
+**🎉 API DOCUMENTATION STATUS: ACCURATE AND COMPREHENSIVE**
+
+- 📚 **Coverage**: All major API endpoints documented
+- 🔄 **Accuracy**: Matches actual backend implementation
+- ⚡ **Usability**: Clear examples and proper error handling
+- 🔧 **Maintenance**: Foundation for ongoing updates
+
+---
+
 ### **[2025-06-10] - LLM-BASED CLASSIFICATION SYSTEM IMPLEMENTATION**
 
 **Type**: Major Architecture Enhancement  

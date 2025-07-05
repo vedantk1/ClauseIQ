@@ -10,7 +10,6 @@ import Button from "@/components/Button";
 import Modal from "@/components/ui/Modal";
 import DropdownMenu from "@/components/DropdownMenu";
 import ContinuousScrollPDFViewer from "@/components/ContinuousScrollPDFViewer";
-// import PDFTestNuclear from "@/components/PDFTestNuclear";
 import ReviewSidebar from "@/components/ReviewSidebar";
 import SummaryContent from "@/components/review/SummaryContent";
 import ClausesContent from "@/components/review/ClausesContent";
@@ -25,7 +24,6 @@ export default function ReviewWorkspace() {
   const { currentDocument, setSelectedClause, loadDocument } = useAnalysis();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [documentLoading, setDocumentLoading] = useState(false);
 
   // Load document when component mounts or documentId changes
   useEffect(() => {
@@ -44,7 +42,6 @@ export default function ReviewWorkspace() {
       // If no document is loaded or a different document is loaded, load the requested one
       if (!currentDocument.id || currentDocument.id !== documentId) {
         try {
-          setDocumentLoading(true);
           console.log(`📄 Loading document ${documentId} for review page`);
           await loadDocument(documentId);
           console.log(`✅ Document ${documentId} loaded successfully`);
@@ -53,8 +50,6 @@ export default function ReviewWorkspace() {
           toast.error("Failed to load document. Please try again.");
           // Redirect back to documents page on error
           router.push("/documents");
-        } finally {
-          setDocumentLoading(false);
         }
       }
     };
@@ -84,9 +79,6 @@ export default function ReviewWorkspace() {
 
   // Safe access with defaults
   const safeRiskSummary = riskSummary || { high: 0, medium: 0, low: 0 };
-  const safeRiskHigh = safeRiskSummary?.high ?? 0;
-  const safeRiskMedium = safeRiskSummary?.medium ?? 0;
-  const safeRiskLow = safeRiskSummary?.low ?? 0;
   const [clauseFilter, setClauseFilter] = useState<
     "all" | "high" | "medium" | "low"
   >("all");
@@ -117,12 +109,6 @@ export default function ReviewWorkspace() {
     useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-
-  // Function to handle risk card clicks - switch to clauses tab with filter
-  const handleRiskCardClick = (riskLevel: "high" | "medium" | "low") => {
-    setActiveSidebarTab("clauses");
-    setClauseFilter(riskLevel);
-  };
 
   // Use filtering hook for clause logic - moved to top to avoid conditional hook call
   const filteredClauses = useClauseFiltering({

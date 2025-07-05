@@ -1,6 +1,6 @@
 # 🔌 ClauseIQ API Reference
 
-**Version**: 3.0 | **Last Updated**: June 22, 2025  
+**Version**: 3.1 | **Last Updated**: July 5, 2025  
 **Base URL**: `http://localhost:8000` (development) | `https://legal-ai-6ppy.onrender.com` (production)
 
 ## 📋 **Quick Reference**
@@ -243,6 +243,104 @@ Complete password reset with token from email.
 
 ---
 
+### **POST /api/v1/analysis/analyze/**
+
+Basic document analysis without full document processing.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Request Body:** `multipart/form-data`
+
+- `file`: PDF file (max 10MB)
+- `ai_model` (optional): AI model to use
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "summary": "Brief analysis of the document",
+    "contract_type": "employment",
+    "key_findings": ["Finding 1", "Finding 2"],
+    "processing_time": 15.2
+  },
+  "message": "Document analyzed successfully"
+}
+```
+
+---
+
+### **POST /api/v1/analysis/analyze-clauses/**
+
+Extract and analyze only clauses from a document.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Request Body:** `multipart/form-data`
+
+- `file`: PDF file (max 10MB)
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "clauses": [
+      {
+        "type": "termination",
+        "content": "Either party may terminate...",
+        "risk_level": "medium",
+        "explanation": "Standard termination clause"
+      }
+    ],
+    "total_clauses": 15,
+    "risk_summary": {
+      "high": 2,
+      "medium": 8,
+      "low": 5
+    },
+    "document_id": "temp_doc_uuid"
+  }
+}
+```
+
+---
+
+### **GET /api/v1/analysis/documents/{document_id}/clauses**
+
+Get clauses for a specific document.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "clauses": [
+      {
+        "type": "termination",
+        "content": "Either party may terminate...",
+        "risk_level": "medium",
+        "explanation": "Standard termination clause"
+      }
+    ],
+    "total_clauses": 15,
+    "risk_summary": {
+      "high": 2,
+      "medium": 8,
+      "low": 5
+    },
+    "document_id": "doc_uuid"
+  }
+}
+```
+
+---
+
 ## 📄 **Document Analysis Endpoints**
 
 ### **POST /api/v1/analysis/analyze-document/**
@@ -445,7 +543,7 @@ Add or update notes for a document.
 
 ## 💬 **Chat Endpoints**
 
-### **GET /api/v1/chat/{document_id}/chat/status**
+### **GET /api/v1/chat/{document_id}/status**
 
 Check if document is ready for chat functionality.
 
@@ -467,19 +565,11 @@ Check if document is ready for chat functionality.
 
 ---
 
-### **POST /api/v1/chat/{document_id}/chat/sessions**
+### **POST /api/v1/chat/{document_id}/session**
 
-Create a new chat session for a document.
+Get or create the single chat session for a document. ClauseIQ uses a simple single-session-per-document architecture.
 
 **Headers:** `Authorization: Bearer <access_token>`
-
-**Request Body:**
-
-```json
-{
-  "session_name": "Contract Review Discussion"
-}
-```
 
 **Response (201):**
 
@@ -488,46 +578,19 @@ Create a new chat session for a document.
   "success": true,
   "data": {
     "session_id": "session_uuid",
-    "session_name": "Contract Review Discussion",
-    "created_at": "2025-06-22T10:30:00Z",
+    "document_id": "doc_uuid",
+    "created_at": "2025-07-05T10:30:00Z",
     "message_count": 0
   },
-  "message": "Chat session created successfully"
+  "message": "Session ready for document"
 }
 ```
 
 ---
 
-### **GET /api/v1/chat/{document_id}/chat/sessions**
+### **POST /api/v1/chat/{document_id}/message**
 
-List all chat sessions for a document.
-
-**Headers:** `Authorization: Bearer <access_token>`
-
-**Response (200):**
-
-```json
-{
-  "success": true,
-  "data": {
-    "sessions": [
-      {
-        "session_id": "session_uuid",
-        "session_name": "Contract Review Discussion",
-        "created_at": "2025-06-22T10:30:00Z",
-        "last_message_at": "2025-06-22T11:15:00Z",
-        "message_count": 8
-      }
-    ]
-  }
-}
-```
-
----
-
-### **POST /api/v1/chat/{document_id}/chat/{session_id}/messages**
-
-Send a message in a chat session.
+Send a message to the document's chat session.
 
 **Headers:** `Authorization: Bearer <access_token>`
 
@@ -556,7 +619,7 @@ Send a message in a chat session.
         "relevance_score": 0.92
       }
     ],
-    "timestamp": "2025-06-22T10:30:00Z",
+    "timestamp": "2025-07-05T10:30:00Z",
     "tokens_used": 150
   },
   "message": "Message sent successfully"
@@ -570,9 +633,9 @@ Send a message in a chat session.
 
 ---
 
-### **GET /api/v1/chat/{document_id}/chat/{session_id}/messages**
+### **GET /api/v1/chat/{document_id}/history**
 
-Get chat message history for a session.
+Get chat message history for the document's session.
 
 **Headers:** `Authorization: Bearer <access_token>`
 
@@ -593,7 +656,7 @@ Get chat message history for a session.
         "user_message": "What is the termination notice period?",
         "ai_response": "According to the contract...",
         "sources": [...],
-        "timestamp": "2025-06-22T10:30:00Z"
+        "timestamp": "2025-07-05T10:30:00Z"
       }
     ],
     "pagination": {
@@ -607,9 +670,31 @@ Get chat message history for a session.
 
 ---
 
-### **DELETE /api/v1/chat/{document_id}/chat/{session_id}**
+### **GET /api/v1/chat/health**
 
-Delete a chat session and all its messages.
+Check chat service health status.
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "chat_service": "healthy",
+    "rag_service": "healthy",
+    "vector_storage": "healthy",
+    "timestamp": "2025-07-05T10:30:00Z"
+  }
+}
+```
+
+---
+
+## 🔍 **Highlights Endpoints**
+
+### **GET /api/v1/highlights/documents/{document_id}/highlights**
+
+Get all highlights for a document.
 
 **Headers:** `Authorization: Bearer <access_token>`
 
@@ -618,7 +703,328 @@ Delete a chat session and all its messages.
 ```json
 {
   "success": true,
-  "message": "Chat session deleted successfully"
+  "data": {
+    "highlights": [
+      {
+        "id": "highlight_uuid",
+        "text": "Selected text from document",
+        "position": {
+          "start": 150,
+          "end": 200
+        },
+        "notes": "User notes about this highlight",
+        "created_at": "2025-07-05T10:30:00Z",
+        "analysis_status": "completed"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### **POST /api/v1/highlights/documents/{document_id}/highlights**
+
+Create a new highlight for a document.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Request Body:**
+
+```json
+{
+  "text": "Selected text from document",
+  "position": {
+    "start": 150,
+    "end": 200
+  },
+  "notes": "User notes about this highlight"
+}
+```
+
+**Response (201):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "highlight_uuid",
+    "text": "Selected text from document",
+    "position": {
+      "start": 150,
+      "end": 200
+    },
+    "notes": "User notes about this highlight",
+    "created_at": "2025-07-05T10:30:00Z",
+    "analysis_status": "pending"
+  },
+  "message": "Highlight created successfully"
+}
+```
+
+---
+
+### **PUT /api/v1/highlights/documents/{document_id}/highlights/{highlight_id}**
+
+Update an existing highlight.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Request Body:**
+
+```json
+{
+  "notes": "Updated user notes"
+}
+```
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "highlight_uuid",
+    "text": "Selected text from document",
+    "notes": "Updated user notes",
+    "updated_at": "2025-07-05T10:30:00Z"
+  },
+  "message": "Highlight updated successfully"
+}
+```
+
+---
+
+### **DELETE /api/v1/highlights/documents/{document_id}/highlights/{highlight_id}**
+
+Delete a highlight.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "message": "Highlight deleted successfully"
+}
+```
+
+---
+
+### **POST /api/v1/highlights/documents/{document_id}/highlights/{highlight_id}/analyze**
+
+Analyze a highlight using AI.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Request Body:**
+
+```json
+{
+  "ai_model": "gpt-4o",
+  "analysis_type": "risk_assessment"
+}
+```
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "analysis": {
+      "risk_level": "medium",
+      "explanation": "This clause contains provisions that may require attention...",
+      "recommendations": [
+        "Consider negotiating alternative terms",
+        "Seek legal review"
+      ]
+    },
+    "ai_model_used": "gpt-4o",
+    "analyzed_at": "2025-07-05T10:30:00Z"
+  },
+  "message": "Highlight analyzed successfully"
+}
+```
+
+---
+
+### **POST /api/v1/highlights/documents/{document_id}/highlights/{highlight_id}/rewrite**
+
+Get AI-powered rewrite suggestions for a highlight.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Request Body:**
+
+```json
+{
+  "ai_model": "gpt-4o",
+  "rewrite_style": "business_friendly"
+}
+```
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "original_text": "Original highlighted text",
+    "rewritten_text": "Improved version of the text",
+    "improvements": ["Clearer language", "Reduced ambiguity"],
+    "ai_model_used": "gpt-4o"
+  },
+  "message": "Rewrite suggestions generated successfully"
+}
+```
+
+---
+
+### **GET /api/v1/highlights/documents/{document_id}/highlights/ai-insights**
+
+Get AI-powered insights for all highlights in a document.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "insights": [
+      {
+        "highlight_id": "highlight_uuid",
+        "insight_type": "risk_warning",
+        "message": "This clause may pose compliance risks",
+        "confidence": 0.85
+      }
+    ],
+    "summary": "Overall risk assessment and recommendations",
+    "generated_at": "2025-07-05T10:30:00Z"
+  }
+}
+```
+
+---
+
+## 📊 **Analytics Endpoints**
+
+### **GET /api/v1/analytics/dashboard**
+
+Get user analytics dashboard data.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "total_documents": 25,
+    "documents_this_month": 8,
+    "total_chat_messages": 150,
+    "highlights_created": 45,
+    "contract_types": {
+      "employment": 10,
+      "nda": 8,
+      "service_agreement": 5,
+      "other": 2
+    },
+    "recent_activity": [
+      {
+        "type": "document_upload",
+        "document_name": "contract.pdf",
+        "date": "2025-07-05T09:30:00Z"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 📄 **Additional Document Endpoints**
+
+### **POST /api/v1/documents/extract-text/**
+
+Extract text from a PDF document without full analysis.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Request Body:** `multipart/form-data`
+
+- `file`: PDF file (max 10MB)
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "extracted_text": "Full text content of the PDF...",
+    "filename": "document.pdf",
+    "page_count": 5,
+    "character_count": 15000
+  },
+  "message": "Text extracted successfully"
+}
+```
+
+---
+
+### **GET /api/v1/documents/documents/{document_id}/pdf**
+
+Download the original PDF file for a document.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Response (200):** PDF file download
+
+**Headers:**
+
+- `Content-Type: application/pdf`
+- `Content-Disposition: attachment; filename="document.pdf"`
+
+---
+
+### **HEAD /api/v1/documents/documents/{document_id}/pdf**
+
+Check if PDF file exists for a document.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Response (200):** No content, headers only
+
+**Headers:**
+
+- `Content-Length: {file_size}`
+- `Last-Modified: {date}`
+
+---
+
+### **GET /api/v1/documents/documents/{document_id}/pdf/metadata**
+
+Get metadata about the PDF file.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "filename": "contract.pdf",
+    "file_size": 2048576,
+    "content_type": "application/pdf",
+    "upload_date": "2025-07-05T10:30:00Z",
+    "page_count": 10,
+    "pdf_available": true
+  }
 }
 ```
 
@@ -736,21 +1142,38 @@ Get list of available AI models.
 
 ### **GET /health**
 
-Check system health and service availability.
+Basic health check endpoint.
 
 **Response (200):**
 
 ```json
 {
-  "status": "healthy",
-  "timestamp": "2025-06-22T10:30:00Z",
-  "services": {
-    "database": "healthy",
-    "ai_service": "healthy",
-    "vector_storage": "healthy",
-    "email_service": "healthy"
+  "success": true,
+  "data": {
+    "status": "healthy",
+    "service": "ClauseIQ Legal AI Backend"
   },
-  "version": "3.0.0"
+  "timestamp": "2025-07-05T10:30:00Z"
+}
+```
+
+---
+
+### **GET /api/v1/health/database**
+
+Check database connectivity and health.
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "database": "healthy",
+    "connection_status": "connected",
+    "response_time_ms": 25
+  },
+  "timestamp": "2025-07-05T10:30:00Z"
 }
 ```
 
@@ -936,4 +1359,4 @@ class ClauseIQAPI {
 
 ---
 
-_Last Updated: June 22, 2025 | Version 3.0_
+_Last Updated: July 5, 2025 | Version 3.1_
