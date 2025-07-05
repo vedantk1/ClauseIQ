@@ -40,37 +40,6 @@ export default function SummaryContent({
           fallbackSummary={summary}
         />
 
-        {/* Risk Overview */}
-        <Card density="compact">
-          <h3 className="font-heading text-lg text-text-primary mb-4">
-            Risk Overview
-          </h3>
-          <div className="space-y-4">
-            <div className="flex justify-between">
-              <span className="text-text-secondary">Overall Risk</span>
-              <span
-                className={`font-medium ${
-                  riskSummary.high > 0
-                    ? "text-accent-rose"
-                    : riskSummary.medium > 0
-                    ? "text-accent-amber"
-                    : riskSummary.low > 0
-                    ? "text-accent-green"
-                    : "text-text-secondary"
-                }`}
-              >
-                {riskSummary.high > 0
-                  ? "High"
-                  : riskSummary.medium > 0
-                  ? "Medium"
-                  : riskSummary.low > 0
-                  ? "Low"
-                  : "Not analyzed"}
-              </span>
-            </div>
-          </div>
-        </Card>
-
         {/* Clause Insights */}
         {clauses && clauses.length > 0 && (
           <Card density="compact">
