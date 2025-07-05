@@ -1,15 +1,14 @@
 "use client";
 import React from "react";
 import Card from "@/components/Card";
+import DocumentStatsBar from "@/components/DocumentStatsBar";
 import StructuredSummary from "@/components/StructuredSummary";
-import DocumentInsights from "@/components/DocumentInsights";
 import type { Clause } from "@shared/common_generated";
 import type { StructuredSummary as StructuredSummaryType } from "@/context/AnalysisContext";
 
 interface SummaryContentProps {
   structuredSummary?: StructuredSummaryType;
   summary?: string;
-  fileName?: string;
   fullText?: string;
   clauses?: Clause[];
   riskSummary: { high: number; medium: number; low: number };
@@ -19,7 +18,6 @@ interface SummaryContentProps {
 export default function SummaryContent({
   structuredSummary,
   summary,
-  fileName,
   fullText,
   clauses,
   riskSummary,
@@ -28,20 +26,18 @@ export default function SummaryContent({
   return (
     <div className="h-full overflow-y-auto">
       <div className="p-4 space-y-6">
-        {/* Structured Summary */}
-        <StructuredSummary
-          structuredSummary={structuredSummary || null}
-          fallbackSummary={summary}
-        />
-
-        {/* Document Insights */}
-        <DocumentInsights
-          structuredSummary={structuredSummary}
-          fileName={fileName}
+        {/* Document Stats Bar */}
+        <DocumentStatsBar
           fullText={fullText}
           clauseCount={clauses?.length || 0}
           riskSummary={riskSummary}
           clauses={clauses}
+        />
+
+        {/* Structured Summary */}
+        <StructuredSummary
+          structuredSummary={structuredSummary || null}
+          fallbackSummary={summary}
         />
 
         {/* Risk Overview */}
