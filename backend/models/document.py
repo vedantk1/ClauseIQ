@@ -11,6 +11,10 @@ class DocumentListItem(BaseModel):
     filename: str
     upload_date: str
     contract_type: Optional[str] = None
+    rag_processed: Optional[bool] = None
+    pinecone_stored: Optional[bool] = None
+    chunk_count: Optional[int] = None
+    embedding_model: Optional[str] = None
 
 
 class DocumentListResponse(BaseModel):
@@ -29,6 +33,13 @@ class DocumentDetailResponse(BaseModel):
     clauses: Optional[List[Clause]] = None
     risk_summary: Optional[RiskSummary] = None
     user_id: str
+    rag_processed: Optional[bool] = None
+    pinecone_stored: Optional[bool] = None
+    chunk_count: Optional[int] = None
+    chunk_ids: Optional[List[str]] = None
+    embedding_model: Optional[str] = None
+    rag_processed_at: Optional[str] = None
+    storage_service: Optional[str] = None
 
 
 class AnalyzeDocumentResponse(BaseModel):
