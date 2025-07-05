@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import Card from "@/components/Card";
-import Button from "@/components/Button";
 import StructuredSummary from "@/components/StructuredSummary";
 import DocumentInsights from "@/components/DocumentInsights";
 import type { Clause } from "@shared/common_generated";
@@ -15,10 +14,6 @@ interface SummaryContentProps {
   clauses?: Clause[];
   riskSummary: { high: number; medium: number; low: number };
   onRiskCardClick: (riskLevel: "high" | "medium" | "low") => void;
-  onDownloadPdf: () => void;
-  onDownloadOriginalPdf: () => void;
-  isDownloadingPdf: boolean;
-  isDownloadingOriginalPdf: boolean;
 }
 
 export default function SummaryContent({
@@ -29,10 +24,6 @@ export default function SummaryContent({
   clauses,
   riskSummary,
   onRiskCardClick,
-  onDownloadPdf,
-  onDownloadOriginalPdf,
-  isDownloadingPdf,
-  isDownloadingOriginalPdf,
 }: SummaryContentProps) {
   return (
     <div className="h-full overflow-y-auto">
@@ -133,63 +124,6 @@ export default function SummaryContent({
             </div>
           </Card>
         )}
-
-        {/* Quick Actions */}
-        <Card density="compact">
-          <h3 className="font-heading text-lg text-text-primary mb-4">
-            Quick Actions
-          </h3>
-          <div className="space-y-3">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="w-full justify-start"
-              onClick={onDownloadPdf}
-              disabled={isDownloadingPdf}
-              loading={isDownloadingPdf}
-            >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              {isDownloadingPdf ? "Generating PDF..." : "Download PDF Report"}
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="w-full justify-start"
-              onClick={onDownloadOriginalPdf}
-              disabled={isDownloadingOriginalPdf}
-              loading={isDownloadingOriginalPdf}
-            >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
-                />
-              </svg>
-              {isDownloadingOriginalPdf
-                ? "Downloading Original PDF..."
-                : "Download Original PDF"}
-            </Button>
-          </div>
-        </Card>
       </div>
     </div>
   );

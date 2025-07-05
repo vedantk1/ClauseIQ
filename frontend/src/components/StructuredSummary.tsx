@@ -205,7 +205,7 @@ export default function StructuredSummary({
         structuredSummary.risk_highlights.length > 0 && (
           <CollapsibleSection
             title="Risk Highlights"
-            defaultExpanded={true}
+            defaultExpanded={false}
             previewText={createPreviewText(
               structuredSummary.risk_highlights,
               "list"
