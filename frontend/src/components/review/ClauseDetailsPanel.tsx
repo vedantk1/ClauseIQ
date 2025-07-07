@@ -224,15 +224,15 @@ export default function ClauseDetailsPanel({
           </span>
           <Button
             size="sm"
-            variant="tertiary"
+            variant="secondary"
             onClick={handleAddNote}
             title="Add a personal note to this clause"
           >
-            📝 Add Note
+            Add Note
           </Button>
           <Button
             size="sm"
-            variant="tertiary"
+            variant="secondary"
             onClick={(event) => onFlagForReview(selectedClause, event)}
             title={
               flaggedClauses.has(selectedClause.id || "")
@@ -240,17 +240,15 @@ export default function ClauseDetailsPanel({
                 : "Flag this clause for legal review"
             }
           >
-            {flaggedClauses.has(selectedClause.id || "")
-              ? "🏳️ Unflag"
-              : "🚩 Flag"}
+            {flaggedClauses.has(selectedClause.id || "") ? "Unflag" : "Flag"}
           </Button>
           <Button
             size="sm"
-            variant="tertiary"
+            variant="secondary"
             onClick={() => onCopyClause(selectedClause)}
             title="Copy analysis to clipboard"
           >
-            📋 Copy
+            Copy
           </Button>
         </div>
 

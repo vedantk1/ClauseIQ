@@ -94,15 +94,6 @@ export default function ReviewSidebar({
       {/* Content Panel - Let parent control width */}
       {!isCollapsed && activeTab && (
         <div className="flex-1 bg-bg-primary border-r border-border-light flex flex-col min-w-0">
-          {/* Tab Header */}
-          <div className="p-4 border-b border-border-light">
-            <div className="flex items-center">
-              <h2 className="font-heading text-lg text-text-primary">
-                {tabs.find((tab) => tab.id === activeTab)?.label}
-              </h2>
-            </div>
-          </div>
-
           {/* Tab Content */}
           <div className="flex-1 overflow-hidden">
             {tabs.find((tab) => tab.id === activeTab)?.content}
