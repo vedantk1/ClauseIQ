@@ -15,6 +15,8 @@ interface DropdownMenuProps {
   items: DropdownMenuItem[];
   align?: "left" | "right";
   className?: string;
+  triggerClassName?: string;
+  triggerVariant?: "default" | "ghost" | "outline";
 }
 
 export default function DropdownMenu({
@@ -22,6 +24,8 @@ export default function DropdownMenu({
   items,
   align = "right",
   className,
+  triggerClassName,
+  triggerVariant = "default",
 }: DropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -74,13 +78,26 @@ export default function DropdownMenu({
     }
   };
 
+  const getTriggerClasses = () => {
+    const baseClasses = "px-4 py-2 rounded-md transition-colors border";
+
+    const variantClasses = {
+      default:
+        "bg-bg-surface text-text-primary hover:bg-bg-elevated border-border-muted",
+      ghost: "hover:bg-bg-elevated border-transparent",
+      outline: "hover:bg-bg-elevated border-border-muted",
+    };
+
+    return clsx(baseClasses, variantClasses[triggerVariant], triggerClassName);
+  };
+
   return (
     <div className={clsx("relative", className)}>
       {/* Trigger */}
       <button
         ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="px-4 py-2 rounded-md hover:bg-bg-elevated transition-colors border border-border-muted"
+        className={getTriggerClasses()}
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label="More actions"

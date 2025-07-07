@@ -14,6 +14,7 @@ import "../styles/pdf-viewer.css";
 
 import Card from "./Card";
 import Button from "./Button";
+import DropdownMenu from "./DropdownMenu";
 import config from "@/config/config";
 import "../utils/pdfConsoleFilter";
 
@@ -21,18 +22,26 @@ interface ContinuousScrollPDFViewerProps {
   documentId: string;
   fileName?: string;
   className?: string;
+  // Optional dropdown menu props
+  dropdownMenuItems?: Array<{
+    label: string;
+    icon?: React.ReactNode;
+    onClick: () => void;
+    disabled?: boolean;
+    variant?: "default" | "danger";
+  }>;
 }
 
 export default function ContinuousScrollPDFViewer({
   documentId,
   fileName = "Document",
   className = "",
+  dropdownMenuItems,
 }: ContinuousScrollPDFViewerProps) {
   const [scale, setScale] = useState(1.0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
-  const [currentPage, setCurrentPage] = useState<number>(0);
 
   // Create plugin instances - removed useMemo to avoid hooks rule violation
   const zoomPluginInstance = zoomPlugin();
@@ -73,7 +82,6 @@ export default function ContinuousScrollPDFViewer({
       currentPage: e.currentPage,
       timestamp: new Date().toISOString(),
     });
-    setCurrentPage(e.currentPage);
   };
 
   // Debug: Monitor state changes
@@ -208,6 +216,32 @@ export default function ContinuousScrollPDFViewer({
               Reset
             </Button>
           </div>
+
+          {/* Document Actions Menu */}
+          {dropdownMenuItems && dropdownMenuItems.length > 0 && (
+            <div className="flex items-center border-l border-gray-300 pl-4">
+              <DropdownMenu
+                align="right"
+                triggerVariant="default"
+                trigger={
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                    />
+                  </svg>
+                }
+                items={dropdownMenuItems}
+              />
+            </div>
+          )}
         </div>
       </div>
 
