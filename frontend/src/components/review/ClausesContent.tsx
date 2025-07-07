@@ -2,7 +2,6 @@
 import React from "react";
 import ClauseNavigator from "@/components/review/ClauseNavigator";
 import ClauseDetailsPanel from "@/components/review/ClauseDetailsPanel";
-import Button from "@/components/Button";
 import type { Clause } from "@shared/common_generated";
 
 interface Note {
@@ -87,49 +86,20 @@ export default function ClausesContent({
   // If a clause is selected, show the details view
   if (selectedClause) {
     return (
-      <div className="h-full flex flex-col">
-        {/* Header with back button */}
-        <div className="p-4 border-b border-border-light">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onClauseSelect(null)}
-              className="flex items-center gap-2"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Back to Clauses
-            </Button>
-          </div>
-        </div>
-
-        {/* Clause Details */}
-        <div className="flex-1 overflow-hidden">
-          <ClauseDetailsPanel
-            selectedClause={selectedClause}
-            flaggedClauses={flaggedClauses}
-            hasNotes={hasNotes}
-            getAllNotes={getAllNotes}
-            getNotesCount={getNotesCount}
-            onAddNote={onAddNote}
-            onEditNote={onEditNote}
-            onDeleteNote={onDeleteNote}
-            onFlagForReview={onFlagForReview}
-            onCopyClause={onCopyClause}
-          />
-        </div>
+      <div className="h-full">
+        <ClauseDetailsPanel
+          selectedClause={selectedClause}
+          flaggedClauses={flaggedClauses}
+          hasNotes={hasNotes}
+          getAllNotes={getAllNotes}
+          getNotesCount={getNotesCount}
+          onAddNote={onAddNote}
+          onEditNote={onEditNote}
+          onDeleteNote={onDeleteNote}
+          onFlagForReview={onFlagForReview}
+          onCopyClause={onCopyClause}
+          onBack={() => onClauseSelect(null)}
+        />
       </div>
     );
   }

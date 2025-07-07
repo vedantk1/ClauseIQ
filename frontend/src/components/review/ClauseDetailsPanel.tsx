@@ -29,6 +29,7 @@ interface ClauseDetailsPanelProps {
   onDeleteNote: (clause: Clause, noteId?: string) => void;
   onFlagForReview: (clause: Clause, event?: React.MouseEvent) => void;
   onCopyClause: (clause: Clause) => void;
+  onBack?: () => void; // Optional back navigation function
 }
 
 export default function ClauseDetailsPanel({
@@ -42,6 +43,7 @@ export default function ClauseDetailsPanel({
   onDeleteNote,
   onFlagForReview,
   onCopyClause,
+  onBack,
 }: ClauseDetailsPanelProps) {
   // New state for notes drawer - keyed by clause ID to preserve context
   const [notesDrawerState, setNotesDrawerState] = useState<
@@ -182,9 +184,38 @@ export default function ClauseDetailsPanel({
 
   return (
     <Card>
-      <h2 className="font-heading text-heading-sm text-text-primary mb-4">
-        Clause Details
-      </h2>
+      {/* Back Button + Title */}
+      {onBack ? (
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={onBack}
+            className="p-1 rounded-md hover:bg-bg-elevated transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple focus:ring-offset-2"
+            aria-label="Back to clauses"
+          >
+            <svg
+              className="w-4 h-4 text-text-secondary hover:text-accent-purple transition-colors"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+          <h2 className="font-heading text-heading-sm text-text-primary">
+            Clause Details
+          </h2>
+        </div>
+      ) : (
+        <h2 className="font-heading text-heading-sm text-text-primary mb-4">
+          Clause Details
+        </h2>
+      )}
+
       <div className="space-y-6">
         {/* Quick Action Bar */}
         <div className="flex items-center gap-2 p-3 bg-bg-elevated rounded-lg border border-border-muted">
