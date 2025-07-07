@@ -11,6 +11,10 @@ interface Note {
   created_at?: string;
 }
 
+/**
+ * Props for ClausesContent component
+ * Supports both clause list navigation and individual clause details
+ */
 interface ClausesContentProps {
   clauses: Clause[];
   filteredClauses: Clause[];
@@ -28,7 +32,7 @@ interface ClausesContentProps {
   flaggedClauses: Set<string>;
   hasNotes: (clauseId: string) => boolean;
   contractType?: string;
-  // Unused props from previous implementation - kept for compatibility
+  // Note management and clause interaction props - used in details view
   getAllNotes: (clauseId: string) => Note[];
   getNotesCount: (clauseId: string) => number;
   onAddNote: (clause: { id?: string }, noteText?: string) => Promise<void>;
@@ -45,6 +49,16 @@ interface ClausesContentProps {
   onCopyClause: (clause: Clause) => Promise<void>;
 }
 
+/**
+ * ClausesContent - Handles clause navigation and details display
+ *
+ * This component implements a list-to-detail navigation pattern:
+ * - When no clause is selected: Shows ClauseNavigator with filters and clause list
+ * - When a clause is selected: Shows ClauseDetailsPanel with back button
+ *
+ * @param selectedClause - Currently selected clause (null for list view)
+ * @param onClauseSelect - Callback to select/deselect clauses (pass null to go back to list)
+ */
 export default function ClausesContent({
   clauses,
   filteredClauses,
