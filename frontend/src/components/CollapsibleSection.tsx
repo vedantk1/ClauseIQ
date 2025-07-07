@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import Card from "./Card";
 
 interface CollapsibleSectionProps {
@@ -20,24 +20,11 @@ export default function CollapsibleSection({
   previewText,
 }: CollapsibleSectionProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-  const [height, setHeight] = useState<number | undefined>(
-    defaultExpanded ? undefined : 0
-  );
   const contentRef = useRef<HTMLDivElement>(null);
 
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
   };
-
-  useEffect(() => {
-    if (contentRef.current) {
-      if (isExpanded) {
-        setHeight(contentRef.current.scrollHeight);
-      } else {
-        setHeight(0);
-      }
-    }
-  }, [isExpanded]);
 
   return (
     <Card className={`${isExpanded ? "" : "!p-3"} ${className}`}>
@@ -85,7 +72,7 @@ export default function CollapsibleSection({
         <div
           id={`section-${title.replace(/\s+/g, "-").toLowerCase()}`}
           className="transition-all duration-300 ease-in-out overflow-hidden"
-          style={{ height }}
+          style={{ height: isExpanded ? "auto" : 0 }}
         >
           <div ref={contentRef}>{children}</div>
         </div>

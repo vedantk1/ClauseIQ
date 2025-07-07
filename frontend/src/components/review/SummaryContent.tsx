@@ -23,7 +23,7 @@ export default function SummaryContent({
   onClausesClick,
 }: SummaryContentProps) {
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="overflow-y-auto">
       <div className="p-4 space-y-6">
         {/* Document Stats Bar */}
         <DocumentStatsBar
