@@ -196,7 +196,6 @@ export const testDataFactory = {
     text: "This is a test clause text",
     clause_type: "general",
     risk_level: "medium",
-    summary: "Test clause summary",
     risk_assessment: "Medium risk assessment",
     recommendations: ["Test recommendation"],
     key_points: ["Test key point"],

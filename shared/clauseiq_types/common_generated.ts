@@ -20,7 +20,6 @@ export interface Clause {
   text?: string;
   clause_type?: ClauseType;
   risk_level?: RiskLevel;
-  summary: string | null;
   risk_assessment: string | null;
   recommendations: string[] | null;
   key_points: string[] | null;

@@ -39,7 +39,6 @@ export function useClauseFiltering({
           const query = searchQuery.toLowerCase().trim();
           const searchableFields = [
             clause.heading || "",
-            clause.summary || "",
             clause.text || "",
             getClauseTypeLabel(clause.clause_type),
           ];

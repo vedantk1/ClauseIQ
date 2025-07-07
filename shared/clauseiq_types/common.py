@@ -109,7 +109,6 @@ class Clause(BaseModel):
     text: str
     clause_type: ClauseType
     risk_level: RiskLevel
-    summary: Optional[str] = None
     risk_assessment: Optional[str] = None
     recommendations: Optional[List[str]] = None
     key_points: Optional[List[str]] = None

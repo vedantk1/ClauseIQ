@@ -425,16 +425,6 @@ export default function ClauseDetailsPanel({
             </div>
           )}
 
-        {/* Clause Summary */}
-        {selectedClause.summary && (
-          <div>
-            <h4 className="font-medium text-text-primary mb-2">Summary</h4>
-            <p className="text-text-secondary text-sm leading-relaxed">
-              {selectedClause.summary}
-            </p>
-          </div>
-        )}
-
         {/* Risk Assessment */}
         {selectedClause.risk_assessment && (
           <div>
