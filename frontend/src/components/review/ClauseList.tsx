@@ -72,8 +72,11 @@ export default function ClauseList({
             {/* Top Row: Title + Icons + Risk Badge */}
             <div className="flex items-start justify-between mb-2">
               <h3 className="font-medium text-text-primary text-sm flex-grow pr-2">
-                {clause.heading ||
-                  `${getClauseTypeLabel(clause.clause_type)} Clause`}
+                {highlightSearchText(
+                  clause.heading ||
+                    `${getClauseTypeLabel(clause.clause_type)} Clause`,
+                  searchQuery
+                )}
               </h3>
 
               {/* Meta Flex: Icons + Risk Badge */}
@@ -122,10 +125,9 @@ export default function ClauseList({
               </span>
               <p className="text-sm text-text-secondary line-clamp-1 flex-1 min-w-0">
                 {highlightSearchText(
-                  clause.summary ||
-                    (clause.text
-                      ? clause.text.substring(0, 90) + "..."
-                      : "No content available"),
+                  clause.text
+                    ? clause.text.substring(0, 90) + "..."
+                    : "No content available",
                   searchQuery
                 )}
               </p>
