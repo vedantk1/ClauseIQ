@@ -95,7 +95,7 @@ export default function ReviewSidebar({
       {!isCollapsed && activeTab && (
         <div className="flex-1 bg-bg-primary border-r border-border-light flex flex-col min-w-0">
           {/* Tab Content */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 min-h-0">
             {tabs.find((tab) => tab.id === activeTab)?.content}
           </div>
         </div>
