@@ -9,6 +9,9 @@ interface CollapsibleSectionProps {
   defaultExpanded?: boolean;
   className?: string;
   previewText?: string; // New prop for preview text
+  sectionId?: string; // Unique identifier for state persistence
+  isExpanded?: boolean; // External state control
+  onToggle?: (sectionId: string, isExpanded: boolean) => void; // External state callback
 }
 
 export default function CollapsibleSection({
@@ -18,12 +21,24 @@ export default function CollapsibleSection({
   defaultExpanded = true,
   className = "",
   previewText,
+  sectionId,
+  isExpanded: externalIsExpanded,
+  onToggle,
 }: CollapsibleSectionProps) {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  // Use external state if provided, otherwise fall back to internal state
+  const [internalIsExpanded, setInternalIsExpanded] = useState(defaultExpanded);
+  const isExpanded =
+    externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded;
   const contentRef = useRef<HTMLDivElement>(null);
 
   const toggleExpanded = () => {
-    setIsExpanded(!isExpanded);
+    if (onToggle && sectionId) {
+      // External state management
+      onToggle(sectionId, !isExpanded);
+    } else {
+      // Internal state management (fallback)
+      setInternalIsExpanded(!internalIsExpanded);
+    }
   };
 
   return (

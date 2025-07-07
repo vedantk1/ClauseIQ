@@ -11,6 +11,8 @@ interface SummaryContentProps {
   fullText?: string;
   clauses?: Clause[];
   riskSummary: { high: number; medium: number; low: number };
+  sectionStates: Record<string, boolean>;
+  onSectionToggle: (sectionId: string, isExpanded: boolean) => void;
   onClausesClick?: () => void;
 }
 
@@ -20,6 +22,8 @@ export default function SummaryContent({
   fullText,
   clauses,
   riskSummary,
+  sectionStates,
+  onSectionToggle,
   onClausesClick,
 }: SummaryContentProps) {
   return (
@@ -38,6 +42,8 @@ export default function SummaryContent({
         <StructuredSummary
           structuredSummary={structuredSummary || null}
           fallbackSummary={summary}
+          sectionStates={sectionStates}
+          onSectionToggle={onSectionToggle}
         />
       </div>
     </div>

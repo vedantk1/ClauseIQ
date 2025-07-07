@@ -6,6 +6,8 @@ import { StructuredSummary as StructuredSummaryType } from "../context/AnalysisC
 interface StructuredSummaryProps {
   structuredSummary: StructuredSummaryType | null;
   fallbackSummary?: string;
+  sectionStates?: Record<string, boolean>;
+  onSectionToggle?: (sectionId: string, isExpanded: boolean) => void;
 }
 
 // Utility function to create preview text
@@ -32,6 +34,8 @@ const createPreviewText = (
 export default function StructuredSummary({
   structuredSummary,
   fallbackSummary,
+  sectionStates,
+  onSectionToggle,
 }: StructuredSummaryProps) {
   // If no structured summary, show fallback or message
   if (!structuredSummary) {
@@ -58,6 +62,9 @@ export default function StructuredSummary({
       {structuredSummary.overview && (
         <CollapsibleSection
           title="Document Overview"
+          sectionId="document-overview"
+          isExpanded={sectionStates?.["document-overview"]}
+          onToggle={onSectionToggle}
           defaultExpanded={true}
           previewText={createPreviewText(structuredSummary.overview)}
           icon={
@@ -87,6 +94,9 @@ export default function StructuredSummary({
         structuredSummary.key_parties.length > 0 && (
           <CollapsibleSection
             title="Key Parties"
+            sectionId="key-parties"
+            isExpanded={sectionStates?.["key-parties"]}
+            onToggle={onSectionToggle}
             defaultExpanded={false}
             previewText={createPreviewText(
               structuredSummary.key_parties,
@@ -126,6 +136,9 @@ export default function StructuredSummary({
         structuredSummary.important_dates.length > 0 && (
           <CollapsibleSection
             title="Important Dates"
+            sectionId="important-dates"
+            isExpanded={sectionStates?.["important-dates"]}
+            onToggle={onSectionToggle}
             defaultExpanded={false}
             previewText={createPreviewText(
               structuredSummary.important_dates,
@@ -166,6 +179,9 @@ export default function StructuredSummary({
         structuredSummary.major_obligations.length > 0 && (
           <CollapsibleSection
             title="Major Obligations"
+            sectionId="major-obligations"
+            isExpanded={sectionStates?.["major-obligations"]}
+            onToggle={onSectionToggle}
             defaultExpanded={false}
             previewText={createPreviewText(
               structuredSummary.major_obligations,
@@ -205,6 +221,9 @@ export default function StructuredSummary({
         structuredSummary.risk_highlights.length > 0 && (
           <CollapsibleSection
             title="Risk Highlights"
+            sectionId="risk-highlights"
+            isExpanded={sectionStates?.["risk-highlights"]}
+            onToggle={onSectionToggle}
             defaultExpanded={false}
             previewText={createPreviewText(
               structuredSummary.risk_highlights,
@@ -261,6 +280,9 @@ export default function StructuredSummary({
         structuredSummary.key_insights.length > 0 && (
           <CollapsibleSection
             title="Key Insights"
+            sectionId="key-insights"
+            isExpanded={sectionStates?.["key-insights"]}
+            onToggle={onSectionToggle}
             defaultExpanded={false}
             previewText={createPreviewText(
               structuredSummary.key_insights,
