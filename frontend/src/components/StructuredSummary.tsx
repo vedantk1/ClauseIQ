@@ -118,14 +118,16 @@ export default function StructuredSummary({
               </svg>
             }
           >
-            <div className="flex flex-wrap gap-2">
+            <div className="space-y-3">
               {structuredSummary.key_parties.map((party, index) => (
-                <span
+                <div
                   key={index}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-bg-elevated text-text-primary border border-border-muted"
+                  className="p-4 bg-bg-elevated border border-border-light rounded-lg"
                 >
-                  {party}
-                </span>
+                  <span className="text-text-secondary text-sm leading-relaxed">
+                    {party}
+                  </span>
+                </div>
               ))}
             </div>
           </CollapsibleSection>
@@ -203,16 +205,18 @@ export default function StructuredSummary({
               </svg>
             }
           >
-            <ul className="space-y-3">
+            <div className="space-y-3">
               {structuredSummary.major_obligations.map((obligation, index) => (
-                <li key={index} className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 bg-accent-blue rounded-full mt-2 flex-shrink-0"></div>
-                  <span className="text-text-secondary leading-relaxed">
+                <div
+                  key={index}
+                  className="p-4 bg-bg-elevated border border-border-light rounded-lg"
+                >
+                  <span className="text-text-secondary text-sm leading-relaxed">
                     {obligation}
                   </span>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </CollapsibleSection>
         )}
 
