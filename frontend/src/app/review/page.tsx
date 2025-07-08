@@ -96,7 +96,7 @@ export default function ReviewWorkspace() {
 
   // Section state management for persistent expanded/collapsed state
   const [sectionStates, setSectionStates] = useState<Record<string, boolean>>({
-    "document-overview": true, // Default expanded
+    summary: true, // Default expanded
     "key-parties": false,
     "important-dates": false,
     "major-obligations": false,

@@ -61,9 +61,9 @@ export default function StructuredSummary({
       {/* Overview Section */}
       {structuredSummary.overview && (
         <CollapsibleSection
-          title="Document Overview"
-          sectionId="document-overview"
-          isExpanded={sectionStates?.["document-overview"]}
+          title="Summary"
+          sectionId="summary"
+          isExpanded={sectionStates?.["summary"]}
           onToggle={onSectionToggle}
           defaultExpanded={true}
           previewText={createPreviewText(structuredSummary.overview)}
