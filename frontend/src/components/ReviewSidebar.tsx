@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import Button from "./Button";
+import { useRouter } from "next/navigation";
 
 interface SidebarTab {
   id: string;
@@ -28,6 +29,8 @@ export default function ReviewSidebar({
   onExpandAndSelectTab,
   className = "",
 }: ReviewSidebarProps) {
+  const router = useRouter();
+
   const handleTabClick = (tabId: string) => {
     if (isCollapsed) {
       // When collapsed, expand and select the tab
@@ -40,10 +43,40 @@ export default function ReviewSidebar({
     }
   };
 
+  const handleBackToDocuments = () => {
+    router.push("/documents");
+  };
+
   return (
     <div className={`flex h-full ${className}`}>
       {/* Tab Icons Column - Fixed width */}
       <div className="w-16 bg-bg-secondary border-r border-border-light flex flex-col flex-shrink-0">
+        {/* Back to Documents Button */}
+        <div className="p-3 border-b border-border-light">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBackToDocuments}
+            className="w-full p-2"
+            aria-label="Back to Documents"
+            title="Back to Documents"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </Button>
+        </div>
+
         {/* Collapse/Expand Button */}
         <div className="p-3 border-b border-border-light">
           <Button

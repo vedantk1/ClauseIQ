@@ -3,7 +3,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import { AppStateProvider } from "@/store/appState";
 import { AuthProvider } from "@/context/AuthContext";
 import { AnalysisProvider } from "@/context/AnalysisContext";
-import NavBar from "@/components/NavBar";
+import ConditionalNavBar from "@/components/ConditionalNavBar";
 import { Toaster } from "react-hot-toast";
 import { Toast, ErrorBoundary } from "@/components/ui";
 
@@ -40,7 +40,7 @@ export default function RootLayout({
             <AnalysisProvider>
               <ErrorBoundary>
                 <div className="min-h-screen flex flex-col">
-                  <NavBar />
+                  <ConditionalNavBar />
                   <main className="flex-1">{children}</main>
                 </div>
                 <Toast />
