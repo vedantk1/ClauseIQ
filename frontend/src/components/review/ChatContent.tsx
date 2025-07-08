@@ -15,7 +15,7 @@ export default function ChatContent({ documentId }: ChatContentProps) {
           Ask Questions About Your Contract
         </h2>
       </div>
-      
+
       {/* Chat area - flexible with scrolling */}
       <div className="flex-1 min-h-0 p-4">
         <DocumentChat documentId={documentId} />
