@@ -46,17 +46,8 @@ export default function DocumentChat({
     error?: string;
   } | null>(null);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Scroll to bottom when messages change
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   // Check chat status when component mounts - force reload
   useEffect(() => {
@@ -376,9 +367,12 @@ export default function DocumentChat({
 
   // Active chat interface
   return (
-    <div className={`space-y-3 ${className}`}>
-      {/* Messages container */}
-      <div className="bg-bg-elevated rounded-lg p-3 min-h-[600px] max-h-[700px] overflow-y-auto">
+    <div className={`flex flex-col h-full ${className}`}>
+      {/* Messages container - flex-1 to fill available space */}
+      <div
+        ref={messagesContainerRef}
+        className="bg-bg-elevated rounded-lg p-3 flex-1 overflow-y-auto min-h-0"
+      >
         <div className="space-y-3">
           {messages.length === 0 ? (
             <div className="text-center py-8">
@@ -450,12 +444,11 @@ export default function DocumentChat({
               </div>
             </div>
           )}
-          <div ref={messagesEndRef} />
         </div>
       </div>
 
-      {/* Input area */}
-      <div className="flex gap-2">
+      {/* Input area - fixed at bottom */}
+      <div className="flex gap-2 mt-3 flex-shrink-0">
         <input
           ref={inputRef}
           type="text"
