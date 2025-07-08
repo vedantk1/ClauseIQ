@@ -57,9 +57,9 @@ export default function ClauseNavigator({
   return (
     <Card>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-heading text-heading-sm text-text-primary">
+        {/* <h2 className="font-heading text-heading-sm text-text-primary">
           Clause Navigator
-        </h2>
+        </h2> */}
         <div className="flex items-center gap-2 text-sm">
           <span className="text-text-secondary">
             {filteredClauses.length} clauses

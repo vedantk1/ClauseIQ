@@ -68,34 +68,13 @@ export default function ReviewSidebar({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M15 19l-7-7 7-7"
+                d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
               />
-            </svg>
-          </Button>
-        </div>
-
-        {/* Collapse/Expand Button */}
-        <div className="p-3 border-b border-border-light">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleCollapse}
-            className="w-full p-2"
-            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            <svg
-              className={`w-4 h-4 transition-transform ${
-                isCollapsed ? "rotate-180" : ""
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+                d="M9 22V12h6v10"
               />
             </svg>
           </Button>
@@ -124,6 +103,35 @@ export default function ReviewSidebar({
       {/* Content Panel - Let parent control width */}
       {!isCollapsed && activeTab && (
         <div className="flex-1 bg-bg-primary border-r border-border-light flex flex-col min-w-0">
+          {/* Header with collapse button */}
+          <div className="flex items-center justify-between p-3 border-b border-border-light bg-bg-secondary">
+            <h3 className="text-sm font-medium text-text-primary">
+              {tabs.find((tab) => tab.id === activeTab)?.label}
+            </h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggleCollapse}
+              className="p-1"
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+                />
+              </svg>
+            </Button>
+          </div>
+
           {/* Tab Content */}
           <div className="flex-1 min-h-0">
             {tabs.find((tab) => tab.id === activeTab)?.content}
