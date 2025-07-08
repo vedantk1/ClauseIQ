@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import Button from "./Button";
-import { useRouter } from "next/navigation";
 
 interface SidebarTab {
   id: string;
@@ -29,8 +28,6 @@ export default function ReviewSidebar({
   onExpandAndSelectTab,
   className = "",
 }: ReviewSidebarProps) {
-  const router = useRouter();
-
   const handleTabClick = (tabId: string) => {
     if (isCollapsed) {
       // When collapsed, expand and select the tab
@@ -44,7 +41,7 @@ export default function ReviewSidebar({
   };
 
   const handleBackToDocuments = () => {
-    router.push("/documents");
+    window.open("/documents", "_blank");
   };
 
   return (
