@@ -10,9 +10,9 @@ interface ChatContentProps {
 export default function ChatContent({ documentId }: ChatContentProps) {
   return (
     <div className="h-full overflow-hidden">
-      <div className="h-full p-4">
+      <div className="h-full p-3">
         <Card className="h-full flex flex-col">
-          <h2 className="font-heading text-heading-sm text-text-primary mb-6">
+          <h2 className="font-heading text-heading-sm text-text-primary mb-4">
             Ask Questions About Your Contract
           </h2>
           <div className="flex-1 min-h-0">

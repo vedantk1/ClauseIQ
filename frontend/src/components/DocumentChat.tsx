@@ -290,9 +290,9 @@ export default function DocumentChat({
     const hasError = chatStatus?.error;
 
     return (
-      <div className={`space-y-4 ${className}`}>
-        <div className="bg-bg-elevated rounded-lg p-4 min-h-96">
-          <div className="text-center py-12">
+      <div className={`space-y-3 ${className}`}>
+        <div className="bg-bg-elevated rounded-lg p-3 min-h-96">
+          <div className="text-center py-8">
             <svg
               className="w-12 h-12 text-text-secondary mx-auto mb-4"
               fill="none"
@@ -339,9 +339,9 @@ export default function DocumentChat({
   // THE session is automatically initialized when chat is ready.
   if (!currentSession) {
     return (
-      <div className={`space-y-4 ${className}`}>
-        <div className="bg-bg-elevated rounded-lg p-4 min-h-96">
-          <div className="text-center py-12">
+      <div className={`space-y-3 ${className}`}>
+        <div className="bg-bg-elevated rounded-lg p-3 min-h-96">
+          <div className="text-center py-8">
             <svg
               className="w-12 h-12 text-accent-purple mx-auto mb-4"
               fill="none"
@@ -355,10 +355,10 @@ export default function DocumentChat({
                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
               />
             </svg>
-            <h3 className="text-lg font-semibold text-text-primary mb-4">
+            <h3 className="text-lg font-semibold text-text-primary mb-3">
               🚀 Initializing Your Document Chat
             </h3>
-            <p className="text-text-secondary mb-6">
+            <p className="text-text-secondary mb-4">
               Setting up your conversation session... The foundational
               architecture is automatically preparing THE session for this
               document.
@@ -376,10 +376,10 @@ export default function DocumentChat({
 
   // Active chat interface
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-3 ${className}`}>
       {/* Messages container */}
-      <div className="bg-bg-elevated rounded-lg p-4 min-h-[600px] max-h-[700px] overflow-y-auto">
-        <div className="space-y-4">
+      <div className="bg-bg-elevated rounded-lg p-3 min-h-[600px] max-h-[700px] overflow-y-auto">
+        <div className="space-y-3">
           {messages.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-text-secondary mb-2">
@@ -400,33 +400,47 @@ export default function DocumentChat({
                 }`}
               >
                 <div
-                  className={`max-w-[80%] rounded-lg p-3 ${
+                  className={`max-w-[85%] rounded-lg px-3 py-2 ${
                     message.role === "user"
                       ? "bg-accent-purple text-white"
                       : "bg-bg-surface border border-border-muted text-text-primary"
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap">
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed">
                     {message.content}
                   </p>
-                  {message.sources && message.sources.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-border-muted">
-                      <p className="text-xs text-text-tertiary">
-                        Sources: {message.sources.length} document section
-                        {message.sources.length > 1 ? "s" : ""}
+                  {message.role === "assistant" &&
+                    message.sources &&
+                    message.sources.length > 0 && (
+                      <div className="mt-2.5 pt-2 border-t border-border-muted flex items-center justify-between">
+                        <p className="text-xs text-text-tertiary">
+                          Sources: {message.sources.length} document section
+                          {message.sources.length > 1 ? "s" : ""}
+                        </p>
+                        <p className="text-xs text-text-tertiary opacity-70 ml-3">
+                          {new Date(message.timestamp).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                    )}
+                  {message.role === "assistant" &&
+                    (!message.sources || message.sources.length === 0) && (
+                      <p className="text-xs text-text-tertiary opacity-70 mt-1.5 text-right">
+                        {new Date(message.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </p>
-                    </div>
-                  )}
-                  <p className="text-xs text-text-tertiary mt-1">
-                    {new Date(message.timestamp).toLocaleTimeString()}
-                  </p>
+                    )}
                 </div>
               </div>
             ))
           )}
           {isSending && (
             <div className="flex justify-start">
-              <div className="bg-bg-surface border border-border-muted rounded-lg p-3 max-w-[80%]">
+              <div className="bg-bg-surface border border-border-muted rounded-lg px-3 py-2 max-w-[85%]">
                 <div className="flex items-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent-purple"></div>
                   <p className="text-sm text-text-secondary">
@@ -441,7 +455,7 @@ export default function DocumentChat({
       </div>
 
       {/* Input area */}
-      <div className="flex gap-3">
+      <div className="flex gap-2">
         <input
           ref={inputRef}
           type="text"
@@ -450,7 +464,7 @@ export default function DocumentChat({
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyPress={handleKeyPress}
           disabled={isSending}
-          className="flex-1 px-4 py-2 bg-bg-elevated border border-border-muted rounded-lg text-text-primary placeholder-text-secondary focus:ring-2 focus:ring-accent-purple focus:border-transparent disabled:opacity-50"
+          className="flex-1 px-3 py-2 bg-bg-elevated border border-border-muted rounded-lg text-text-primary placeholder-text-secondary focus:ring-2 focus:ring-accent-purple focus:border-transparent disabled:opacity-50"
         />
         <Button
           onClick={sendMessageFoundational} // 🚀 Use foundational architecture!
