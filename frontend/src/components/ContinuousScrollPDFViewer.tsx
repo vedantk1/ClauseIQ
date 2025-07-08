@@ -273,41 +273,6 @@ export default function ContinuousScrollPDFViewer({
           </div>
         </Worker>
       </div>
-
-      {/* Status Bar - ClauseIQ Professional Styling */}
-      <div className="px-4 py-2 bg-slate-50 border-t border-gray-200 text-xs text-slate-600">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 text-emerald-600">
-            ✅ <span className="font-medium">Ready</span>
-          </span>
-          <span className="text-slate-400">•</span>
-          <span>
-            Mode: <span className="font-medium">Single Page</span>
-          </span>
-          {numPages && (
-            <>
-              <span className="text-slate-400">•</span>
-              <span>
-                Page:{" "}
-                <CurrentPageLabel>
-                  {(props) => (
-                    <span className="font-medium">
-                      {props.currentPage + 1} of {props.numberOfPages}
-                    </span>
-                  )}
-                </CurrentPageLabel>
-              </span>
-            </>
-          )}
-          <span className="text-slate-400">•</span>
-          <span>
-            Scale:{" "}
-            <span className="font-medium">{Math.round(scale * 100)}%</span>
-          </span>
-          <span className="text-slate-400">•</span>
-          <span>ClauseIQ Legal AI</span>
-        </div>
-      </div>
     </Card>
   );
 }
