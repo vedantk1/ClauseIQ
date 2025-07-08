@@ -248,7 +248,7 @@ export default function ContinuousScrollPDFViewer({
       {/* 🎯 CONTINUOUS SCROLL PDF VIEWER - ClauseIQ Professional Background */}
       <div
         className="flex-1 bg-slate-100 relative"
-        style={{ height: "calc(100vh - 200px)" }}
+        style={{ height: "calc(100vh - 140px)" }}
       >
         {isLoading && (
           <div className="absolute inset-0 bg-slate-100 flex items-center justify-center z-10">
