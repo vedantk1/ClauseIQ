@@ -40,9 +40,9 @@ export default function StructuredSummary({
   // If no structured summary, show fallback or message
   if (!structuredSummary) {
     return (
-      <Card>
-        <div className="mb-6">
-          <h2 className="font-heading text-heading-sm text-text-primary mb-3">
+      <Card density="compact">
+        <div className="mb-4">
+          <h2 className="font-heading text-heading-sm text-text-primary mb-2">
             AI Summary
           </h2>
           <div className="prose prose-invert max-w-none">
@@ -57,7 +57,7 @@ export default function StructuredSummary({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Overview Section */}
       {structuredSummary.overview && (
         <CollapsibleSection
@@ -118,11 +118,11 @@ export default function StructuredSummary({
               </svg>
             }
           >
-            <div className="space-y-3">
+            <div className="space-y-2">
               {structuredSummary.key_parties.map((party, index) => (
                 <div
                   key={index}
-                  className="p-4 bg-bg-elevated border border-border-light rounded-lg"
+                  className="p-3 bg-bg-elevated border border-border-light rounded-lg"
                 >
                   <span className="text-text-secondary text-sm leading-relaxed">
                     {party}
@@ -205,11 +205,11 @@ export default function StructuredSummary({
               </svg>
             }
           >
-            <div className="space-y-3">
+            <div className="space-y-2">
               {structuredSummary.major_obligations.map((obligation, index) => (
                 <div
                   key={index}
-                  className="p-4 bg-bg-elevated border border-border-light rounded-lg"
+                  className="p-3 bg-bg-elevated border border-border-light rounded-lg"
                 >
                   <span className="text-text-secondary text-sm leading-relaxed">
                     {obligation}
@@ -249,11 +249,11 @@ export default function StructuredSummary({
               </svg>
             }
           >
-            <div className="space-y-3">
+            <div className="space-y-2">
               {structuredSummary.risk_highlights.map((risk, index) => (
                 <div
                   key={index}
-                  className="p-4 bg-accent-rose/5 border border-accent-rose/20 rounded-lg"
+                  className="p-3 bg-accent-rose/5 border border-accent-rose/20 rounded-lg"
                 >
                   <div className="flex items-start gap-3">
                     <svg
@@ -308,11 +308,11 @@ export default function StructuredSummary({
               </svg>
             }
           >
-            <div className="space-y-3">
+            <div className="space-y-2">
               {structuredSummary.key_insights.map((insight, index) => (
                 <div
                   key={index}
-                  className="p-4 bg-accent-green/5 border border-accent-green/20 rounded-lg"
+                  className="p-3 bg-accent-green/5 border border-accent-green/20 rounded-lg"
                 >
                   <div className="flex items-start gap-3">
                     <svg

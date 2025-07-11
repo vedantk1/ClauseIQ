@@ -37,7 +37,7 @@ export default function SummaryContent({
 
       {/* Content area - flexible with scrolling */}
       <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="p-4 space-y-6">
+        <div className="p-4 space-y-3">
           {/* Document Stats Bar */}
           <DocumentStatsBar
             fullText={fullText}

@@ -42,13 +42,16 @@ export default function CollapsibleSection({
   };
 
   return (
-    <Card className={`${isExpanded ? "" : "!p-3"} ${className}`}>
-      <div className={isExpanded ? "mb-6" : "mb-0"}>
+    <Card
+      density="compact"
+      className={`${isExpanded ? "" : "!p-3"} ${className}`}
+    >
+      <div className={isExpanded ? "mb-4" : "mb-0"}>
         {/* Header with toggle button */}
         <button
           onClick={toggleExpanded}
           className={`flex items-center gap-2 w-full text-left group hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-accent-blue/20 rounded-md p-1 -m-1 ${
-            isExpanded ? "mb-3" : "mb-0"
+            isExpanded ? "mb-2" : "mb-0"
           }`}
           aria-expanded={isExpanded}
           aria-controls={`section-${title.replace(/\s+/g, "-").toLowerCase()}`}
