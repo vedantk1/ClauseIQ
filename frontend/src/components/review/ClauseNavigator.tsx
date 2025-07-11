@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import Card from "@/components/Card";
 import RiskSummaryCards from "./RiskSummaryCards";
 import ClauseSearchAndFilters from "./ClauseSearchAndFilters";
 import ClauseList from "./ClauseList";
@@ -55,17 +54,18 @@ export default function ClauseNavigator({
   const hasRiskData = safeRiskHigh > 0 || safeRiskMedium > 0 || safeRiskLow > 0;
 
   return (
-    <Card>
-      <div className="flex items-center justify-between mb-4">
-        {/* <h2 className="font-heading text-heading-sm text-text-primary">
+    <div className="p-4">
+      {/* <div className="bg-bg-surface border border-border-muted rounded-lg shadow-card p-2"> */}
+      {/* <div className="flex items-center justify-between mb-4">
+        <h2 className="font-heading text-heading-sm text-text-primary">
           Clause Navigator
-        </h2> */}
+        </h2>
         <div className="flex items-center gap-2 text-sm">
           <span className="text-text-secondary">
             {filteredClauses.length} clauses
           </span>
         </div>
-      </div>
+      </div> */}
 
       {/* Risk Summary - Clickable Filter Cards */}
       {riskSummary && hasRiskData && (
@@ -155,6 +155,7 @@ export default function ClauseNavigator({
           </p>
         </div>
       )}
-    </Card>
+    </div>
+    // </div>
   );
 }

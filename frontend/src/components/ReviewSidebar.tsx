@@ -105,7 +105,7 @@ export default function ReviewSidebar({
         <div className="flex-1 bg-bg-primary border-r border-border-light flex flex-col min-w-0">
           {/* Header with collapse button */}
           <div className="flex items-center justify-between p-3 border-b border-border-light bg-bg-secondary">
-            <h3 className="text-sm font-medium text-text-primary">
+            <h3 className="text-base font-medium text-text-primary">
               {tabs.find((tab) => tab.id === activeTab)?.label}
             </h3>
             <Button
