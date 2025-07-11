@@ -262,8 +262,8 @@ export default function ContinuousScrollPDFViewer({
 
       {/* 🎯 CONTINUOUS SCROLL PDF VIEWER - ClauseIQ Professional Background */}
       <div
-        className="flex-1 bg-bg-surface relative"
-        style={{ height: "calc(100vh - 140px)" }}
+        className="flex-1 bg-bg-surface relative h-screen overflow-auto"
+        style={{ height: "calc(100vh)" }}
       >
         {isLoading && (
           <div className="absolute inset-0 bg-bg-surface flex items-center justify-center z-10">
@@ -290,29 +290,6 @@ export default function ContinuousScrollPDFViewer({
             />
           </div>
         </Worker>
-      </div>
-
-      {/* Status Bar */}
-      <div className="flex items-center justify-between p-3 border-t border-border-muted bg-bg-surface text-sm text-text-secondary">
-        <div className="flex items-center gap-4">
-          <span className="font-medium text-accent-green">Ready</span>
-          <span>{viewMode === "single" ? "Single Page" : "Continuous"}</span>
-          {viewMode === "single" && numPages && (
-            <CurrentPageLabel>
-              {(props) => (
-                <span>
-                  Page: {props.currentPage + 1} of {props.numberOfPages}
-                </span>
-              )}
-            </CurrentPageLabel>
-          )}
-        </div>
-        <div className="flex items-center gap-4">
-          <span>Scale: {Math.round(scale * 100)}%</span>
-          <span className="text-accent-purple font-medium">
-            ClauseIQ Legal AI
-          </span>
-        </div>
       </div>
     </Card>
   );
