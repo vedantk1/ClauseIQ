@@ -1,20 +1,48 @@
 /* ClauseIQ Professional PDF Viewer Styling - Minimal & Surgical Approach */
 
-/* � ONLY fix the stark white background - keep PDF.js layout intact */
+/* 🔧 Remove all default spacing from PDF.js containers */
+.pdf-viewer-container .rpv-core__viewer {
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: 0 !important; /* 🎯 Override min-height: inherit to eliminate unwanted vertical space */
+}
+
+.pdf-viewer-container .rpv-core__viewer-container {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.pdf-viewer-container .rpv-core__doc {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* 🔧 Fix min-height inheritance that causes unwanted vertical space */
+.pdf-viewer-container .rpv-core__inner-container {
+  min-height: 0 !important; /* Override min-height: inherit from library */
+}
+
+/* 🔧 ONLY center the pages container - don't break PDF.js internal layout */
+.pdf-viewer-container .rpv-core__inner-pages {
+  text-align: center; /* Centers child elements */
+  background: var(--color-bg-primary); /* Theme-aware background */
+  padding: 0 20px !important; /* Only horizontal padding, no top/bottom padding */
+  margin: 0 !important; /* Remove any default margins */
+  /* Remove any potential top spacing */
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* 🔧 ONLY fix the stark white background - keep PDF.js layout intact */
 .pdf-viewer-container .rpv-core__page-layer {
-  background-color: #fefefe !important; /* Softer than stark white */
+  background-color: var(
+    --color-bg-surface
+  ) !important; /* Theme-aware page background */
 }
 
 /* 🎨 Match canvas background to page background */
 .pdf-viewer-container .rpv-core__canvas-layer canvas {
-  background-color: #fefefe !important;
-}
-
-/* � ONLY center the pages container - don't break PDF.js internal layout */
-.pdf-viewer-container .rpv-core__inner-pages {
-  text-align: center; /* Centers child elements */
-  background: #f8fafc; /* Soft container background */
-  padding: 20px;
+  background-color: var(--color-bg-surface) !important;
 }
 
 /* 🎯 Ensure individual pages are inline-block for centering */
@@ -24,21 +52,21 @@
   margin-bottom: 16px;
 }
 
-/* � Professional scrollbar */
+/* 📜 Professional scrollbar with theme support */
 .pdf-viewer-container .rpv-core__inner-pages::-webkit-scrollbar {
   width: 8px;
 }
 
 .pdf-viewer-container .rpv-core__inner-pages::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--color-bg-primary);
   border-radius: 4px;
 }
 
 .pdf-viewer-container .rpv-core__inner-pages::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--color-border-default);
   border-radius: 4px;
 }
 
 .pdf-viewer-container .rpv-core__inner-pages::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--color-text-secondary);
 }

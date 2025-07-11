@@ -67,18 +67,11 @@ export default function ContinuousScrollPDFViewer({
 
   // Toggle view mode function
   const toggleViewMode = () => {
-    console.log("🔄 [DEBUG] toggleViewMode called, current mode:", viewMode);
     setViewMode((prev) => (prev === "single" ? "continuous" : "single"));
   };
 
   // Handle document load
   const handleDocumentLoad = (e: { doc: { numPages: number } }) => {
-    console.log("✅ [DEBUG] PDF LOADED:", {
-      numPages: e.doc.numPages,
-      currentViewMode: viewMode,
-      scale: scale,
-      timestamp: new Date().toISOString(),
-    });
     setNumPages(e.doc.numPages);
     setIsLoading(false);
     setError(null);
@@ -89,10 +82,6 @@ export default function ContinuousScrollPDFViewer({
 
   // Handle page change - sync with library's internal state
   const handlePageChange = (e: PageChangeEvent) => {
-    console.log("📄 [DEBUG] Page changed:", {
-      currentPage: e.currentPage,
-      timestamp: new Date().toISOString(),
-    });
     setCurrentPage(e.currentPage);
   };
 
@@ -100,20 +89,17 @@ export default function ContinuousScrollPDFViewer({
   // Zoom controls
   const zoomIn = () => {
     const newScale = Math.min(scale + 0.2, 3.0);
-    console.log("🔍 [DEBUG] Zooming in to:", newScale);
     setScale(newScale);
     zoomTo(newScale);
   };
 
   const zoomOut = () => {
     const newScale = Math.max(scale - 0.2, 0.5);
-    console.log("🔍 [DEBUG] Zooming out to:", newScale);
     setScale(newScale);
     zoomTo(newScale);
   };
 
   const resetZoom = () => {
-    console.log("🔍 [DEBUG] Resetting zoom to 1.0");
     setScale(1.0);
     zoomTo(1.0);
   };
@@ -145,7 +131,7 @@ export default function ContinuousScrollPDFViewer({
 
   return (
     <Card
-      className={`h-full flex flex-col shadow-lg rounded-lg border border-border-muted ${className}`}
+      className={`h-full flex flex-col shadow-lg rounded-lg border border-border-muted !p-0 ${className}`}
     >
       {/* Header with controls - ClauseIQ Professional Styling */}
       <div className="flex items-center justify-between p-4 border-b border-border-muted bg-gradient-to-r from-bg-surface to-bg-elevated">
