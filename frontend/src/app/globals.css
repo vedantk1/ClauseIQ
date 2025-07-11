@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dark-first theme implementation */
+/* Theme system - Dark theme as default */
 :root {
   /* ClauseIQ Dark Theme Colors */
   --bg-primary: #0e0e11;
@@ -18,6 +18,21 @@
   --border-muted: #2a2a31;
 }
 
+/* Light theme variables */
+[data-theme="light"] {
+  /* ClauseIQ Light Theme Colors */
+  --bg-primary: #ffffff;
+  --bg-surface: #f8fafc;
+  --bg-elevated: #f1f5f9;
+  --accent-purple: #7c3aed;
+  --accent-green: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #ef4444;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border-muted: #e2e8f0;
+}
+
 * {
   border-color: theme("colors.border.muted");
 }
@@ -25,6 +40,17 @@
 body {
   @apply bg-bg-primary text-text-primary font-sans antialiased;
   font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* Debug: Ensure theme switching is visible */
+[data-theme="light"] body {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] body {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
 }
 
 /* Focus styles for accessibility */
@@ -41,7 +67,7 @@ body {
   box-shadow: 0 0 0 2px var(--bg-surface), 0 0 0 4px var(--accent-purple);
 }
 
-/* Scrollbar styling for dark theme */
+/* Scrollbar styling - adapts to theme */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -58,6 +84,15 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
+}
+
+/* Light theme scrollbar adjustments */
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* Selection styling */

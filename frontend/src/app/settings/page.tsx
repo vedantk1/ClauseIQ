@@ -2,8 +2,10 @@
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
+import { useTheme } from "@/hooks/useTheme";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
+import ThemeToggle from "@/components/ThemeToggle";
 import { toast } from "react-hot-toast";
 
 export default function Settings() {
@@ -113,7 +115,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-bg-primary to-bg-secondary">
+    <div className="min-h-screen bg-gradient-to-br from-bg-primary to-bg-surface">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold text-text-primary mb-8">
@@ -136,7 +138,7 @@ export default function Settings() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Enter your full name"
-                  className="w-full px-4 py-3 bg-bg-primary border border-border-muted rounded-lg focus:ring-2 focus:ring-accent-purple focus:border-accent-purple outline-none transition-colors text-text-primary placeholder-text-muted"
+                  className="w-full px-4 py-3 bg-bg-primary border border-border-muted rounded-lg focus:ring-2 focus:ring-accent-purple focus:border-accent-purple outline-none transition-colors text-text-primary placeholder:text-text-secondary"
                 />
                 <p className="text-xs text-text-secondary mt-1">
                   This name will be displayed throughout the application
@@ -162,6 +164,33 @@ export default function Settings() {
                   >
                     {isUpdatingProfile ? "Updating..." : "Update Name"}
                   </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Theme Preferences Section */}
+          <Card className="p-6 mb-6">
+            <h2 className="text-xl font-semibold text-text-primary mb-6">
+              Appearance
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-3">
+                  Theme Preference
+                </label>
+                <div className="flex items-center justify-between p-4 bg-bg-surface rounded-lg border border-border-muted">
+                  <div>
+                    <p className="text-sm font-medium text-text-primary">
+                      Choose your preferred theme
+                    </p>
+                    <p className="text-xs text-text-secondary mt-1">
+                      Toggle between light and dark modes for optimal viewing
+                      experience
+                    </p>
+                  </div>
+                  <ThemeToggle size="md" showLabel />
                 </div>
               </div>
             </div>

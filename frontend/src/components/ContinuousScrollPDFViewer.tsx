@@ -122,14 +122,14 @@ export default function ContinuousScrollPDFViewer({
   if (error) {
     return (
       <Card
-        className={`h-full flex flex-col shadow-lg rounded-lg border border-red-200 ${className}`}
+        className={`h-full flex flex-col shadow-lg rounded-lg border border-accent-rose/20 ${className}`}
       >
         <div className="flex items-center justify-center h-full p-8">
           <div className="text-center">
-            <div className="text-red-600 text-lg font-semibold mb-2">
+            <div className="text-accent-rose text-lg font-semibold mb-2">
               Failed to Load PDF
             </div>
-            <div className="text-slate-600 text-sm mb-4">{error}</div>
+            <div className="text-text-secondary text-sm mb-4">{error}</div>
             <Button
               onClick={() => window.location.reload()}
               size="sm"
@@ -145,16 +145,16 @@ export default function ContinuousScrollPDFViewer({
 
   return (
     <Card
-      className={`h-full flex flex-col shadow-lg rounded-lg border border-gray-200 ${className}`}
+      className={`h-full flex flex-col shadow-lg rounded-lg border border-border-muted ${className}`}
     >
       {/* Header with controls - ClauseIQ Professional Styling */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-slate-50 to-gray-50">
+      <div className="flex items-center justify-between p-4 border-b border-border-muted bg-gradient-to-r from-bg-surface to-bg-elevated">
         <div className="flex items-center gap-3">
-          <h3 className="text-lg font-semibold text-slate-800">
+          <h3 className="text-lg font-semibold text-text-primary">
             📄 {fileName}
           </h3>
           {numPages && (
-            <span className="text-sm text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
+            <span className="text-sm text-text-secondary bg-bg-elevated px-2 py-1 rounded-md">
               {numPages} pages
             </span>
           )}
@@ -181,7 +181,7 @@ export default function ContinuousScrollPDFViewer({
 
           {/* Page Navigation - Only show in single mode */}
           {viewMode === "single" && numPages && (
-            <div className="flex items-center gap-2 border-l border-gray-300 pl-4">
+            <div className="flex items-center gap-2 border-l border-border-muted pl-4">
               <GoToPreviousPage>
                 {(props) => (
                   <Button
@@ -198,7 +198,7 @@ export default function ContinuousScrollPDFViewer({
 
               <CurrentPageLabel>
                 {(props) => (
-                  <span className="text-sm text-slate-600 min-w-16 text-center font-medium">
+                  <span className="text-sm text-text-secondary min-w-16 text-center font-medium">
                     {props.currentPage + 1} / {props.numberOfPages}
                   </span>
                 )}
@@ -221,7 +221,7 @@ export default function ContinuousScrollPDFViewer({
           )}
 
           {/* Zoom Controls */}
-          <div className="flex items-center gap-2 border-l border-gray-300 pl-4">
+          <div className="flex items-center gap-2 border-l border-border-muted pl-4">
             <Button
               onClick={zoomOut}
               size="sm"
@@ -230,7 +230,7 @@ export default function ContinuousScrollPDFViewer({
             >
               🔍−
             </Button>
-            <span className="text-sm text-slate-600 min-w-12 text-center font-medium">
+            <span className="text-sm text-text-secondary min-w-12 text-center font-medium">
               {Math.round(scale * 100)}%
             </span>
             <Button
@@ -248,7 +248,7 @@ export default function ContinuousScrollPDFViewer({
 
           {/* Document Actions Menu */}
           {dropdownMenuItems && dropdownMenuItems.length > 0 && (
-            <div className="flex items-center border-l border-gray-300 pl-4">
+            <div className="flex items-center border-l border-border-muted pl-4">
               <DropdownMenu
                 align="right"
                 triggerVariant="default"
@@ -276,14 +276,14 @@ export default function ContinuousScrollPDFViewer({
 
       {/* 🎯 CONTINUOUS SCROLL PDF VIEWER - ClauseIQ Professional Background */}
       <div
-        className="flex-1 bg-slate-100 relative"
+        className="flex-1 bg-bg-surface relative"
         style={{ height: "calc(100vh - 140px)" }}
       >
         {isLoading && (
-          <div className="absolute inset-0 bg-slate-100 flex items-center justify-center z-10">
+          <div className="absolute inset-0 bg-bg-surface flex items-center justify-center z-10">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-              <div className="text-sm text-slate-600 font-medium">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-purple mx-auto mb-2"></div>
+              <div className="text-sm text-text-secondary font-medium">
                 Loading PDF...
               </div>
             </div>
@@ -307,9 +307,9 @@ export default function ContinuousScrollPDFViewer({
       </div>
 
       {/* Status Bar */}
-      <div className="flex items-center justify-between p-3 border-t border-gray-200 bg-slate-50 text-sm text-slate-600">
+      <div className="flex items-center justify-between p-3 border-t border-border-muted bg-bg-surface text-sm text-text-secondary">
         <div className="flex items-center gap-4">
-          <span className="font-medium text-green-600">Ready</span>
+          <span className="font-medium text-accent-green">Ready</span>
           <span>{viewMode === "single" ? "Single Page" : "Continuous"}</span>
           {viewMode === "single" && numPages && (
             <CurrentPageLabel>
@@ -323,7 +323,9 @@ export default function ContinuousScrollPDFViewer({
         </div>
         <div className="flex items-center gap-4">
           <span>Scale: {Math.round(scale * 100)}%</span>
-          <span className="text-blue-600 font-medium">ClauseIQ Legal AI</span>
+          <span className="text-accent-purple font-medium">
+            ClauseIQ Legal AI
+          </span>
         </div>
       </div>
     </Card>

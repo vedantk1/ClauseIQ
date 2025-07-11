@@ -134,7 +134,7 @@ const initialAppState: AppState = {
   analysis: initialAnalysisState,
   ui: {
     sidebarOpen: false,
-    theme: "light",
+    theme: "dark", // Default to dark theme
     notifications: [],
   },
 };

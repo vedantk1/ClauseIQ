@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
 import clsx from "clsx";
+import ThemeToggle from "./ThemeToggle";
 
 const links = [
   { href: "/", label: "Upload" },
@@ -75,6 +76,9 @@ export default function NavBar() {
 
           {/* Auth Section */}
           <div className="flex items-center space-x-4">
+            {/* Theme Toggle - always visible */}
+            <ThemeToggle size="sm" />
+
             {isAuthenticated ? (
               <>
                 <div className="hidden md:flex items-center space-x-3">

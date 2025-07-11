@@ -13,26 +13,27 @@ const config: Config = {
         heading: ["Space Grotesk", "sans-serif"],
       },
       colors: {
-        // Dark-first color system from design spec
+        // Theme-aware color system using CSS variables
         bg: {
-          primary: "#0E0E11",
-          surface: "#18181D",
-          elevated: "#1F1F25",
+          primary: "var(--bg-primary)",
+          surface: "var(--bg-surface)",
+          elevated: "var(--bg-elevated)",
         },
         accent: {
-          purple: "#7C3AED",
-          green: "#10B981",
-          amber: "#F59E0B",
-          rose: "#EF4444",
+          purple: "var(--accent-purple)",
+          green: "var(--accent-green)",
+          amber: "var(--accent-amber)",
+          rose: "var(--accent-rose)",
         },
         text: {
-          primary: "#F9FAFB",
-          secondary: "#D1D5DB",
+          primary: "var(--text-primary)",
+          secondary: "var(--text-secondary)",
+          muted: "var(--text-secondary)", // Add muted variant
         },
         border: {
-          muted: "#2A2A31",
+          muted: "var(--border-muted)",
         },
-        // Keep some Tailwind defaults for light mode (future)
+        // Keep some Tailwind defaults for fallbacks
         gray: {
           50: "#F9FAFB",
           100: "#F3F4F6",
