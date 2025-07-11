@@ -108,7 +108,7 @@ export default function ContinuousScrollPDFViewer({
   if (error) {
     return (
       <Card
-        className={`h-full flex flex-col shadow-lg rounded-lg border border-accent-rose/20 ${className}`}
+        className={`flex flex-col shadow-lg rounded-lg border border-accent-rose/20 ${className}`}
       >
         <div className="flex items-center justify-center h-full p-8">
           <div className="text-center">
@@ -262,8 +262,8 @@ export default function ContinuousScrollPDFViewer({
 
       {/* 🎯 CONTINUOUS SCROLL PDF VIEWER - ClauseIQ Professional Background */}
       <div
-        className="flex-1 bg-bg-surface relative h-screen overflow-auto"
-        style={{ height: "calc(100vh)" }}
+        className="flex-1 bg-bg-surface relative min-h-0 overflow-auto"
+        style={{ height: "calc(100vh - 70px)" }}
       >
         {isLoading && (
           <div className="absolute inset-0 bg-bg-surface flex items-center justify-center z-10">
