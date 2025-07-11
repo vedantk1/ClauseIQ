@@ -52,8 +52,8 @@ export default function ClauseList({
   }
 
   return (
-    <div className="border border-border-muted rounded-lg bg-bg-surface p-3">
-      <div className="space-y-3 max-h-[600px] overflow-y-auto">
+    <div className="border border-border-muted rounded-lg bg-bg-surface p-3 h-full flex flex-col">
+      <div className="space-y-3 flex-1 overflow-y-auto">
         {clauses.map((clause, index) => (
           <div
             key={clause.id || index}
