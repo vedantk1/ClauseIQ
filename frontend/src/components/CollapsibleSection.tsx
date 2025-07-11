@@ -42,10 +42,7 @@ export default function CollapsibleSection({
   };
 
   return (
-    <Card
-      density="compact"
-      className={`${isExpanded ? "" : "!p-3"} ${className}`}
-    >
+    <Card density="compact" className={`!p-3 ${className}`}>
       <div className={isExpanded ? "mb-4" : "mb-0"}>
         {/* Header with toggle button */}
         <button
