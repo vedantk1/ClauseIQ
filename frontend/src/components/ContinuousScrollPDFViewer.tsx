@@ -131,7 +131,8 @@ export default function ContinuousScrollPDFViewer({
 
   return (
     <Card
-      className={`h-full flex flex-col shadow-lg rounded-lg border border-border-muted !p-0 ${className}`}
+      className={`h-full flex flex-col shadow-lg border border-border-muted !p-0 ${className}`}
+      rounded={false}
     >
       {/* Header with controls - ClauseIQ Professional Styling */}
       <div className="flex items-center justify-between p-4 border-b border-border-muted bg-gradient-to-r from-bg-surface to-bg-elevated">

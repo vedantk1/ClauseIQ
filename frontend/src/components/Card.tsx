@@ -8,6 +8,7 @@ interface CardProps {
   density?: "standard" | "compact";
   status?: "success" | "warning" | "danger" | "info";
   statusLabel?: string;
+  rounded?: boolean;
 }
 
 export default function Card({
@@ -16,11 +17,13 @@ export default function Card({
   density = "standard",
   status,
   statusLabel,
+  rounded = true,
 }: CardProps) {
   const cardClasses = clsx(
-    "bg-bg-surface border border-border-muted rounded-lg shadow-card overflow-hidden",
+    "bg-bg-surface border border-border-muted shadow-card overflow-hidden",
     "transition-shadow duration-200 hover:shadow-card-lg",
     {
+      "rounded-lg": rounded,
       "p-6 lg:p-8": density === "standard",
       "p-4 lg:p-6": density === "compact",
     },
