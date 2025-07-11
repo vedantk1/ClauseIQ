@@ -42,6 +42,10 @@ export default function ContinuousScrollPDFViewer({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<"single" | "continuous">(
+    "continuous"
+  );
+  const [currentPage, setCurrentPage] = useState(0);
 
   // Create plugin instances - removed useMemo to avoid hooks rule violation
   const zoomPluginInstance = zoomPlugin();
@@ -61,10 +65,17 @@ export default function ContinuousScrollPDFViewer({
     return finalUrl;
   }, [documentId]);
 
+  // Toggle view mode function
+  const toggleViewMode = () => {
+    console.log("🔄 [DEBUG] toggleViewMode called, current mode:", viewMode);
+    setViewMode((prev) => (prev === "single" ? "continuous" : "single"));
+  };
+
   // Handle document load
   const handleDocumentLoad = (e: { doc: { numPages: number } }) => {
     console.log("✅ [DEBUG] PDF LOADED:", {
       numPages: e.doc.numPages,
+      currentViewMode: viewMode,
       scale: scale,
       timestamp: new Date().toISOString(),
     });
@@ -82,6 +93,7 @@ export default function ContinuousScrollPDFViewer({
       currentPage: e.currentPage,
       timestamp: new Date().toISOString(),
     });
+    setCurrentPage(e.currentPage);
   };
 
   // Debug: Monitor state changes
@@ -148,10 +160,27 @@ export default function ContinuousScrollPDFViewer({
           )}
         </div>
 
-        {/* Controls Section - Page Navigation & Zoom */}
+        {/* Controls Section - View Mode Toggle, Page Navigation & Zoom */}
         <div className="flex items-center gap-4">
-          {/* Page Navigation */}
-          {numPages && (
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={toggleViewMode}
+              size="sm"
+              variant="secondary"
+              title={
+                viewMode === "single"
+                  ? "Switch to continuous view"
+                  : "Switch to single-page view"
+              }
+            >
+              {viewMode === "single" ? "📄" : "📜"}{" "}
+              {viewMode === "single" ? "Single" : "Scroll"}
+            </Button>
+          </div>
+
+          {/* Page Navigation - Only show in single mode */}
+          {viewMode === "single" && numPages && (
             <div className="flex items-center gap-2 border-l border-gray-300 pl-4">
               <GoToPreviousPage>
                 {(props) => (
@@ -199,10 +228,10 @@ export default function ContinuousScrollPDFViewer({
               variant="secondary"
               disabled={scale <= 0.5}
             >
-              −
+              🔍−
             </Button>
             <span className="text-sm text-slate-600 min-w-12 text-center font-medium">
-              🔍{Math.round(scale * 100)}%
+              {Math.round(scale * 100)}%
             </span>
             <Button
               onClick={zoomIn}
@@ -210,7 +239,7 @@ export default function ContinuousScrollPDFViewer({
               variant="secondary"
               disabled={scale >= 3.0}
             >
-              +
+              🔍+
             </Button>
             <Button onClick={resetZoom} size="sm" variant="secondary">
               Reset
@@ -267,11 +296,35 @@ export default function ContinuousScrollPDFViewer({
               onDocumentLoad={handleDocumentLoad}
               onPageChange={handlePageChange}
               plugins={[zoomPluginInstance, pageNavigationPluginInstance]}
-              scrollMode={ScrollMode.Page}
+              scrollMode={
+                viewMode === "single" ? ScrollMode.Page : ScrollMode.Vertical
+              }
               initialPage={0}
+              key={`pdf-viewer-${viewMode}`}
             />
           </div>
         </Worker>
+      </div>
+
+      {/* Status Bar */}
+      <div className="flex items-center justify-between p-3 border-t border-gray-200 bg-slate-50 text-sm text-slate-600">
+        <div className="flex items-center gap-4">
+          <span className="font-medium text-green-600">Ready</span>
+          <span>{viewMode === "single" ? "Single Page" : "Continuous"}</span>
+          {viewMode === "single" && numPages && (
+            <CurrentPageLabel>
+              {(props) => (
+                <span>
+                  Page: {props.currentPage + 1} of {props.numberOfPages}
+                </span>
+              )}
+            </CurrentPageLabel>
+          )}
+        </div>
+        <div className="flex items-center gap-4">
+          <span>Scale: {Math.round(scale * 100)}%</span>
+          <span className="text-blue-600 font-medium">ClauseIQ Legal AI</span>
+        </div>
       </div>
     </Card>
   );
