@@ -15,6 +15,7 @@ interface UseDocumentOperationsProps {
   selectedDocuments: Set<string>;
   setSelectedDocuments: React.Dispatch<React.SetStateAction<Set<string>>>;
   setIsSelectMode: React.Dispatch<React.SetStateAction<boolean>>;
+  onDeleteDocument?: (documentId: string, documentName: string) => void;
 }
 
 export const useDocumentOperations = ({
@@ -23,6 +24,7 @@ export const useDocumentOperations = ({
   selectedDocuments,
   setSelectedDocuments,
   setIsSelectMode,
+  onDeleteDocument,
 }: UseDocumentOperationsProps) => {
   const { loadDocument } = useAnalysis();
   const apiCall = useApiCall();
@@ -47,20 +49,14 @@ export const useDocumentOperations = ({
     }
   };
 
-  const handleDeleteDocument = async (
-    documentId: string,
-    documentName: string
-  ) => {
-    // Using window.confirm is okay for individual document deletion
-    // A modal dialog would be better UX but that's beyond the scope of this fix
-    if (
-      !window.confirm(
-        `Are you sure you want to delete "${documentName}"? This action cannot be undone.`
-      )
-    ) {
-      return;
+  const initiateDeleteDocument = (documentId: string, documentName: string) => {
+    // This function will trigger the modal
+    if (onDeleteDocument) {
+      onDeleteDocument(documentId, documentName);
     }
+  };
 
+  const handleDeleteDocument = async (documentId: string) => {
     try {
       setDeletingDocId(documentId);
       const res = await apiCall(`/documents/${documentId}`, {
@@ -187,6 +183,7 @@ export const useDocumentOperations = ({
     deletingDocId,
     deletingAll,
     handleViewDocument,
+    initiateDeleteDocument,
     handleDeleteDocument,
     handleDeleteAllDocuments,
     handleBulkDelete,

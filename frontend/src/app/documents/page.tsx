@@ -20,6 +20,7 @@ import { NoResultsMessage } from "@/components/documents/NoResultsMessage";
 import { ResultsCounter } from "@/components/documents/ResultsCounter";
 import { DocumentsFooter } from "@/components/documents/DocumentsFooter";
 import { DeleteAllModal } from "@/components/documents/DeleteAllModal";
+import { DeleteDocumentModal } from "@/components/documents/DeleteDocumentModal";
 
 export default function Documents() {
   const router = useRouter();
@@ -62,6 +63,7 @@ export default function Documents() {
     deletingDocId,
     deletingAll,
     handleViewDocument,
+    initiateDeleteDocument,
     handleDeleteDocument,
     handleDeleteAllDocuments,
     handleBulkDelete,
@@ -71,12 +73,22 @@ export default function Documents() {
     selectedDocuments,
     setSelectedDocuments,
     setIsSelectMode,
+    onDeleteDocument: (documentId: string, documentName: string) => {
+      setDocumentToDelete({ id: documentId, name: documentName });
+      setIsDeleteDocumentDialogOpen(true);
+    },
   });
 
   // UI state
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
+  const [isDeleteDocumentDialogOpen, setIsDeleteDocumentDialogOpen] =
+    useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -195,7 +207,7 @@ export default function Documents() {
         viewMode={viewMode}
         onViewDocument={handleViewDocument}
         onToggleSelection={toggleDocumentSelection}
-        onDeleteDocument={handleDeleteDocument}
+        onDeleteDocument={initiateDeleteDocument}
       />
 
       {/* No Results */}
@@ -220,6 +232,23 @@ export default function Documents() {
         isOpen={isDeleteAllDialogOpen}
         onClose={() => setIsDeleteAllDialogOpen(false)}
         onConfirm={handleDeleteAllDocuments}
+      />
+
+      {/* Delete Single Document Confirmation Dialog */}
+      <DeleteDocumentModal
+        isOpen={isDeleteDocumentDialogOpen}
+        onClose={() => {
+          setIsDeleteDocumentDialogOpen(false);
+          setDocumentToDelete(null);
+        }}
+        onConfirm={() => {
+          if (documentToDelete) {
+            handleDeleteDocument(documentToDelete.id);
+          }
+          setIsDeleteDocumentDialogOpen(false);
+          setDocumentToDelete(null);
+        }}
+        documentName={documentToDelete?.name || ""}
       />
     </div>
   );
