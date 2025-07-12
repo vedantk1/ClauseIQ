@@ -257,6 +257,19 @@ class MongoDBAdapter(DatabaseInterface):
             logger.error(f"Error updating document: {e}")
             raise DatabaseError(f"Failed to update document: {e}")
     
+    async def delete_document(self, document_id: str, user_id: str) -> bool:
+        """Delete document."""
+        try:
+            documents_collection = self._get_collection("documents")
+            result = await documents_collection.delete_one({
+                "id": document_id,
+                "user_id": user_id
+            })
+            return result.deleted_count > 0
+        except Exception as e:
+            logger.error(f"Error deleting document: {e}")
+            raise DatabaseError(f"Failed to delete document: {e}")
+
     async def create_or_get_chat_session(self, document_id: str, user_id: str, session_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Atomically create chat session if it doesn't exist, or return existing session."""
         try:
@@ -321,20 +334,33 @@ class MongoDBAdapter(DatabaseInterface):
         except Exception as e:
             logger.error(f"Error adding chat message atomically: {e}")
             raise DatabaseError(f"Failed to add chat message: {e}")
-    
-    async def delete_document(self, document_id: str, user_id: str) -> bool:
-        """Delete document."""
+
+    async def clear_chat_messages(self, document_id: str, user_id: str) -> bool:
+        """Clear all messages from the chat session while keeping the session."""
         try:
             documents_collection = self._get_collection("documents")
-            result = await documents_collection.delete_one({
-                "id": document_id,
-                "user_id": user_id
-            })
-            return result.deleted_count > 0
+            
+            result = await documents_collection.update_one(
+                {
+                    "id": document_id,
+                    "user_id": user_id,
+                    "chat_session": {"$exists": True}
+                },
+                {
+                    "$set": {
+                        "chat_session.messages": [],
+                        "chat_session.updated_at": datetime.utcnow().isoformat(),
+                        "updated_at": datetime.utcnow().isoformat()
+                    }
+                }
+            )
+            
+            return result.modified_count > 0
+            
         except Exception as e:
-            logger.error(f"Error deleting document: {e}")
-            raise DatabaseError(f"Failed to delete document: {e}")
-    
+            logger.error(f"Error clearing chat messages: {e}")
+            return False
+
     # Analytics operations
     async def get_user_analytics(self, user_id: str) -> Dict[str, Any]:
         """Get analytics data for user."""

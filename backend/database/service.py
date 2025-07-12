@@ -585,6 +585,11 @@ class DocumentService:
         db = await self._get_db()
         return await db.add_chat_message_atomic(document_id, user_id, message)
 
+    async def clear_chat_messages(self, document_id: str, user_id: str) -> bool:
+        """Clear all messages from the chat session."""
+        db = await self._get_db()
+        return await db.clear_chat_messages(document_id, user_id)
+
     # Note: Document-based PDF methods are above in the "PDF File Operations" section
     # The methods below provide direct file storage access if needed
 

@@ -223,8 +223,11 @@ export const createCompatibleDocumentChatClient = () => {
           ok: response.success,
           status: response.success ? 200 : 400,
           hasData: !!response.data,
-          messageCount: Array.isArray((response.data as any)?.messages)
-            ? (response.data as any).messages.length
+          messageCount: Array.isArray(
+            (response.data as Record<string, unknown>)?.messages
+          )
+            ? ((response.data as Record<string, unknown>).messages as unknown[])
+                .length
             : 0,
         });
 
@@ -241,6 +244,60 @@ export const createCompatibleDocumentChatClient = () => {
         };
       } catch (error) {
         console.error("💥 [Foundational] History retrieval error:", error);
+        return {
+          ok: false,
+          status: 500,
+          statusText: "Internal Server Error",
+          json: async () => ({ error: "Network error" }),
+        };
+      }
+    },
+
+    /**
+     * 🗑️ Clear chat history for a document
+     */
+    async clearChatHistory(documentId: string): Promise<{
+      ok: boolean;
+      status: number;
+      statusText: string;
+      json: () => Promise<unknown>;
+    }> {
+      console.log(
+        "🗑️ [DocumentChat-Compat] Clearing chat history for document:",
+        documentId
+      );
+
+      try {
+        const response = await apiClient.delete(`/chat/${documentId}/history`);
+
+        console.log("🗑️ [DocumentChat-Compat] Clear history response:", {
+          ok: response.success,
+          status: response.success ? 200 : 400,
+          hasData: !!response.data,
+          messagesCleared: (response.data as Record<string, unknown>)
+            ?.messages_cleared,
+        });
+
+        return {
+          ok: response.success,
+          status: response.success ? 200 : 400,
+          statusText: response.success ? "OK" : "Bad Request",
+          json: async () => {
+            if (response.success) {
+              // Return in format DocumentChat expects: {data: actualData}
+              return {
+                data: response.data,
+              };
+            } else {
+              // Return error in format DocumentChat expects
+              throw new Error(
+                response.error?.message || "Failed to clear chat history"
+              );
+            }
+          },
+        };
+      } catch (error) {
+        console.error("💥 [DocumentChat-Compat] Clear history error:", error);
         return {
           ok: false,
           status: 500,

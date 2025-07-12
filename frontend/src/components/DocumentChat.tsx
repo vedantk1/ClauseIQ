@@ -46,6 +46,9 @@ export default function DocumentChat({
     error?: string;
   } | null>(null);
 
+  // State for clear history confirmation
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -264,6 +267,42 @@ export default function DocumentChat({
     }
   };
 
+  // Clear chat history
+  const clearChatHistory = async () => {
+    if (!currentSession) {
+      console.warn("⚠️ [DocumentChat] No session to clear");
+      return;
+    }
+
+    try {
+      console.log("🗑️ [DocumentChat] Clearing chat history...");
+      const response = await documentChatApi.clearChatHistory(documentId);
+
+      if (response.ok) {
+        const result = (await response.json()) as {
+          data: { messages_cleared?: number };
+        };
+        console.log("✅ [DocumentChat] Chat history cleared:", result);
+
+        // Clear local messages
+        setMessages([]);
+        setShowClearConfirm(false);
+
+        toast.success(
+          `Chat history cleared (${
+            result.data?.messages_cleared || 0
+          } messages removed)`
+        );
+      } else {
+        throw new Error("Failed to clear chat history");
+      }
+    } catch (error) {
+      console.error("💥 [DocumentChat] Clear history error:", error);
+      toast.error("Failed to clear chat history. Please try again.");
+      setShowClearConfirm(false);
+    }
+  };
+
   // If chat is not available
   // console.log("Chat status check:", {
   //   chatStatus,
@@ -368,6 +407,43 @@ export default function DocumentChat({
   // Active chat interface
   return (
     <div className={`flex flex-col h-full ${className}`}>
+      {/* Chat header with clear history button */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold text-text-primary">
+          Document Chat
+        </h3>
+        {messages.length > 0 && (
+          <div className="relative">
+            {!showClearConfirm ? (
+              <button
+                onClick={() => setShowClearConfirm(true)}
+                className="px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary border border-border-muted hover:border-border-default rounded-lg transition-colors"
+              >
+                Clear History
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-text-secondary">
+                  Clear all messages?
+                </span>
+                <button
+                  onClick={clearChatHistory}
+                  className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => setShowClearConfirm(false)}
+                  className="px-2 py-1 text-xs border border-border-muted text-text-secondary rounded hover:bg-bg-surface transition-colors"
+                >
+                  No
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Messages container - flex-1 to fill available space */}
       <div
         ref={messagesContainerRef}

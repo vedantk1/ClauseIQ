@@ -498,6 +498,49 @@ Please provide a clear, helpful answer based on the document content. If the con
                 "error": str(e)
             }
 
+    async def clear_chat_history(self, document_id: str, user_id: str) -> Dict[str, Any]:
+        """Clear all messages from a chat session while keeping the session structure."""
+        try:
+            logger.info(f"🗑️ Clearing chat history for document {document_id} by user {user_id}")
+            
+            # First, get the current session to count messages before clearing
+            session_result = await self.get_or_create_session(document_id, user_id)
+            if not session_result["success"]:
+                return {
+                    "success": False,
+                    "error": "Failed to get current session"
+                }
+            
+            session = session_result["session"]
+            session_id = session["session_id"]
+            messages_count = len(session.get("messages", []))
+            
+            # Clear messages from the session
+            clear_result = await self.doc_service.clear_chat_messages(document_id, user_id)
+            
+            if not clear_result:
+                logger.error(f"Failed to clear messages from session {session_id}")
+                return {
+                    "success": False,
+                    "error": "Failed to clear chat history"
+                }
+            
+            logger.info(f"✅ Cleared {messages_count} messages from session {session_id}")
+            
+            return {
+                "success": True,
+                "data": {
+                    "session_id": session_id,
+                    "messages_cleared": messages_count
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in clear_chat_history for document {document_id}: {e}")
+            return {
+                "success": False,
+                "error": "Failed to clear chat history"
+            }
 
 def get_chat_service() -> ChatService:
     """Get global chat service instance."""

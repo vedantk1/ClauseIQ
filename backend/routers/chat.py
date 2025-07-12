@@ -336,3 +336,44 @@ async def get_health_status(request: Request):
         logger.error(f"❌ Error in health check: {e}")
         log_exception(logger, e, "Error in health check")
         raise HTTPException(status_code=500, detail="Health check failed")
+
+
+@router.delete("/{document_id}/history", response_model=APIResponse[Dict[str, Any]])
+async def clear_chat_history(
+    document_id: str,
+    request: Request,
+    current_user: dict = Depends(get_current_user)
+) -> APIResponse[Dict[str, Any]]:
+    """
+    🗑️ Clear chat history for a document.
+    
+    Removes all messages from the chat session while keeping the session structure.
+    """
+    try:
+        user_id = current_user["id"]
+        
+        logger.info(f"🗑️ Clear history request for document {document_id} by user {user_id}")
+        
+        chat_service = get_chat_service()
+        result = await chat_service.clear_chat_history(document_id, user_id)
+        
+        if result["success"]:
+            logger.info(f"✅ Successfully cleared chat history for document {document_id}")
+            return create_success_response_with_request(
+                data=result["data"],
+                message=f"Chat history cleared ({result['data']['messages_cleared']} messages removed)",
+                request=request
+            )
+        else:
+            logger.error(f"❌ Failed to clear chat history: {result.get('error')}")
+            raise HTTPException(
+                status_code=400,
+                detail=result.get("error", "Failed to clear chat history")
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error clearing chat history for document {document_id}: {e}")
+        log_exception(logger, e, f"Error clearing chat history for document {document_id}")
+        raise HTTPException(status_code=500, detail="Internal server error")
