@@ -46,8 +46,8 @@ export default function DocumentChat({
     error?: string;
   } | null>(null);
 
-  // State for clear history confirmation
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  // State no longer needed - direct delete without confirmation
+  // const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -286,7 +286,6 @@ export default function DocumentChat({
 
         // Clear local messages
         setMessages([]);
-        setShowClearConfirm(false);
 
         toast.success(
           `Chat history cleared (${
@@ -299,7 +298,6 @@ export default function DocumentChat({
     } catch (error) {
       console.error("💥 [DocumentChat] Clear history error:", error);
       toast.error("Failed to clear chat history. Please try again.");
-      setShowClearConfirm(false);
     }
   };
 
@@ -407,48 +405,33 @@ export default function DocumentChat({
   // Active chat interface
   return (
     <div className={`flex flex-col h-full ${className}`}>
-      {/* Chat header with clear history button */}
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold text-text-primary">
-          Document Chat
-        </h3>
-        {messages.length > 0 && (
-          <div className="relative">
-            {!showClearConfirm ? (
-              <button
-                onClick={() => setShowClearConfirm(true)}
-                className="px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary border border-border-muted hover:border-border-default rounded-lg transition-colors"
-              >
-                Clear History
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-text-secondary">
-                  Clear all messages?
-                </span>
-                <button
-                  onClick={clearChatHistory}
-                  className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                >
-                  Yes
-                </button>
-                <button
-                  onClick={() => setShowClearConfirm(false)}
-                  className="px-2 py-1 text-xs border border-border-muted text-text-secondary rounded hover:bg-bg-surface transition-colors"
-                >
-                  No
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Messages container - flex-1 to fill available space */}
+      {/* Messages container with tiny clear button overlay */}
       <div
         ref={messagesContainerRef}
-        className="bg-bg-elevated rounded-lg p-3 flex-1 overflow-y-auto min-h-0"
+        className="bg-bg-elevated rounded-lg p-3 flex-1 overflow-y-auto min-h-0 relative"
       >
+        {/* Tiny clear button - top-left overlay, direct delete without confirmation */}
+        {messages.length > 0 && (
+          <button
+            onClick={clearChatHistory}
+            className="absolute top-2 left-2 z-10 w-5 h-5 flex items-center justify-center text-text-tertiary hover:text-text-secondary bg-bg-surface/60 hover:bg-bg-surface/80 border border-border-muted/30 hover:border-border-muted rounded transition-all duration-200"
+            title="Clear chat history"
+          >
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+          </button>
+        )}
         <div className="space-y-3">
           {messages.length === 0 ? (
             <div className="text-center py-8">
@@ -524,7 +507,7 @@ export default function DocumentChat({
       </div>
 
       {/* Input area - fixed at bottom */}
-      <div className="flex gap-2 mt-3 flex-shrink-0">
+      <div className="flex gap-2 mt-4 flex-shrink-0">
         <input
           ref={inputRef}
           type="text"
