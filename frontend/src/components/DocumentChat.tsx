@@ -414,7 +414,7 @@ export default function DocumentChat({
         {messages.length > 0 && (
           <button
             onClick={clearChatHistory}
-            className="absolute top-2 left-2 z-10 w-5 h-5 flex items-center justify-center text-text-tertiary hover:text-text-secondary bg-bg-surface/60 hover:bg-bg-surface/80 border border-border-muted/30 hover:border-border-muted rounded transition-all duration-200"
+            className="sticky top-2 left-2 z-10 w-5 h-5 flex items-center justify-center text-text-tertiary hover:text-text-secondary bg-bg-surface/80 hover:bg-bg-surface/90 border border-border-muted/30 hover:border-border-muted rounded transition-all duration-200"
             title="Clear chat history"
           >
             <svg
