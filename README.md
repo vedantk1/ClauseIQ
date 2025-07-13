@@ -72,8 +72,8 @@ cd frontend && npm run dev  # Terminal 2
 
 ### **Quick Links**
 
-- **[🚀 Getting Started](docs/README.md#quick-start)** - 5-minute setup guide
-- **[🔌 API Reference](docs/API.md)** - Complete endpoint documentation
+- **[🚀 Getting Started](docs/QUICK_START.md)** - 5-minute setup guide
+- **[🔌 API Reference](docs/API_REFERENCE.md)** - Complete endpoint documentation
 - **[🤖 AI Agent Guide](docs/README.md#ai-agent-guide)** - Essential knowledge for automated development
 - **[🏗️ Architecture](docs/README.md#architecture)** - System design and components
 - **[🚨 Troubleshooting](docs/README.md#troubleshooting)** - Common issues and solutions

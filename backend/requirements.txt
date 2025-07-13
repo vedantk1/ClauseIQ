@@ -77,7 +77,7 @@ fpdf==1.7.2
 jiter==0.10.0
 typing-inspection==0.4.1
 typing_extensions==4.14.0
-packaging==25.0
+packaging>=23.2,<25
 Pygments==2.19.1
 
 # System monitoring
@@ -85,7 +85,7 @@ psutil==6.1.0
 
 # Testing dependencies
 pytest==8.4.0
-pytest-asyncio==1.0.0
+pytest-asyncio>=0.20,<1
 iniconfig==2.1.0
 pluggy==1.6.0
 

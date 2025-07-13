@@ -2,6 +2,7 @@ README.md
 setup.py
 clauseiq_types/__init__.py
 clauseiq_types/common.py
+clauseiq_types/highlights.py
 shared/__init__.py
 shared.egg-info/PKG-INFO
 shared.egg-info/SOURCES.txt

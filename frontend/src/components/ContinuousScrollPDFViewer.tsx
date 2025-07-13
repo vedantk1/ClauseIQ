@@ -8,8 +8,10 @@ import {
 } from "@react-pdf-viewer/core";
 import { zoomPlugin } from "@react-pdf-viewer/zoom";
 import { pageNavigationPlugin } from "@react-pdf-viewer/page-navigation";
+import { searchPlugin } from "@react-pdf-viewer/search";
 import "@react-pdf-viewer/core/lib/styles/index.css";
 import "@react-pdf-viewer/page-navigation/lib/styles/index.css";
+import "@react-pdf-viewer/search/lib/styles/index.css";
 import "../styles/pdf-viewer.css";
 
 import Card from "./Card";
@@ -22,6 +24,8 @@ interface ContinuousScrollPDFViewerProps {
   documentId: string;
   fileName?: string;
   className?: string;
+  // Text to highlight in the PDF
+  highlightText?: string;
   // Optional dropdown menu props
   dropdownMenuItems?: Array<{
     label: string;
@@ -36,6 +40,7 @@ export default function ContinuousScrollPDFViewer({
   documentId,
   fileName = "Document",
   className = "",
+  highlightText,
   dropdownMenuItems,
 }: ContinuousScrollPDFViewerProps) {
   const [scale, setScale] = useState(1.0);
@@ -47,13 +52,16 @@ export default function ContinuousScrollPDFViewer({
   );
   const [currentPage, setCurrentPage] = useState(0);
 
-  // Create plugin instances - removed useMemo to avoid hooks rule violation
+  // Create plugin instances
   const zoomPluginInstance = zoomPlugin();
   const { zoomTo } = zoomPluginInstance;
 
   const pageNavigationPluginInstance = pageNavigationPlugin();
   const { GoToPreviousPage, GoToNextPage, CurrentPageLabel } =
     pageNavigationPluginInstance;
+
+  const searchPluginInstance = searchPlugin();
+  const { highlight } = searchPluginInstance;
 
   // PDF URL with authentication - fixed dependency array
   const pdfUrl = useMemo(() => {
@@ -79,6 +87,31 @@ export default function ContinuousScrollPDFViewer({
     // Set initial zoom level
     zoomTo(scale);
   };
+
+  // Handle highlighting when text is provided
+  React.useEffect(() => {
+    if (highlightText && !isLoading) {
+      // Small delay to ensure PDF is fully loaded
+      const timer = setTimeout(() => {
+        try {
+          // Try exact text first
+          highlight(highlightText);
+        } catch {
+          console.warn("Failed to highlight exact text, trying keywords...");
+          // Fallback: extract first and last few words
+          const words = highlightText.trim().split(/\s+/);
+          if (words.length > 6) {
+            const keywords = [...words.slice(0, 3), ...words.slice(-3)];
+            highlight(keywords);
+          } else {
+            highlight(words);
+          }
+        }
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [highlightText, isLoading, highlight]);
 
   // Handle page change - sync with library's internal state
   const handlePageChange = (e: PageChangeEvent) => {
@@ -282,7 +315,11 @@ export default function ContinuousScrollPDFViewer({
               fileUrl={pdfUrl}
               onDocumentLoad={handleDocumentLoad}
               onPageChange={handlePageChange}
-              plugins={[zoomPluginInstance, pageNavigationPluginInstance]}
+              plugins={[
+                zoomPluginInstance,
+                pageNavigationPluginInstance,
+                searchPluginInstance,
+              ]}
               scrollMode={
                 viewMode === "single" ? ScrollMode.Page : ScrollMode.Vertical
               }
