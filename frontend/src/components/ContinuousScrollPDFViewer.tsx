@@ -19,13 +19,23 @@ import Button from "./Button";
 import DropdownMenu from "./DropdownMenu";
 import config from "@/config/config";
 import "../utils/pdfConsoleFilter";
+import {
+  getRiskHighlightColor,
+  getRiskBorderColor,
+  type HighlightResult,
+} from "@/utils/pdfHighlightUtils";
+import { usePDFHighlighting } from "@/hooks/usePDFHighlighting";
+import type { Clause } from "@shared/common_generated";
 
 interface ContinuousScrollPDFViewerProps {
   documentId: string;
   fileName?: string;
   className?: string;
-  // Text to highlight in the PDF
+  // Text to highlight in the PDF (legacy prop for backward compatibility)
   highlightText?: string;
+  // Enhanced clause highlighting
+  highlightClause?: Clause | null;
+  onHighlightComplete?: (result: HighlightResult) => void;
   // Optional dropdown menu props
   dropdownMenuItems?: Array<{
     label: string;
@@ -41,6 +51,8 @@ export default function ContinuousScrollPDFViewer({
   fileName = "Document",
   className = "",
   highlightText,
+  highlightClause,
+  onHighlightComplete,
   dropdownMenuItems,
 }: ContinuousScrollPDFViewerProps) {
   const [scale, setScale] = useState(1.0);
@@ -60,8 +72,80 @@ export default function ContinuousScrollPDFViewer({
   const { GoToPreviousPage, GoToNextPage, CurrentPageLabel } =
     pageNavigationPluginInstance;
 
-  const searchPluginInstance = searchPlugin();
-  const { highlight } = searchPluginInstance;
+  const searchPluginInstance = searchPlugin({
+    onHighlightKeyword: (props) => {
+      // Apply custom styling based on risk level
+      const riskLevel = highlightClause?.risk_level;
+      props.highlightEle.style.backgroundColor = getRiskHighlightColor(riskLevel);
+      props.highlightEle.style.border = `2px solid ${getRiskBorderColor(riskLevel)}`;
+      props.highlightEle.style.borderRadius = '3px';
+      props.highlightEle.style.padding = '1px 2px';
+      props.highlightEle.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+    }
+  });
+  const { highlight, clearHighlights, jumpToMatch, jumpToNextMatch, jumpToPreviousMatch } = searchPluginInstance;
+
+  // Enhanced highlighting using custom hook
+  const highlighting = usePDFHighlighting({
+    highlightFunction: React.useCallback(async (terms) => {
+      console.log('🔍 PDF Viewer highlight function called with:', terms);
+      console.log('🔍 Type of terms:', typeof terms);
+      
+      // Debug: Extract actual PDF text content before highlighting
+      const textElements = document.querySelectorAll('.rpv-core__text-layer span');
+      const pdfText = Array.from(textElements).map(el => el.textContent || '').join(' ');
+      console.log('🔍 PDF text content (first 200 chars):', pdfText.substring(0, 200));
+      
+      // Check if our search terms exist in the PDF text
+      const searchTerm = Array.isArray(terms) ? terms[0] : terms;
+      const normalizedPdfText = pdfText.toLowerCase().replace(/\s+/g, ' ').trim();
+      const normalizedSearchTerm = searchTerm.toLowerCase().replace(/\s+/g, ' ').trim();
+      
+      console.log('🔍 Search term (normalized):', normalizedSearchTerm.substring(0, 100));
+      console.log('🔍 PDF contains search term:', normalizedPdfText.includes(normalizedSearchTerm));
+      
+      // Try to find partial matches
+      const words = normalizedSearchTerm.split(' ').filter(w => w.length > 3);
+      console.log('🔍 Individual words found in PDF:', words.map(word => ({
+        word,
+        found: normalizedPdfText.includes(word)
+      })));
+      
+      try {
+        const result = await highlight(terms);
+        console.log('✅ PDF search plugin highlight completed', result);
+        
+        // Debug: Check if highlight elements were created
+        setTimeout(() => {
+          const highlightElements = document.querySelectorAll('.rpv-search__highlight');
+          console.log(`🔍 Found ${highlightElements.length} highlight elements in DOM`);
+          if (highlightElements.length > 0) {
+            console.log('🔍 First highlight element:', highlightElements[0]);
+            console.log('🔍 First highlight styles:', getComputedStyle(highlightElements[0]));
+          }
+        }, 100);
+        
+        return result;
+      } catch (error) {
+        console.error('❌ PDF search plugin highlight failed:', error);
+        throw error;
+      }
+    }, [highlight, clearHighlights]),
+    clearHighlights: React.useCallback(() => {
+      clearHighlights();
+    }, [clearHighlights]),
+    jumpToMatch: React.useCallback((index: number) => {
+      jumpToMatch(index);
+    }, [jumpToMatch]),
+    jumpToNextMatch: React.useCallback(() => {
+      jumpToNextMatch();
+    }, [jumpToNextMatch]),
+    jumpToPreviousMatch: React.useCallback(() => {
+      jumpToPreviousMatch();
+    }, [jumpToPreviousMatch]),
+    debounceMs: 500,
+    viewMode: viewMode, // Pass current view mode for different handling
+  });
 
   // PDF URL with authentication - fixed dependency array
   const pdfUrl = useMemo(() => {
@@ -86,11 +170,44 @@ export default function ContinuousScrollPDFViewer({
 
     // Set initial zoom level
     zoomTo(scale);
+    
+    // Debug: Check if text layer is available
+    setTimeout(() => {
+      const textLayers = document.querySelectorAll('.rpv-core__text-layer');
+      console.log(`🔍 Found ${textLayers.length} text layers in DOM`);
+      
+      const textElements = document.querySelectorAll('.rpv-core__text-layer span');
+      console.log(`🔍 Found ${textElements.length} text elements in DOM`);
+      
+      if (textElements.length > 0) {
+        console.log('🔍 First few text elements:', Array.from(textElements).slice(0, 5).map(el => el.textContent));
+      }
+    }, 2000);
   };
 
-  // Handle highlighting when text is provided
+  // Enhanced clause highlighting effect
   React.useEffect(() => {
-    if (highlightText && !isLoading) {
+    try {
+      highlighting.executeHighlighting(highlightClause || null);
+    } catch (error) {
+      console.error('Error in clause highlighting:', error);
+    }
+  }, [highlightClause]); // Removed highlighting.executeHighlighting from dependency array to prevent infinite loop
+
+  // Notify parent component when highlighting completes
+  React.useEffect(() => {
+    try {
+      if (highlighting.highlightResult) {
+        onHighlightComplete?.(highlighting.highlightResult);
+      }
+    } catch (error) {
+      console.error('Error in highlight completion callback:', error);
+    }
+  }, [highlighting.highlightResult, onHighlightComplete]);
+
+  // Legacy highlighting support (backward compatibility)
+  React.useEffect(() => {
+    if (highlightText && !isLoading && !highlightClause) {
       // Small delay to ensure PDF is fully loaded
       const timer = setTimeout(() => {
         try {
@@ -111,7 +228,9 @@ export default function ContinuousScrollPDFViewer({
 
       return () => clearTimeout(timer);
     }
-  }, [highlightText, isLoading, highlight]);
+  }, [highlightText, isLoading, highlight, highlightClause]);
+
+  // This effect is now handled by the custom hook
 
   // Handle page change - sync with library's internal state
   const handlePageChange = (e: PageChangeEvent) => {
@@ -136,6 +255,8 @@ export default function ContinuousScrollPDFViewer({
     setScale(1.0);
     zoomTo(1.0);
   };
+
+  // Navigation functions are now provided by the hook
 
   // Show error state if there's an error
   if (error) {
@@ -237,6 +358,68 @@ export default function ContinuousScrollPDFViewer({
                   </Button>
                 )}
               </GoToNextPage>
+            </div>
+          )}
+
+          {/* Highlighting Status & Navigation */}
+          {(highlighting.isHighlighting || highlighting.highlightResult) && (
+            <div className="flex items-center gap-2 border-l border-border-muted pl-4">
+              {highlighting.isHighlighting && (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent-purple"></div>
+                  <span className="text-sm text-text-secondary">Searching...</span>
+                </div>
+              )}
+              
+              {highlighting.highlightResult && !highlighting.isHighlighting && (
+                <div className="flex items-center gap-2">
+                  {highlighting.highlightResult.found ? (
+                    <>
+                      <div className="flex items-center gap-1">
+                        <div 
+                          className="w-3 h-3 rounded-full border-2"
+                          style={{
+                            backgroundColor: getRiskHighlightColor(highlightClause?.risk_level),
+                            borderColor: getRiskBorderColor(highlightClause?.risk_level)
+                          }}
+                        ></div>
+                        <span className="text-sm text-text-secondary">
+                          Found ({highlighting.highlightResult.strategy})
+                        </span>
+                      </div>
+                      
+                      {highlighting.totalMatches > 1 && (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            onClick={highlighting.goToPreviousMatch}
+                            size="sm"
+                            variant="secondary"
+                            title="Previous match"
+                          >
+                            ↑
+                          </Button>
+                          <span className="text-xs text-text-secondary min-w-8 text-center">
+                            {highlighting.currentMatchIndex + 1}/{highlighting.totalMatches}
+                          </span>
+                          <Button
+                            onClick={highlighting.goToNextMatch}
+                            size="sm"
+                            variant="secondary"
+                            title="Next match"
+                          >
+                            ↓
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 h-3 rounded-full bg-gray-300 border-2 border-gray-400"></div>
+                      <span className="text-sm text-text-secondary">Not found</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
