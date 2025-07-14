@@ -73,14 +73,50 @@ export default function ContinuousScrollPDFViewer({
     pageNavigationPluginInstance;
 
   const searchPluginInstance = searchPlugin({
-    onHighlightKeyword: (props) => {
-      // Apply custom styling based on risk level
+    renderHighlights: (renderProps) => {
       const riskLevel = highlightClause?.risk_level;
-      props.highlightEle.style.backgroundColor = getRiskHighlightColor(riskLevel);
-      props.highlightEle.style.border = `2px solid ${getRiskBorderColor(riskLevel)}`;
-      props.highlightEle.style.borderRadius = '3px';
-      props.highlightEle.style.padding = '1px 2px';
-      props.highlightEle.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+      
+      return (
+        <div>
+          {renderProps.highlightAreas.map((area, index) => {
+            // Get base CSS properties for positioning
+            const baseCssProperties = renderProps.getCssProperties(area);
+            
+            // Calculate enhanced width for better coverage
+            const minWidthPercent = 8; // Minimum 8% width for visibility
+            const enhancedWidth = Math.max(area.width, minWidthPercent);
+            
+            // Create custom highlight style
+            const highlightStyle = {
+              ...baseCssProperties,
+              position: 'absolute' as const,
+              backgroundColor: getRiskHighlightColor(riskLevel),
+              opacity: 0.4, // Semi-transparent for readability
+              border: `1px solid ${getRiskBorderColor(riskLevel)}`,
+              borderRadius: '3px',
+              minHeight: '1.2em',
+              minWidth: `${minWidthPercent}%`,
+              width: `${enhancedWidth}%`,
+              // Ensure highlight is visible but doesn't interfere with text selection
+              pointerEvents: 'none' as const,
+              zIndex: 1,
+              // Add slight padding for better visual coverage
+              paddingLeft: '2px',
+              paddingRight: '2px',
+            };
+
+            return (
+              <div
+                key={`highlight-${area.pageIndex}-${index}`}
+                style={highlightStyle}
+                className="clause-highlight"
+                title={`${highlightClause?.clause_type || 'Clause'} - ${riskLevel || 'unknown'} risk`}
+                aria-label={`Highlighted ${riskLevel || 'unknown'} risk clause`}
+              />
+            );
+          })}
+        </div>
+      );
     }
   });
   const { highlight, clearHighlights, jumpToMatch, jumpToNextMatch, jumpToPreviousMatch } = searchPluginInstance;

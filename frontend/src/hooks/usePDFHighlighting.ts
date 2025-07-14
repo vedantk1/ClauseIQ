@@ -155,246 +155,134 @@ export function usePDFHighlighting({
         return;
       }
 
-      // Clear existing highlights
+      // Clear existing highlights before trying new search
       clearHighlights();
 
-      // Create and execute highlighting strategies
-      const strategies = createHighlightStrategies(clause);
-      let foundMatch = false;
+      // Use the exact clause text as search term - simple and clean
+      const searchTerm = clause.text.trim();
+      console.log(`🔍 Searching for exact clause text: "${searchTerm.substring(0, 100)}..."`);
 
-      for (const strategy of strategies) {
-        try {
-          console.log(`Trying highlighting strategy: ${strategy.name}`);
-          const searchTerms = strategy.execute(clause.text);
-          console.log(`Search terms for ${strategy.name}:`, searchTerms);
-
-          // Validate search terms
-          if (!searchTerms || 
-              (typeof searchTerms === 'string' && searchTerms.trim().length === 0) ||
-              (Array.isArray(searchTerms) && searchTerms.length === 0)) {
-            console.warn(`Invalid search terms for strategy ${strategy.name}`);
-            continue;
-          }
-
-          // Execute the highlight and get match results
-          try {
-            console.log(`🔍 Executing highlight function for strategy: ${strategy.name}`);
-            
-            // Add timeout to prevent hanging
-            const highlightPromise = highlightFunction(searchTerms);
-            const timeoutPromise = new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Highlight timeout')), 10000)
-            );
-            
-            const matchResults = await Promise.race([highlightPromise, timeoutPromise]);
-            console.log(`✅ Highlight function completed for strategy: ${strategy.name}`, matchResults);
-            
-            // Get actual match count from results if available
-            let actualMatchCount = 1;
-            if (matchResults && Array.isArray(matchResults)) {
-              actualMatchCount = matchResults.length;
-              console.log(`📊 Found ${actualMatchCount} matches from search results`);
-            } else if (matchResults && typeof matchResults.length === 'number') {
-              actualMatchCount = matchResults.length;
-              console.log(`📊 Found ${actualMatchCount} matches from search results`);
-            }
-
-            // Get timing strategy for current view mode
-            const timing = getTimingStrategy();
-            console.log(`⏱️ Using ${timing.name} timing strategy`);
-
-            // Wait for DOM update with view mode-specific timing
-            await new Promise(resolve => setTimeout(resolve, timing.initialDelay));
-            
-            // Verify matches are actually in DOM
-            const highlightElements = document.querySelectorAll('.rpv-search__highlight');
-            const domMatchCount = highlightElements.length;
-            console.log(`🔍 DOM verification: found ${domMatchCount} highlight elements`);
-            
-            // If we have highlights in DOM, we succeeded!
-            if (domMatchCount > 0) {
-              const finalMatchCount = Math.max(actualMatchCount, domMatchCount);
-              
-              const result: HighlightResult = {
-                found: true,
-                strategy: strategy.name,
-                searchTerms,
-                matchCount: finalMatchCount
-              };
-
-              setHighlightResult(result);
-              setTotalMatches(finalMatchCount);
-              foundMatch = true;
-
-              // Cache the successful result
-              cacheResult(clause.id, result);
-
-              // Jump to first match with proper timing for view mode
-              console.log(`🎯 Jumping to first match with ${timing.name} timing...`);
-              setTimeout(() => {
-                try {
-                  jumpToMatch(1); // Jump to first match (1-based index)
-                  console.log(`✅ Successfully jumped to first match`);
-                } catch (jumpError) {
-                  console.warn(`⚠️ Jump to match failed:`, jumpError);
-                  // Fallback to jumpToNextMatch if jumpToMatch fails
-                  try {
-                    jumpToNextMatch();
-                    console.log(`✅ Fallback jumpToNextMatch succeeded`);
-                  } catch (fallbackError) {
-                    console.error(`❌ Both jump methods failed:`, fallbackError);
-                  }
-                }
-              }, timing.jumpDelay);
-
-              console.log(`✅ Successfully highlighted using strategy: ${strategy.name}`);
-              break;
-            } else {
-              console.warn(`⚠️ No highlights in DOM despite successful search - trying with longer delay`);
-              // Try longer delay for virtual list rendering
-              await new Promise(resolve => setTimeout(resolve, timing.retryDelay));
-              const retryHighlights = document.querySelectorAll('.rpv-search__highlight');
-              console.log(`🔍 Retry DOM check: found ${retryHighlights.length} highlight elements`);
-              
-              if (retryHighlights.length > 0) {
-                // Success on retry!
-                const finalMatchCount = Math.max(actualMatchCount, retryHighlights.length);
-                
-                const result: HighlightResult = {
-                  found: true,
-                  strategy: strategy.name,
-                  searchTerms,
-                  matchCount: finalMatchCount
-                };
-
-                setHighlightResult(result);
-                setTotalMatches(finalMatchCount);
-                foundMatch = true;
-                cacheResult(clause.id, result);
-
-                // Jump to first match
-                setTimeout(() => {
-                  try {
-                    jumpToMatch(1);
-                    console.log(`✅ Successfully jumped to first match after retry`);
-                  } catch (jumpError) {
-                    console.warn(`⚠️ Jump to match failed after retry:`, jumpError);
-                    jumpToNextMatch();
-                  }
-                }, timing.jumpDelay);
-
-                console.log(`✅ Successfully highlighted using strategy: ${strategy.name} (after retry)`);
-                break;
-              } else {
-                console.warn(`❌ Still no highlights in DOM - continuing to next strategy`);
-                // Continue to next strategy rather than failing completely
-                continue;
-              }
-            }
-          } catch (highlightError) {
-            console.error(`❌ Highlight function failed for strategy ${strategy.name}:`, highlightError);
-            // Don't throw - try next strategy
-            continue;
-          }
-        } catch (error) {
-          console.warn(`Strategy ${strategy.name} failed:`, error);
-          continue;
-        }
-      }
-
-      // If no strategy worked, try PDF text-based matching as a last resort
-      if (!foundMatch) {
-        console.log('🔍 Trying PDF text-based matching...');
-        try {
-          // Extract actual PDF text
-          const textElements = document.querySelectorAll('.rpv-core__text-layer span');
-          const pdfText = Array.from(textElements).map(el => el.textContent || '').join(' ');
+      // DEBUG: Let's see what the PDF actually contains vs our clause text
+      const textElements = document.querySelectorAll('.rpv-core__text-layer span');
+      const pdfText = Array.from(textElements).map(el => el.textContent || '').join(' ');
+      console.log(`📄 PDF text (first 500 chars): "${pdfText.substring(0, 500)}"`);
+      
+      // Compare normalized versions
+      const normalizedClause = searchTerm.toLowerCase().replace(/\s+/g, ' ').replace(/[^\w\s]/g, '').trim();
+      const normalizedPdf = pdfText.toLowerCase().replace(/\s+/g, ' ').replace(/[^\w\s]/g, '').trim();
+      
+      console.log(`🔍 Normalized clause: "${normalizedClause.substring(0, 100)}..."`);
+      console.log(`📄 Does PDF contain normalized clause?`, normalizedPdf.includes(normalizedClause.substring(0, 50)));
+      
+      // Try to find a distinctive phrase from the clause that exists in PDF
+      const clauseWords = searchTerm.split(/\s+/);
+      let distinctivePhrase = '';
+      
+      // Look for longer sequences first (10-15 words), then shorter ones
+      const searchLengths = [15, 12, 10, 8, 6]; // Try longer phrases first
+      
+      for (const length of searchLengths) {
+        if (distinctivePhrase) break; // Stop once we find something
+        
+        for (let i = 0; i <= clauseWords.length - length; i++) {
+          const phrase = clauseWords.slice(i, i + length).join(' ');
+          const normalizedPhrase = phrase.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
           
-          if (pdfText.length > 0) {
-            // Try to find the best matching phrases from the PDF text
-            const clauseWords = clause.text.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-            const pdfWords = pdfText.toLowerCase().split(/\s+/);
-            
-            // Find sequences of words that match
-            const matchingPhrases = [];
-            for (let i = 0; i < clauseWords.length - 1; i++) {
-              const phrase = `${clauseWords[i]} ${clauseWords[i + 1]}`;
-              if (pdfText.toLowerCase().includes(phrase)) {
-                matchingPhrases.push(phrase);
-              }
-            }
-            
-            // Try individual words if no phrases match
-            if (matchingPhrases.length === 0) {
-              for (const word of clauseWords.slice(0, 3)) {
-                if (pdfText.toLowerCase().includes(word)) {
-                  matchingPhrases.push(word);
-                }
-              }
-            }
-            
-            if (matchingPhrases.length > 0) {
-              console.log('🔍 Found matching phrases in PDF:', matchingPhrases);
-              
-              // Use the same Promise-based approach as strategies
-              const matchResults = await highlightFunction(matchingPhrases);
-              console.log('📊 PDF text matching results:', matchResults);
-              
-              // Wait for virtual list rendering based on view mode
-              const timing = getTimingStrategy();
-              await new Promise(resolve => setTimeout(resolve, timing.initialDelay));
-              
-              // Verify matches in DOM
-              const highlightElements = document.querySelectorAll('.rpv-search__highlight');
-              const domMatchCount = highlightElements.length;
-              console.log(`🔍 PDF text matching DOM verification: found ${domMatchCount} highlight elements`);
-              
-              if (domMatchCount > 0) {
-                const result: HighlightResult = {
-                  found: true,
-                  strategy: 'pdf_text_matching',
-                  searchTerms: matchingPhrases,
-                  matchCount: domMatchCount
-                };
-                
-                setHighlightResult(result);
-                setTotalMatches(domMatchCount);
-                foundMatch = true;
-                cacheResult(clause.id, result);
-                
-                // Jump to first match with timing
-                setTimeout(() => {
-                  try {
-                    jumpToMatch(1);
-                    console.log('✅ Successfully jumped to first match via PDF text matching');
-                  } catch (jumpError) {
-                    console.warn('⚠️ Jump to match failed, using fallback:', jumpError);
-                    jumpToNextMatch();
-                  }
-                }, timing.jumpDelay);
-                
-                console.log('✅ Successfully highlighted using PDF text matching');
-              } else {
-                console.warn('❌ PDF text matching failed - no highlights in DOM');
-              }
-            }
+          if (normalizedPdf.includes(normalizedPhrase)) {
+            distinctivePhrase = phrase;
+            console.log(`✅ Found ${length}-word distinctive phrase in PDF: "${distinctivePhrase}"`);
+            break;
           }
-        } catch (error) {
-          console.warn('PDF text-based matching failed:', error);
         }
       }
+      
+      // If we couldn't find a long phrase, try the first half of the clause
+      if (!distinctivePhrase && clauseWords.length > 10) {
+        const firstHalf = clauseWords.slice(0, Math.floor(clauseWords.length / 2)).join(' ');
+        const normalizedFirstHalf = firstHalf.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
+        
+        if (normalizedPdf.includes(normalizedFirstHalf)) {
+          distinctivePhrase = firstHalf;
+          console.log(`✅ Found first half of clause in PDF: "${distinctivePhrase}"`);
+        }
+      }
+      
+      const actualSearchTerm = distinctivePhrase || searchTerm;
+      console.log(`🎯 Using search term: "${actualSearchTerm}"`);
 
-      // If still no match found
-      if (!foundMatch) {
-        const notFoundResult: HighlightResult = {
+      try {
+        // Execute the highlight with the best search term we can find
+        const matchResults = await highlightFunction(actualSearchTerm);
+        console.log(`✅ Highlight function completed with exact text`, matchResults);
+        
+        // Get timing strategy for current view mode
+        const timing = getTimingStrategy();
+        console.log(`⏱️ Using ${timing.name} timing strategy`);
+
+        // Wait for DOM update with view mode-specific timing
+        await new Promise(resolve => setTimeout(resolve, timing.initialDelay));
+        
+        // Verify matches are actually in DOM
+        const highlightElements = document.querySelectorAll('.rpv-search__highlight');
+        const domMatchCount = highlightElements.length;
+        console.log(`🔍 DOM verification: found ${domMatchCount} highlight elements`);
+        
+        // If we have highlights in DOM, we succeeded!
+        if (domMatchCount > 0) {
+          const result: HighlightResult = {
+            found: true,
+            strategy: 'exact_clause_text',
+            searchTerms: searchTerm,
+            matchCount: domMatchCount
+          };
+
+          setHighlightResult(result);
+          setTotalMatches(domMatchCount);
+
+          // Cache the successful result
+          cacheResult(clause.id, result);
+
+          // Jump to first match with proper timing for view mode
+          console.log(`🎯 Jumping to first match with ${timing.name} timing...`);
+          setTimeout(() => {
+            try {
+              jumpToMatch(1); // Jump to first match (1-based index)
+              console.log(`✅ Successfully jumped to first match`);
+            } catch (jumpError) {
+              console.warn(`⚠️ Jump to match failed:`, jumpError);
+              // Fallback to jumpToNextMatch if jumpToMatch fails
+              try {
+                jumpToNextMatch();
+                console.log(`✅ Fallback jumpToNextMatch succeeded`);
+              } catch (fallbackError) {
+                console.error(`❌ Both jump methods failed:`, fallbackError);
+              }
+            }
+          }, timing.jumpDelay);
+
+          console.log(`✅ Successfully highlighted exact clause text`);
+        } else {
+          console.warn(`❌ No highlights found for exact clause text`);
+          
+          // No fallback - just report not found
+          const notFoundResult: HighlightResult = {
+            found: false,
+            strategy: 'exact_clause_text_failed',
+            searchTerms: searchTerm,
+            matchCount: 0
+          };
+          setHighlightResult(notFoundResult);
+          console.warn('❌ Exact clause text not found in PDF');
+        }
+      } catch (highlightError) {
+        console.error(`❌ Highlight function failed:`, highlightError);
+        const errorResult: HighlightResult = {
           found: false,
-          strategy: 'none',
+          strategy: 'error',
           searchTerms: clause.text,
           matchCount: 0
         };
-
-        setHighlightResult(notFoundResult);
-        console.warn('❌ No highlighting strategy succeeded for clause');
+        setHighlightResult(errorResult);
       }
     } catch (error) {
       console.error('Error in highlighting execution:', error);
@@ -414,9 +302,9 @@ export function usePDFHighlighting({
     clearHighlights,
     jumpToMatch,
     jumpToNextMatch,
-    getTimingStrategy, // Added getTimingStrategy to dependencies
-    viewMode // Added viewMode to dependencies
-  ]); // Removed dependencies that change on every render
+    getTimingStrategy,
+    viewMode
+  ]);
 
   // Debounced execute highlighting
   const executeHighlighting = useCallback(async (clause: Clause | null) => {
@@ -425,8 +313,9 @@ export function usePDFHighlighting({
       clearTimeout(debounceTimerRef.current);
     }
 
-    // If no clause, clear highlights
+    // If no clause, clear highlights immediately
     if (!clause) {
+      console.log('🧹 Clearing highlights - no clause selected');
       clearHighlights();
       setHighlightResult(null);
       setCurrentMatchIndex(0);
@@ -442,10 +331,18 @@ export function usePDFHighlighting({
       if (lastClause.text && clause.text) {
         const similarity = calculateTextSimilarity(lastClause.text, clause.text);
         if (similarity > 0.95) {
-          console.log('Skipping re-highlight for similar clause');
+          console.log('⏭️ Skipping re-highlight for same clause');
           return;
         }
       }
+    }
+
+    // Different clause - clear old highlights before processing new one
+    if (lastClause && lastClause.id !== clause.id) {
+      console.log('🧹 Clearing highlights - switching to different clause');
+      clearHighlights();
+      // Small delay to ensure highlights are cleared before new search
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     lastClauseRef.current = clause;
@@ -454,7 +351,7 @@ export function usePDFHighlighting({
     debounceTimerRef.current = setTimeout(() => {
       executeHighlightingInternal(clause);
     }, debounceMs);
-  }, [executeHighlightingInternal, clearHighlights, debounceMs]); // Stable dependencies
+  }, [executeHighlightingInternal, clearHighlights, debounceMs]);
 
   // Navigation functions
   const goToNextMatch = useCallback(() => {
