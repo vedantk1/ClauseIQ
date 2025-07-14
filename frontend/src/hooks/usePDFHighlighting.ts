@@ -178,32 +178,15 @@ export function usePDFHighlighting({
       const clauseWords = searchTerm.split(/\s+/);
       let distinctivePhrase = '';
       
-      // Look for longer sequences first (10-15 words), then shorter ones
-      const searchLengths = [15, 12, 10, 8, 6]; // Try longer phrases first
-      
-      for (const length of searchLengths) {
-        if (distinctivePhrase) break; // Stop once we find something
+      // Look for a sequence of 5-8 words that appears in the PDF
+      for (let i = 0; i < clauseWords.length - 4; i++) {
+        const phrase = clauseWords.slice(i, i + 6).join(' ');
+        const normalizedPhrase = phrase.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
         
-        for (let i = 0; i <= clauseWords.length - length; i++) {
-          const phrase = clauseWords.slice(i, i + length).join(' ');
-          const normalizedPhrase = phrase.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
-          
-          if (normalizedPdf.includes(normalizedPhrase)) {
-            distinctivePhrase = phrase;
-            console.log(`✅ Found ${length}-word distinctive phrase in PDF: "${distinctivePhrase}"`);
-            break;
-          }
-        }
-      }
-      
-      // If we couldn't find a long phrase, try the first half of the clause
-      if (!distinctivePhrase && clauseWords.length > 10) {
-        const firstHalf = clauseWords.slice(0, Math.floor(clauseWords.length / 2)).join(' ');
-        const normalizedFirstHalf = firstHalf.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
-        
-        if (normalizedPdf.includes(normalizedFirstHalf)) {
-          distinctivePhrase = firstHalf;
-          console.log(`✅ Found first half of clause in PDF: "${distinctivePhrase}"`);
+        if (normalizedPdf.includes(normalizedPhrase)) {
+          distinctivePhrase = phrase;
+          console.log(`✅ Found distinctive phrase in PDF: "${distinctivePhrase}"`);
+          break;
         }
       }
       
