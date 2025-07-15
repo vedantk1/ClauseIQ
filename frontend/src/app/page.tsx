@@ -286,11 +286,11 @@ export default function Home() {
             {/* Left Column - Content (60%) */}
             <div className="flex-1 xl:flex-[3]">
               <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-semibold text-text-primary mb-8 leading-tight">
-                Understand any
-                <span className="text-accent-purple"> contract</span>
-                <br />
+              Understand any
+              <span className="text-accent-purple"> contract</span>
+              <br />
                 in 60 seconds
-              </h1>
+            </h1>
               <div className="mb-10 max-w-2xl">
                 <p className="text-xl text-text-secondary leading-relaxed mb-4">
                   Upload your legal document and get instant AI-powered analysis in plain English.
@@ -299,7 +299,7 @@ export default function Home() {
                   Chat with your contract, identify risks, and make informed decisions.
                 </p>
               </div>
-              
+
               {/* Key Differentiators */}
               <div className="space-y-4 mb-12">
                 <div className="flex items-center gap-4">
@@ -316,7 +316,7 @@ export default function Home() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-                  <span className="text-text-primary font-medium">Support for 10+ contract types</span>
+                  <span className="text-text-primary font-medium">AI suggestions and rewrites</span>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="w-8 h-8 bg-accent-amber/20 rounded-lg flex items-center justify-center">
@@ -324,7 +324,7 @@ export default function Home() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
-                  <span className="text-text-primary font-medium">Documents auto-deleted for privacy</span>
+                  <span className="text-text-primary font-medium">100% open source</span>
                 </div>
               </div>
 
@@ -335,11 +335,11 @@ export default function Home() {
                   <div className="text-sm text-text-secondary font-medium">Contract<br />Types</div>
                 </div>
                 <div className="text-center p-4 bg-accent-green/5 border border-accent-green/10 rounded-xl hover:bg-accent-green/10 transition-all duration-300">
-                  <div className="text-3xl font-bold text-accent-green mb-2">60s</div>
+                  <div className="text-3xl font-bold text-accent-green mb-2">&lt;1min</div>
                   <div className="text-sm text-text-secondary font-medium">Analysis<br />Time</div>
                 </div>
                 <div className="text-center p-4 bg-accent-amber/5 border border-accent-amber/10 rounded-xl hover:bg-accent-amber/10 transition-all duration-300">
-                  <div className="text-3xl font-bold text-accent-amber mb-2">4</div>
+                  <div className="text-3xl font-bold text-accent-amber mb-2">5+</div>
                   <div className="text-sm text-text-secondary font-medium">AI<br />Models</div>
                 </div>
               </div>
@@ -358,30 +358,30 @@ export default function Home() {
                 </div>
 
                 {/* Enhanced Upload Zone */}
-                <div
-                  className={clsx(
+              <div
+                className={clsx(
                     "relative border-2 border-dashed rounded-xl p-10 text-center transition-all duration-300 cursor-pointer group",
-                    dragActive || file
+                  dragActive || file
                       ? "border-accent-purple bg-gradient-to-br from-accent-purple/10 to-accent-purple/5 shadow-lg scale-[1.02]"
                       : "border-border-muted hover:border-accent-purple/60 hover:bg-gradient-to-br hover:from-accent-purple/5 hover:to-transparent hover:shadow-md hover:scale-[1.01]"
-                  )}
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                  onClick={() => {
-                    if (fileInputRef.current && !analysisLoading) {
-                      fileInputRef.current.click();
-                    }
-                  }}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleInputChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    disabled={analysisLoading}
+                )}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => {
+                  if (fileInputRef.current && !analysisLoading) {
+                    fileInputRef.current.click();
+                  }
+                }}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleInputChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  disabled={analysisLoading}
                   />
 
                   {file ? (
@@ -389,7 +389,7 @@ export default function Home() {
                       <div className="w-12 h-12 bg-accent-green/20 rounded-full flex items-center justify-center mx-auto">
                         <svg className="w-6 h-6 text-accent-green" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
+                      </svg>
                       </div>
                       <p className="font-semibold text-text-primary">{file.name}</p>
                       <p className="text-sm text-text-secondary">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
@@ -399,7 +399,7 @@ export default function Home() {
                       <div className="w-16 h-16 bg-accent-purple/10 rounded-full flex items-center justify-center mx-auto group-hover:bg-accent-purple/20 transition-all duration-300">
                         <svg className="w-8 h-8 text-accent-purple group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
+                      </svg>
                       </div>
                       <div>
                         <p className="text-text-primary font-semibold text-lg">
@@ -409,41 +409,35 @@ export default function Home() {
                       </div>
                     </div>
                   )}
-                </div>
+              </div>
 
-                {file && (
+              {file && (
                   <div className="mt-6 space-y-4">
-                    <Button
-                      onClick={handleProcessDocument}
-                      loading={analysisLoading}
+                  <Button
+                    onClick={handleProcessDocument}
+                    loading={analysisLoading}
                       size="md"
                       className="w-full"
-                    >
+                  >
                       {analysisLoading ? "Analyzing..." : "Analyze Contract"}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={handleRemoveFile}
-                      disabled={analysisLoading}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={handleRemoveFile}
+                    disabled={analysisLoading}
                       size="sm"
                       className="w-full"
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                )}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              )}
 
                 <div className="mt-6 space-y-4">
                   <div className="text-center">
-                    <p className="text-sm text-text-secondary">
+                <p className="text-sm text-text-secondary">
                       🔒 Secure & private - documents deleted after analysis
                     </p>
-                  </div>
-                  
-                  {/* Trust Indicator */}
-                  <div className="bg-accent-green/5 border border-accent-green/20 rounded-lg p-3 text-center">
-                    <p className="text-xs text-accent-green font-medium mb-1">✓ Trusted by professionals</p>
-                    <p className="text-xs text-text-secondary">Join 1000+ users analyzing contracts daily</p>
                   </div>
                   
                   {/* Sample Contract Link */}
@@ -603,8 +597,8 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                </div>
-              </Card>
+              </div>
+            </Card>
             </div>
           </div>
         </div>
