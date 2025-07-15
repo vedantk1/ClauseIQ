@@ -1,20 +1,14 @@
 /**
- * Custom hook for PDF highlighting with performance optimizations
+ * Custom hook for PDF highlighting - always performs fresh searches
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { Clause } from '@shared/common_generated';
 import { 
   createHighlightStrategies, 
   type HighlightResult,
   calculateTextSimilarity 
 } from '@/utils/pdfHighlightUtils';
-
-interface HighlightCache {
-  clauseId: string;
-  result: HighlightResult;
-  timestamp: number;
-}
 
 interface UsePDFHighlightingProps {
   highlightFunction: (terms: string | string[]) => Promise<any>; // highlight() returns Promise with results
@@ -23,7 +17,6 @@ interface UsePDFHighlightingProps {
   jumpToNextMatch: () => void;
   jumpToPreviousMatch: () => void;
   debounceMs?: number;
-  cacheTimeout?: number; // Cache timeout in milliseconds
   viewMode?: "single" | "continuous"; // Handle different scroll modes
 }
 
@@ -45,7 +38,6 @@ export function usePDFHighlighting({
   jumpToNextMatch,
   jumpToPreviousMatch,
   debounceMs = 500,
-  cacheTimeout = 5 * 60 * 1000, // 5 minutes
   viewMode = "continuous",
 }: UsePDFHighlightingProps): UsePDFHighlightingReturn {
   const [isHighlighting, setIsHighlighting] = useState(false);
@@ -53,8 +45,6 @@ export function usePDFHighlighting({
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [totalMatches, setTotalMatches] = useState(0);
   
-  // Cache for successful highlights
-  const cacheRef = useRef<Map<string, HighlightCache>>(new Map());
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastClauseRef = useRef<Clause | null>(null);
 
@@ -79,42 +69,7 @@ export function usePDFHighlighting({
     }
   }, [viewMode]);
 
-  // Clean expired cache entries
-  const cleanCache = useCallback(() => {
-    const now = Date.now();
-    const cache = cacheRef.current;
-    
-    for (const [key, entry] of cache.entries()) {
-      if (now - entry.timestamp > cacheTimeout) {
-        cache.delete(key);
-      }
-    }
-  }, [cacheTimeout]);
-
-  // Get cached result if available and not expired
-  const getCachedResult = useCallback((clauseId: string): HighlightResult | null => {
-    const cache = cacheRef.current;
-    const entry = cache.get(clauseId);
-    
-    if (entry && Date.now() - entry.timestamp < cacheTimeout) {
-      return entry.result;
-    }
-    
-    return null;
-  }, [cacheTimeout]);
-
-  // Cache a successful result
-  const cacheResult = useCallback((clauseId: string, result: HighlightResult) => {
-    if (result.found) {
-      cacheRef.current.set(clauseId, {
-        clauseId,
-        result,
-        timestamp: Date.now()
-      });
-    }
-  }, []);
-
-  // Execute highlighting with strategies and caching
+  // Execute highlighting - always fresh, no caching
   const executeHighlightingInternal = useCallback(async (clause: Clause) => {
     if (!clause.id || !clause.text) {
       return;
@@ -125,38 +80,11 @@ export function usePDFHighlighting({
     setTotalMatches(0);
 
     try {
-      // Check cache first
-      const cachedResult = getCachedResult(clause.id);
-      if (cachedResult) {
-        console.log(`✅ Using cached highlight result for clause ${clause.id}`);
-        setHighlightResult(cachedResult);
-        setTotalMatches(cachedResult.matchCount || 1);
-        
-        // Apply cached highlighting
-        if (cachedResult.found) {
-          await highlightFunction(cachedResult.searchTerms);
-          // Wait for virtual list rendering based on view mode
-          const timing = getTimingStrategy();
-          await new Promise(resolve => setTimeout(resolve, timing.initialDelay));
-          
-          // Jump to first match with proper timing
-          setTimeout(() => {
-            try {
-              jumpToMatch(1); // Jump to first match (1-based index)
-              console.log('✅ Successfully jumped to first cached match');
-            } catch (jumpError) {
-              console.warn('⚠️ Cached jump to match failed, using fallback:', jumpError);
-              jumpToNextMatch();
-            }
-          }, timing.jumpDelay);
-        }
-        
-        setIsHighlighting(false);
-        return;
-      }
-
-      // Clear existing highlights before trying new search
+      // Always clear existing highlights before trying new search
       clearHighlights();
+      
+      // Small delay to ensure clear operation completes
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Use the exact clause text as search term - simple and clean
       const searchTerm = clause.text.trim();
@@ -222,9 +150,6 @@ export function usePDFHighlighting({
           setHighlightResult(result);
           setTotalMatches(domMatchCount);
 
-          // Cache the successful result
-          cacheResult(clause.id, result);
-
           // Jump to first match with proper timing for view mode
           console.log(`🎯 Jumping to first match with ${timing.name} timing...`);
           setTimeout(() => {
@@ -247,56 +172,46 @@ export function usePDFHighlighting({
         } else {
           console.warn(`❌ No highlights found for exact clause text`);
           
-          // No fallback - just report not found
-          const notFoundResult: HighlightResult = {
+          // Set not found result
+          const result: HighlightResult = {
             found: false,
-            strategy: 'exact_clause_text_failed',
+            strategy: 'exact_clause_text',
             searchTerms: searchTerm,
             matchCount: 0
           };
-          setHighlightResult(notFoundResult);
-          console.warn('❌ Exact clause text not found in PDF');
+          setHighlightResult(result);
         }
-      } catch (highlightError) {
-        console.error(`❌ Highlight function failed:`, highlightError);
-        const errorResult: HighlightResult = {
+      } catch (error) {
+        console.error(`❌ Error during highlighting:`, error);
+        const result: HighlightResult = {
           found: false,
-          strategy: 'error',
-          searchTerms: clause.text,
+          strategy: 'exact_clause_text',
+          searchTerms: searchTerm,
           matchCount: 0
         };
-        setHighlightResult(errorResult);
+        setHighlightResult(result);
       }
     } catch (error) {
-      console.error('Error in highlighting execution:', error);
-      setHighlightResult({
+      console.error(`❌ Error in executeHighlightingInternal:`, error);
+      const result: HighlightResult = {
         found: false,
-        strategy: 'error',
-        searchTerms: clause.text || '',
+        strategy: 'exact_clause_text',
+        searchTerms: clause.text,
         matchCount: 0
-      });
+      };
+      setHighlightResult(result);
     } finally {
       setIsHighlighting(false);
     }
-  }, [
-    getCachedResult,
-    cacheResult,
-    highlightFunction,
-    clearHighlights,
-    jumpToMatch,
-    jumpToNextMatch,
-    getTimingStrategy,
-    viewMode
-  ]);
+  }, [highlightFunction, clearHighlights, jumpToMatch, jumpToNextMatch, getTimingStrategy]);
 
-  // Debounced execute highlighting
+  // Public interface for highlighting with debouncing
   const executeHighlighting = useCallback(async (clause: Clause | null) => {
-    // Clear existing timer
+    // Clear any existing debounce timer
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
-    // If no clause, clear highlights immediately
     if (!clause) {
       console.log('🧹 Clearing highlights - no clause selected');
       clearHighlights();
@@ -307,105 +222,44 @@ export function usePDFHighlighting({
       return;
     }
 
-    // Check if it's the same clause to avoid unnecessary re-highlighting
-    const lastClause = lastClauseRef.current;
-    if (lastClause && lastClause.id === clause.id) {
-      // Same clause, check if text is similar enough
-      if (lastClause.text && clause.text) {
-        const similarity = calculateTextSimilarity(lastClause.text, clause.text);
-        if (similarity > 0.95) {
-          console.log('⏭️ Skipping re-highlight for same clause');
-          return;
-        }
-      }
-    }
-
-    // Different clause - clear old highlights before processing new one
-    if (lastClause && lastClause.id !== clause.id) {
-      console.log('🧹 Clearing highlights - switching to different clause');
-      clearHighlights();
-      // Small delay to ensure highlights are cleared before new search
-      await new Promise(resolve => setTimeout(resolve, 100));
+    // Skip if same clause is already being processed
+    if (lastClauseRef.current?.id === clause.id) {
+      console.log('🔄 Skipping duplicate clause highlighting');
+      return;
     }
 
     lastClauseRef.current = clause;
 
-    // Debounce the execution
-    debounceTimerRef.current = setTimeout(() => {
-      executeHighlightingInternal(clause);
+    // Debounce the highlighting operation
+    debounceTimerRef.current = setTimeout(async () => {
+      await executeHighlightingInternal(clause);
     }, debounceMs);
   }, [executeHighlightingInternal, clearHighlights, debounceMs]);
 
   // Navigation functions
   const goToNextMatch = useCallback(() => {
-    const timing = getTimingStrategy();
-    
-    if (totalMatches > 1) {
-      setCurrentMatchIndex((prev) => {
-        const next = prev < totalMatches - 1 ? prev + 1 : 0;
-        // Jump to the specific match (1-based index)
-        setTimeout(() => {
-          try {
-            jumpToMatch(next + 1); // Convert 0-based to 1-based
-            console.log(`🎯 Jumped to match ${next + 1} of ${totalMatches}`);
-          } catch (error) {
-            console.warn('⚠️ jumpToMatch failed, using jumpToNextMatch:', error);
-            jumpToNextMatch();
-          }
-        }, timing.jumpDelay); // Use view mode-specific delay
-        return next;
-      });
-    } else {
-      // Single match or no specific match tracking - use default navigation
-      jumpToNextMatch();
+    if (totalMatches > 0) {
+      const nextIndex = currentMatchIndex < totalMatches - 1 ? currentMatchIndex + 1 : 0;
+      setCurrentMatchIndex(nextIndex);
+      jumpToMatch(nextIndex + 1); // Convert to 1-based index
     }
-  }, [totalMatches, jumpToMatch, jumpToNextMatch, getTimingStrategy]);
+  }, [currentMatchIndex, totalMatches, jumpToMatch]);
 
   const goToPreviousMatch = useCallback(() => {
-    const timing = getTimingStrategy();
-    
-    if (totalMatches > 1) {
-      setCurrentMatchIndex((prev) => {
-        const previous = prev > 0 ? prev - 1 : totalMatches - 1;
-        // Jump to the specific match (1-based index)
-        setTimeout(() => {
-          try {
-            jumpToMatch(previous + 1); // Convert 0-based to 1-based
-            console.log(`🎯 Jumped to match ${previous + 1} of ${totalMatches}`);
-          } catch (error) {
-            console.warn('⚠️ jumpToMatch failed, using jumpToPreviousMatch:', error);
-            jumpToPreviousMatch();
-          }
-        }, timing.jumpDelay); // Use view mode-specific delay
-        return previous;
-      });
-    } else {
-      // Single match or no specific match tracking - use default navigation
-      jumpToPreviousMatch();
+    if (totalMatches > 0) {
+      const prevIndex = currentMatchIndex > 0 ? currentMatchIndex - 1 : totalMatches - 1;
+      setCurrentMatchIndex(prevIndex);
+      jumpToMatch(prevIndex + 1); // Convert to 1-based index
     }
-  }, [totalMatches, jumpToMatch, jumpToPreviousMatch, getTimingStrategy]);
+  }, [currentMatchIndex, totalMatches, jumpToMatch]);
 
   const clearCurrentHighlights = useCallback(() => {
     clearHighlights();
     setHighlightResult(null);
     setCurrentMatchIndex(0);
     setTotalMatches(0);
-  }, [clearHighlights]); // Stable dependencies
-
-  // Clean cache periodically
-  useEffect(() => {
-    const interval = setInterval(cleanCache, cacheTimeout / 2);
-    return () => clearInterval(interval);
-  }, [cleanCache, cacheTimeout]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, []);
+    lastClauseRef.current = null;
+  }, [clearHighlights]);
 
   return {
     isHighlighting,
