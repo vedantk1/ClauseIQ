@@ -172,16 +172,9 @@ export default function Home() {
       timestamp: new Date().toISOString(),
     });
 
-    // Check state before removal
-    checkStateConsistency();
-
-    // Reset global analysis state first
     resetAnalysis();
-
-    // Clear local file state
     setFile(null);
 
-    // CRITICAL: Reset the file input element value
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
       console.log("🔄 [DEBUG] File input element reset");
@@ -251,10 +244,6 @@ export default function Home() {
       timestamp: new Date().toISOString(),
     });
 
-    // Check state consistency before processing
-    checkStateConsistency();
-
-    // Check if user is authenticated before processing
     if (!isAuthenticated) {
       console.log("🔒 [DEBUG] User not authenticated, redirecting to login");
       const toast = (await import("react-hot-toast")).toast;
@@ -269,7 +258,6 @@ export default function Home() {
       console.log(
         "✅ [DEBUG] Document analysis completed successfully, opening review in new tab"
       );
-      // Get the document ID from the analysis result
       const documentId = currentDocument.id;
       if (documentId) {
         window.open(`/review?documentId=${documentId}`, "_blank");
@@ -289,264 +277,655 @@ export default function Home() {
     }
   };
 
-  // For the home page, we don't require authentication to view the landing page
-  // Only require auth when trying to upload/analyze documents
-
   return (
     <div className="min-h-screen bg-bg-primary">
-      {/* Hero Section */}
+      {/* Hero Section - Two Column Layout */}
       <div className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-20 pb-32">
-          <div className="text-center">
-            <h1 className="font-heading text-heading-lg sm:text-5xl lg:text-6xl font-semibold text-text-primary mb-6">
-              Understand any
-              <span className="text-accent-purple"> contract</span>
-              <br />
-              in minutes
-            </h1>
-            <p className="text-body-lg text-text-secondary max-w-2xl mx-auto mb-12">
-              Upload your employment contract and get an AI-powered analysis in
-              plain language. Identify risks, understand key terms, and make
-              informed decisions.
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-24 pb-20">
+          <div className="flex flex-col xl:flex-row xl:items-center gap-12 xl:gap-16">
+            {/* Left Column - Content (60%) */}
+            <div className="flex-1 xl:flex-[3]">
+              <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-semibold text-text-primary mb-8 leading-tight">
+                Understand any
+                <span className="text-accent-purple"> contract</span>
+                <br />
+                in 60 seconds
+              </h1>
+              <div className="mb-10 max-w-2xl">
+                <p className="text-xl text-text-secondary leading-relaxed mb-4">
+                  Upload your legal document and get instant AI-powered analysis in plain English.
+                </p>
+                <p className="text-lg text-text-secondary/80 leading-relaxed">
+                  Chat with your contract, identify risks, and make informed decisions.
+                </p>
+              </div>
+              
+              {/* Key Differentiators */}
+              <div className="space-y-4 mb-12">
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 bg-accent-green/20 rounded-lg flex items-center justify-center">
+                    <svg className="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                  <span className="text-text-primary font-medium">Chat with your document in natural language</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 bg-accent-purple/20 rounded-lg flex items-center justify-center">
+                    <svg className="w-4 h-4 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <span className="text-text-primary font-medium">Support for 10+ contract types</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 bg-accent-amber/20 rounded-lg flex items-center justify-center">
+                    <svg className="w-4 h-4 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <span className="text-text-primary font-medium">Documents auto-deleted for privacy</span>
+                </div>
+              </div>
+
+              {/* Social Proof */}
+              <div className="grid grid-cols-3 gap-6 max-w-lg">
+                <div className="text-center p-4 bg-accent-purple/5 border border-accent-purple/10 rounded-xl hover:bg-accent-purple/10 transition-all duration-300">
+                  <div className="text-3xl font-bold text-accent-purple mb-2">10+</div>
+                  <div className="text-sm text-text-secondary font-medium">Contract<br />Types</div>
+                </div>
+                <div className="text-center p-4 bg-accent-green/5 border border-accent-green/10 rounded-xl hover:bg-accent-green/10 transition-all duration-300">
+                  <div className="text-3xl font-bold text-accent-green mb-2">60s</div>
+                  <div className="text-sm text-text-secondary font-medium">Analysis<br />Time</div>
+                </div>
+                <div className="text-center p-4 bg-accent-amber/5 border border-accent-amber/10 rounded-xl hover:bg-accent-amber/10 transition-all duration-300">
+                  <div className="text-3xl font-bold text-accent-amber mb-2">4</div>
+                  <div className="text-sm text-text-secondary font-medium">AI<br />Models</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Upload Widget (40%) */}
+            <div className="flex-1 xl:flex-[2]">
+              <Card className="p-8 shadow-xl border border-border-muted/50 bg-gradient-to-br from-bg-surface to-bg-elevated">
+                <div className="text-center mb-8">
+                  <h3 className="font-heading text-xl font-semibold text-text-primary mb-3">
+                    Try it now
+                  </h3>
+                  <p className="text-text-secondary">
+                    Upload your PDF contract
+                  </p>
+                </div>
+
+                {/* Enhanced Upload Zone */}
+                <div
+                  className={clsx(
+                    "relative border-2 border-dashed rounded-xl p-10 text-center transition-all duration-300 cursor-pointer group",
+                    dragActive || file
+                      ? "border-accent-purple bg-gradient-to-br from-accent-purple/10 to-accent-purple/5 shadow-lg scale-[1.02]"
+                      : "border-border-muted hover:border-accent-purple/60 hover:bg-gradient-to-br hover:from-accent-purple/5 hover:to-transparent hover:shadow-md hover:scale-[1.01]"
+                  )}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  onClick={() => {
+                    if (fileInputRef.current && !analysisLoading) {
+                      fileInputRef.current.click();
+                    }
+                  }}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleInputChange}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    disabled={analysisLoading}
+                  />
+
+                  {file ? (
+                    <div className="space-y-3">
+                      <div className="w-12 h-12 bg-accent-green/20 rounded-full flex items-center justify-center mx-auto">
+                        <svg className="w-6 h-6 text-accent-green" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <p className="font-semibold text-text-primary">{file.name}</p>
+                      <p className="text-sm text-text-secondary">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="w-16 h-16 bg-accent-purple/10 rounded-full flex items-center justify-center mx-auto group-hover:bg-accent-purple/20 transition-all duration-300">
+                        <svg className="w-8 h-8 text-accent-purple group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-text-primary font-semibold text-lg">
+                          Drop PDF or <span className="text-accent-purple group-hover:text-accent-purple/80 transition-colors">browse</span>
+                        </p>
+                        <p className="text-sm text-text-secondary mt-2">Max {config.maxFileSizeMB}MB • Secure & Private</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {file && (
+                  <div className="mt-6 space-y-4">
+                    <Button
+                      onClick={handleProcessDocument}
+                      loading={analysisLoading}
+                      size="md"
+                      className="w-full"
+                    >
+                      {analysisLoading ? "Analyzing..." : "Analyze Contract"}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={handleRemoveFile}
+                      disabled={analysisLoading}
+                      size="sm"
+                      className="w-full"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                )}
+
+                <div className="mt-6 space-y-4">
+                  <div className="text-center">
+                    <p className="text-sm text-text-secondary">
+                      🔒 Secure & private - documents deleted after analysis
+                    </p>
+                  </div>
+                  
+                  {/* Trust Indicator */}
+                  <div className="bg-accent-green/5 border border-accent-green/20 rounded-lg p-3 text-center">
+                    <p className="text-xs text-accent-green font-medium mb-1">✓ Trusted by professionals</p>
+                    <p className="text-xs text-text-secondary">Join 1000+ users analyzing contracts daily</p>
+                  </div>
+                  
+                  {/* Sample Contract Link */}
+                  <div className="text-center">
+                    <button className="text-sm text-accent-purple hover:text-accent-purple/80 transition-colors font-medium">
+                      Try with sample contract →
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* How It Works Section */}
+      <div className="py-24 bg-bg-surface">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="font-heading text-4xl font-semibold text-text-primary mb-6">
+              How ClauseIQ works
+            </h2>
+            <p className="text-xl text-text-secondary max-w-3xl mx-auto">
+              Get professional legal analysis in three simple steps
             </p>
           </div>
 
-          {/* Upload Section */}
-          <div className="max-w-2xl mx-auto">
-            <Card className="p-8">
-              <div className="text-center mb-8">
-                <h2 className="font-heading text-heading-md text-text-primary mb-2">
-                  Upload your contract
-                </h2>
-                <p className="text-text-secondary">
-                  Drag and drop your PDF file here, or click to select
-                </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-accent-purple/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-3xl font-bold text-accent-purple">1</span>
               </div>
+              <h3 className="font-heading text-xl font-semibold text-text-primary mb-4">
+                Upload Contract
+              </h3>
+              <p className="text-text-secondary leading-relaxed">
+                Drop your PDF contract and our AI instantly identifies the document type and structure
+              </p>
+            </div>
 
-              {/* Drag & Drop Zone */}
-              <div
-                className={clsx(
-                  "relative border-2 border-dashed rounded-lg p-12 text-center transition-all duration-200",
-                  dragActive || file
-                    ? "border-accent-purple bg-accent-purple/5"
-                    : "border-border-muted hover:border-accent-purple/50 hover:bg-bg-elevated"
-                )}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-                onClick={() => {
-                  console.log("🖱️ [DEBUG] Upload area clicked:", {
-                    hasFile: !!file,
-                    analysisLoading,
-                    inputRef: !!fileInputRef.current,
-                    inputValue: fileInputRef.current?.value || null,
-                    inputDisabled: fileInputRef.current?.disabled || false,
-                    timestamp: new Date().toISOString(),
-                  });
+            <div className="text-center">
+              <div className="w-20 h-20 bg-accent-green/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-3xl font-bold text-accent-green">2</span>
+              </div>
+              <h3 className="font-heading text-xl font-semibold text-text-primary mb-4">
+                AI Analysis
+              </h3>
+              <p className="text-text-secondary leading-relaxed">
+                Advanced AI extracts clauses, assesses risks, and prepares your document for interactive chat
+              </p>
+            </div>
 
-                  // Manually trigger file input click if needed
-                  if (fileInputRef.current && !analysisLoading) {
-                    console.log(
-                      "🎯 [DEBUG] Manually triggering file input click"
-                    );
-                    fileInputRef.current.click();
-                  }
-                }}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleInputChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  disabled={analysisLoading}
-                  onClick={(e) => {
-                    console.log("📎 [DEBUG] File input clicked:", {
-                      disabled: e.currentTarget.disabled,
-                      value: e.currentTarget.value,
-                      files: e.currentTarget.files?.length || 0,
-                      timestamp: new Date().toISOString(),
-                    });
+            <div className="text-center">
+              <div className="w-20 h-20 bg-accent-amber/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-3xl font-bold text-accent-amber">3</span>
+              </div>
+              <h3 className="font-heading text-xl font-semibold text-text-primary mb-4">
+                Chat & Explore
+              </h3>
+              <p className="text-text-secondary leading-relaxed">
+                Ask questions, navigate clauses, and get plain-English explanations of complex legal terms
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-                    // Stop propagation to prevent duplicate clicks
-                    e.stopPropagation();
-                  }}
-                />
+      {/* Chat Feature Showcase */}
+      <div className="py-24">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <h2 className="font-heading text-4xl font-semibold text-text-primary mb-6">
+                Chat with your contract like ChatGPT
+              </h2>
+              <p className="text-text-secondary mb-8 text-xl leading-relaxed">
+                Ask any question about your contract in natural language. Get instant answers 
+                with exact citations from your document.
+              </p>
+              
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 bg-accent-green/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <svg className="w-4 h-4 text-accent-green" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-text-primary text-lg">"What's my notice period?"</p>
+                    <p className="text-text-secondary mt-1">Get instant answers with source citations</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 bg-accent-green/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <svg className="w-4 h-4 text-accent-green" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-text-primary text-lg">"Are there any concerning clauses?"</p>
+                    <p className="text-text-secondary mt-1">AI highlights potential risks and red flags</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 bg-accent-green/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <svg className="w-4 h-4 text-accent-green" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-text-primary text-lg">"Explain this clause in simple terms"</p>
+                    <p className="text-text-secondary mt-1">Complex legal jargon translated to plain English</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                <div className="space-y-4">
-                  {file ? (
-                    <div className="flex items-center justify-center space-x-3">
-                      <svg
-                        className="w-8 h-8 text-accent-purple"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      <div>
-                        <p className="font-medium text-text-primary">
-                          {file.name}
-                        </p>
-                        <p className="text-sm text-text-secondary">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
+            <div className="lg:order-first">
+              {/* Chat Interface Mockup */}
+              <Card className="p-8 shadow-lg">
+                <div className="space-y-6">
+                  {/* User Message */}
+                  <div className="flex justify-end">
+                    <div className="bg-accent-purple text-white rounded-2xl px-6 py-3 max-w-xs">
+                      <p className="text-sm">What happens if I want to leave this job?</p>
+                    </div>
+                  </div>
+                  
+                  {/* AI Response */}
+                  <div className="flex justify-start">
+                    <div className="bg-bg-elevated border border-border-muted rounded-2xl px-6 py-4 max-w-sm">
+                      <p className="text-sm text-text-primary mb-3">
+                        According to your contract, you need to provide <strong>30 days written notice</strong> before leaving. There's no penalty for resignation.
+                      </p>
+                      <div className="text-xs text-accent-purple">
+                        📎 Source: Section 4.2 - Termination
                       </div>
                     </div>
-                  ) : (
-                    <>
-                      <svg
-                        className="w-12 h-12 text-text-secondary mx-auto"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 48 48"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                        />
-                      </svg>
-                      <div>
-                        <p className="text-text-primary font-medium">
-                          Drop your PDF here, or{" "}
-                          <span className="text-accent-purple">
-                            click to browse
-                          </span>
-                        </p>
-                        <p className="text-sm text-text-secondary mt-1">
-                          Maximum file size: {config.maxFileSizeMB}MB
-                        </p>
+                  </div>
+                  
+                  {/* User Message */}
+                  <div className="flex justify-end">
+                    <div className="bg-accent-purple text-white rounded-2xl px-6 py-3 max-w-xs">
+                      <p className="text-sm">What about my benefits?</p>
+                    </div>
+                  </div>
+                  
+                  {/* Typing Indicator */}
+                  <div className="flex justify-start">
+                    <div className="bg-bg-elevated border border-border-muted rounded-2xl px-6 py-4">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-text-secondary rounded-full animate-pulse"></div>
+                        <div className="w-2 h-2 bg-text-secondary rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                        <div className="w-2 h-2 bg-text-secondary rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
                       </div>
-                    </>
-                  )}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Clause Navigator Feature */}
+      <div className="py-24 bg-bg-surface">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <h2 className="font-heading text-4xl font-semibold text-text-primary mb-6">
+                Smart clause analysis & navigation
+              </h2>
+              <p className="text-text-secondary mb-8 text-xl leading-relaxed">
+                Every clause automatically categorized and risk-assessed. Navigate your contract 
+                with color-coded risk levels and smart filtering.
+              </p>
+              
+              <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-4 h-4 bg-accent-rose rounded-full"></div>
+                  <span className="text-text-primary font-semibold text-lg">High Risk Clauses</span>
+                  <span className="text-text-secondary">- Review carefully</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-4 h-4 bg-accent-amber rounded-full"></div>
+                  <span className="text-text-primary font-semibold text-lg">Medium Risk Clauses</span>
+                  <span className="text-text-secondary">- Consider implications</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-4 h-4 bg-accent-green rounded-full"></div>
+                  <span className="text-text-primary font-semibold text-lg">Low Risk Clauses</span>
+                  <span className="text-text-secondary">- Generally favorable</span>
                 </div>
               </div>
+            </div>
 
-              {file && (
-                <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                  <Button
-                    onClick={handleProcessDocument}
-                    loading={analysisLoading}
-                    size="lg"
-                    className="flex-1"
-                  >
-                    {analysisLoading ? "Processing..." : "Analyze Contract"}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={handleRemoveFile}
-                    disabled={analysisLoading}
-                    size="lg"
-                  >
-                    Remove
-                  </Button>
+            <div>
+              {/* Clause Navigator Mockup */}
+              <Card className="p-6 shadow-lg">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-6">
+                    <h4 className="font-semibold text-text-primary text-lg">Contract Clauses</h4>
+                    <span className="text-text-secondary">12 found</span>
+                  </div>
+                  
+                  <div className="p-4 bg-accent-rose/5 border border-accent-rose/20 rounded-xl">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-text-primary">Termination Clause</p>
+                        <p className="text-sm text-text-secondary mt-2">Immediate dismissal for gross misconduct...</p>
+                      </div>
+                      <span className="px-3 py-1 bg-accent-rose text-white text-sm rounded-full font-medium">High</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-accent-amber/5 border border-accent-amber/20 rounded-xl">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-text-primary">Non-Compete Clause</p>
+                        <p className="text-sm text-text-secondary mt-2">6-month restriction period...</p>
+                      </div>
+                      <span className="px-3 py-1 bg-accent-amber text-white text-sm rounded-full font-medium">Medium</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-accent-green/5 border border-accent-green/20 rounded-xl">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-text-primary">Salary Review</p>
+                        <p className="text-sm text-text-secondary mt-2">Annual performance-based review...</p>
+                      </div>
+                      <span className="px-3 py-1 bg-accent-green text-white text-sm rounded-full font-medium">Low</span>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center pt-4">
+                    <button className="text-accent-purple hover:text-accent-purple/80 font-medium">
+                      View all clauses →
+                    </button>
+                  </div>
                 </div>
-              )}
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
 
-              <div className="mt-6 text-center">
-                <p className="text-sm text-text-secondary">
-                  Your documents are processed securely and deleted after
-                  analysis.
-                </p>
+      {/* Contract Types Section */}
+      <div className="py-24">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="font-heading text-4xl font-semibold text-text-primary mb-6">
+              Built for real people and businesses
+            </h2>
+            <p className="text-xl text-text-secondary max-w-3xl mx-auto">
+              Whether you're a small business owner, HR manager, or individual, ClauseIQ makes legal documents accessible
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-16">
+            <Card density="compact" className="text-center p-8">
+              <div className="w-16 h-16 bg-accent-blue/10 rounded-xl flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </div>
+              <h3 className="font-heading text-xl font-semibold text-text-primary mb-4">
+                Small Business Owners
+              </h3>
+              <p className="text-text-secondary leading-relaxed">
+                Review vendor contracts, service agreements, and partnership deals with confidence
+              </p>
+            </Card>
+
+            <Card density="compact" className="text-center p-8">
+              <div className="w-16 h-16 bg-accent-purple/10 rounded-xl flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h3 className="font-heading text-xl font-semibold text-text-primary mb-4">
+                HR Teams
+              </h3>
+              <p className="text-text-secondary leading-relaxed">
+                Analyze employment contracts, NDAs, and consultant agreements for your team
+              </p>
+            </Card>
+
+            <Card density="compact" className="text-center p-8">
+              <div className="w-16 h-16 bg-accent-green/10 rounded-xl flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <h3 className="font-heading text-xl font-semibold text-text-primary mb-4">
+                Individuals
+              </h3>
+              <p className="text-text-secondary leading-relaxed">
+                Understand your employment contract, lease agreement, or any legal document
+              </p>
+            </Card>
+          </div>
+
+          {/* Contract Types */}
+          <div className="text-center">
+            <h3 className="font-heading text-2xl font-semibold text-text-primary mb-8">
+              Supports 10+ contract types
+            </h3>
+            <div className="flex flex-wrap justify-center gap-4">
+              {[
+                'Employment', 'NDAs', 'Service Agreements', 'Leases', 
+                'Purchase Agreements', 'Partnership', 'License', 'Consulting',
+                'Contractor', 'Generic'
+              ].map((type) => (
+                <span key={type} className="px-4 py-2 bg-bg-elevated border border-border-muted rounded-full text-text-secondary font-medium">
+                  {type}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Privacy & Security Section */}
+      <div className="py-24 bg-bg-surface">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="font-heading text-4xl font-semibold text-text-primary mb-6">
+              Your data stays private
+            </h2>
+            <p className="text-xl text-text-secondary max-w-3xl mx-auto">
+              Enterprise-grade security with complete privacy protection. Your documents are analyzed and immediately deleted.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-accent-green/10 rounded-xl flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h4 className="font-semibold text-text-primary mb-3 text-lg">Encrypted Processing</h4>
+              <p className="text-text-secondary leading-relaxed">All documents encrypted in transit and at rest</p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-accent-rose/10 rounded-xl flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 text-accent-rose" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h4 className="font-semibold text-text-primary mb-3 text-lg">Auto-Deletion</h4>
+              <p className="text-text-secondary leading-relaxed">Documents permanently deleted after analysis</p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-accent-purple/10 rounded-xl flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <h4 className="font-semibold text-text-primary mb-3 text-lg">No Data Retention</h4>
+              <p className="text-text-secondary leading-relaxed">We never store your documents long-term</p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-accent-amber/10 rounded-xl flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h4 className="font-semibold text-text-primary mb-3 text-lg">Transparent Process</h4>
+              <p className="text-text-secondary leading-relaxed">Clear visibility into AI analysis and sources</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Choose Your AI Model */}
+      <div className="py-24">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="font-heading text-4xl font-semibold text-text-primary mb-6">
+              Choose your AI model
+            </h2>
+            <p className="text-xl text-text-secondary max-w-3xl mx-auto">
+              Select the perfect balance of speed, accuracy, and cost for your needs
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <Card density="compact" className="text-center relative p-6">
+              <div className="absolute top-4 right-4">
+                <span className="px-3 py-1 bg-accent-purple text-white text-xs rounded-full font-medium">Recommended</span>
+              </div>
+              <h4 className="font-semibold text-text-primary mb-3 text-lg">GPT-4o</h4>
+              <p className="text-text-secondary mb-4 leading-relaxed">Most advanced model with superior accuracy</p>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">Accuracy</span>
+                  <span className="text-accent-green">★★★★★</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">Speed</span>
+                  <span className="text-accent-amber">★★★★☆</span>
+                </div>
+              </div>
+            </Card>
+
+            <Card density="compact" className="text-center p-6">
+              <h4 className="font-semibold text-text-primary mb-3 text-lg">GPT-4o Mini</h4>
+              <p className="text-text-secondary mb-4 leading-relaxed">Optimized for speed and efficiency</p>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">Accuracy</span>
+                  <span className="text-accent-green">★★★★☆</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">Speed</span>
+                  <span className="text-accent-green">★★★★★</span>
+                </div>
+              </div>
+            </Card>
+
+            <Card density="compact" className="text-center p-6">
+              <h4 className="font-semibold text-text-primary mb-3 text-lg">GPT-4.1 Mini</h4>
+              <p className="text-text-secondary mb-4 leading-relaxed">Balanced performance</p>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">Accuracy</span>
+                  <span className="text-accent-amber">★★★★☆</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">Speed</span>
+                  <span className="text-accent-amber">★★★★☆</span>
+                </div>
+              </div>
+            </Card>
+
+            <Card density="compact" className="text-center p-6">
+              <h4 className="font-semibold text-text-primary mb-3 text-lg">GPT-3.5 Turbo</h4>
+              <p className="text-text-secondary mb-4 leading-relaxed">Fast and cost-effective</p>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">Accuracy</span>
+                  <span className="text-accent-amber">★★★☆☆</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">Speed</span>
+                  <span className="text-accent-green">★★★★★</span>
+                </div>
               </div>
             </Card>
           </div>
         </div>
       </div>
 
-      {/* Features Section */}
-      <div className="py-24 bg-bg-surface">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="font-heading text-heading-md text-text-primary mb-4">
-              Why choose ClauseIQ?
-            </h2>
-            <p className="text-text-secondary max-w-2xl mx-auto">
-              Powerful AI analysis tools designed to make legal documents
-              accessible to everyone
-            </p>
+      {/* Final CTA Section */}
+      <div className="py-28 bg-bg-surface">
+        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
+          <h2 className="font-heading text-5xl font-semibold text-text-primary mb-8">
+            Ready to understand your contracts?
+          </h2>
+          <p className="text-2xl text-text-secondary mb-12 leading-relaxed">
+            Join thousands of businesses and individuals who trust ClauseIQ for legal document analysis
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <Button size="lg" className="px-10 py-4 text-lg">
+              Get Started Free
+            </Button>
+            <Button variant="secondary" size="lg" className="px-10 py-4 text-lg">
+              Try Sample Contract
+            </Button>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card density="compact" className="text-center">
-              <div className="w-12 h-12 bg-accent-purple/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-6 h-6 text-accent-purple"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-              </div>
-              <h3 className="font-heading text-lg font-semibold text-text-primary mb-2">
-                Lightning Fast
-              </h3>
-              <p className="text-text-secondary">
-                Get comprehensive contract analysis in under 2 minutes
-              </p>
-            </Card>
-
-            <Card density="compact" className="text-center">
-              <div className="w-12 h-12 bg-accent-green/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-6 h-6 text-accent-green"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="font-heading text-lg font-semibold text-text-primary mb-2">
-                Plain Language
-              </h3>
-              <p className="text-text-secondary">
-                Complex legal terms explained in simple, understandable language
-              </p>
-            </Card>
-
-            <Card density="compact" className="text-center">
-              <div className="w-12 h-12 bg-accent-amber/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-6 h-6 text-accent-amber"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
-              </div>
-              <h3 className="font-heading text-lg font-semibold text-text-primary mb-2">
-                Secure & Private
-              </h3>
-              <p className="text-text-secondary">
-                Your documents are encrypted and automatically deleted after
-                processing
-              </p>
-            </Card>
-          </div>
+          
+          <p className="text-text-secondary mt-8 text-lg">
+            No credit card required • 60-second analysis • Enterprise security
+          </p>
         </div>
       </div>
     </div>
