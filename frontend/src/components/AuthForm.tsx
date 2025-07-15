@@ -1,7 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Button, Input, Card } from "@/components/ui";
+import { Button, Input } from "@/components/ui";
+import Card from "@/components/Card";
 import { Mail, Lock, User } from "lucide-react";
 
 interface AuthFormProps {
