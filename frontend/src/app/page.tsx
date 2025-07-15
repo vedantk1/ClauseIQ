@@ -700,7 +700,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-16">
-            <Card density="compact" className="text-center p-8">
+            <Card density="compact" className="text-center p-8 h-full flex flex-col">
               <div className="w-16 h-16 bg-accent-blue/10 rounded-xl flex items-center justify-center mx-auto mb-6">
                 <svg className="w-8 h-8 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -709,12 +709,12 @@ export default function Home() {
               <h3 className="font-heading text-xl font-semibold text-text-primary mb-4">
                 Small Business Owners
               </h3>
-              <p className="text-text-secondary leading-relaxed">
+              <p className="text-text-secondary leading-relaxed flex-grow">
                 Review vendor contracts, service agreements, and partnership deals with confidence
               </p>
             </Card>
 
-            <Card density="compact" className="text-center p-8">
+            <Card density="compact" className="text-center p-8 h-full flex flex-col">
               <div className="w-16 h-16 bg-accent-purple/10 rounded-xl flex items-center justify-center mx-auto mb-6">
                 <svg className="w-8 h-8 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -723,12 +723,12 @@ export default function Home() {
               <h3 className="font-heading text-xl font-semibold text-text-primary mb-4">
                 HR Teams
               </h3>
-              <p className="text-text-secondary leading-relaxed">
+              <p className="text-text-secondary leading-relaxed flex-grow">
                 Analyze employment contracts, NDAs, and consultant agreements for your team
               </p>
             </Card>
 
-            <Card density="compact" className="text-center p-8">
+            <Card density="compact" className="text-center p-8 h-full flex flex-col">
               <div className="w-16 h-16 bg-accent-green/10 rounded-xl flex items-center justify-center mx-auto mb-6">
                 <svg className="w-8 h-8 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -737,7 +737,7 @@ export default function Home() {
               <h3 className="font-heading text-xl font-semibold text-text-primary mb-4">
                 Individuals
               </h3>
-              <p className="text-text-secondary leading-relaxed">
+              <p className="text-text-secondary leading-relaxed flex-grow">
                 Understand your employment contract, lease agreement, or any legal document
               </p>
             </Card>
@@ -763,165 +763,63 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Privacy & Security Section */}
+      {/* Advanced AI Features Section */}
       <div className="py-24 bg-bg-surface">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="font-heading text-4xl font-semibold text-text-primary mb-6">
-              Your data stays private
+              Advanced AI capabilities
             </h2>
             <p className="text-xl text-text-secondary max-w-3xl mx-auto">
-              Enterprise-grade security with complete privacy protection. Your documents are analyzed and immediately deleted.
+              Powered by cutting-edge AI that catches what humans miss and provides strategic insights for better decisions.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-accent-green/10 rounded-xl flex items-center justify-center mx-auto mb-6">
-                <svg className="w-8 h-8 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <h4 className="font-semibold text-text-primary mb-3 text-lg">Encrypted Processing</h4>
-              <p className="text-text-secondary leading-relaxed">All documents encrypted in transit and at rest</p>
-            </div>
-
-            <div className="text-center">
               <div className="w-16 h-16 bg-accent-rose/10 rounded-xl flex items-center justify-center mx-auto mb-6">
                 <svg className="w-8 h-8 text-accent-rose" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h4 className="font-semibold text-text-primary mb-3 text-lg">Auto-Deletion</h4>
-              <p className="text-text-secondary leading-relaxed">Documents permanently deleted after analysis</p>
+              <h4 className="font-semibold text-text-primary mb-3 text-lg">Finds Hidden Risks</h4>
+              <p className="text-text-secondary leading-relaxed">Spots problematic clauses lawyers miss</p>
             </div>
 
             <div className="text-center">
               <div className="w-16 h-16 bg-accent-purple/10 rounded-xl flex items-center justify-center mx-auto mb-6">
                 <svg className="w-8 h-8 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-8 0h8m-8 0v9a2 2 0 002 2h4.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H20a2 2 0 002-2V7m-8 0V3a4 4 0 118 0v4" />
                 </svg>
               </div>
-              <h4 className="font-semibold text-text-primary mb-3 text-lg">No Data Retention</h4>
-              <p className="text-text-secondary leading-relaxed">We never store your documents long-term</p>
+              <h4 className="font-semibold text-text-primary mb-3 text-lg">Deadline Extraction</h4>
+              <p className="text-text-secondary leading-relaxed">Never miss critical dates again</p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-accent-green/10 rounded-xl flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h4 className="font-semibold text-text-primary mb-3 text-lg">Compliance Checking</h4>
+              <p className="text-text-secondary leading-relaxed">Highlights regulatory violations automatically</p>
             </div>
 
             <div className="text-center">
               <div className="w-16 h-16 bg-accent-amber/10 rounded-xl flex items-center justify-center mx-auto mb-6">
                 <svg className="w-8 h-8 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h4 className="font-semibold text-text-primary mb-3 text-lg">Transparent Process</h4>
-              <p className="text-text-secondary leading-relaxed">Clear visibility into AI analysis and sources</p>
+              <h4 className="font-semibold text-text-primary mb-3 text-lg">Negotiation Intel</h4>
+              <p className="text-text-secondary leading-relaxed">Shows where you have leverage to improve terms</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Choose Your AI Model */}
-      <div className="py-24">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="font-heading text-4xl font-semibold text-text-primary mb-6">
-              Choose your AI model
-            </h2>
-            <p className="text-xl text-text-secondary max-w-3xl mx-auto">
-              Select the perfect balance of speed, accuracy, and cost for your needs
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <Card density="compact" className="text-center relative p-6">
-              <div className="absolute top-4 right-4">
-                <span className="px-3 py-1 bg-accent-purple text-white text-xs rounded-full font-medium">Recommended</span>
-              </div>
-              <h4 className="font-semibold text-text-primary mb-3 text-lg">GPT-4o</h4>
-              <p className="text-text-secondary mb-4 leading-relaxed">Most advanced model with superior accuracy</p>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">Accuracy</span>
-                  <span className="text-accent-green">★★★★★</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">Speed</span>
-                  <span className="text-accent-amber">★★★★☆</span>
-                </div>
-              </div>
-            </Card>
-
-            <Card density="compact" className="text-center p-6">
-              <h4 className="font-semibold text-text-primary mb-3 text-lg">GPT-4o Mini</h4>
-              <p className="text-text-secondary mb-4 leading-relaxed">Optimized for speed and efficiency</p>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">Accuracy</span>
-                  <span className="text-accent-green">★★★★☆</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">Speed</span>
-                  <span className="text-accent-green">★★★★★</span>
-                </div>
-              </div>
-            </Card>
-
-            <Card density="compact" className="text-center p-6">
-              <h4 className="font-semibold text-text-primary mb-3 text-lg">GPT-4.1 Mini</h4>
-              <p className="text-text-secondary mb-4 leading-relaxed">Balanced performance</p>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">Accuracy</span>
-                  <span className="text-accent-amber">★★★★☆</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">Speed</span>
-                  <span className="text-accent-amber">★★★★☆</span>
-                </div>
-              </div>
-            </Card>
-
-            <Card density="compact" className="text-center p-6">
-              <h4 className="font-semibold text-text-primary mb-3 text-lg">GPT-3.5 Turbo</h4>
-              <p className="text-text-secondary mb-4 leading-relaxed">Fast and cost-effective</p>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">Accuracy</span>
-                  <span className="text-accent-amber">★★★☆☆</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">Speed</span>
-                  <span className="text-accent-green">★★★★★</span>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </div>
-
-      {/* Final CTA Section */}
-      <div className="py-28 bg-bg-surface">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
-          <h2 className="font-heading text-5xl font-semibold text-text-primary mb-8">
-            Ready to understand your contracts?
-          </h2>
-          <p className="text-2xl text-text-secondary mb-12 leading-relaxed">
-            Join thousands of businesses and individuals who trust ClauseIQ for legal document analysis
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Button size="lg" className="px-10 py-4 text-lg">
-              Get Started Free
-            </Button>
-            <Button variant="secondary" size="lg" className="px-10 py-4 text-lg">
-              Try Sample Contract
-            </Button>
-          </div>
-          
-          <p className="text-text-secondary mt-8 text-lg">
-            No credit card required • 60-second analysis • Enterprise security
-          </p>
-        </div>
-      </div>
     </div>
   );
 }
