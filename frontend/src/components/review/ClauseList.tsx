@@ -58,10 +58,10 @@ export default function ClauseList({
           <div
             key={clause.id || index}
             onClick={() => onClauseSelect(clause)}
-            className={`p-3 rounded-lg cursor-pointer transition-all duration-100 focus:outline-none focus:outline-offset-2 focus:outline-accent-purple ${
+            className={`p-3 rounded-lg cursor-pointer transition-all duration-200 focus:outline-none focus:outline-offset-2 focus:outline-accent-purple ${
               selectedClause?.id === clause.id
                 ? "bg-accent-purple/5 border-transparent"
-                : "border border-border-muted bg-bg-elevated hover:bg-bg-elevated/80 hover:shadow-sm"
+                : "border border-border-muted bg-bg-elevated hover:bg-bg-primary hover:border-accent-purple/20 hover:shadow-sm hover:scale-[1.01]"
             }`}
             tabIndex={0}
             role="button"
