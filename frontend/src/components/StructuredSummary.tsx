@@ -166,9 +166,8 @@ export default function StructuredSummary({
               {structuredSummary.important_dates.map((date, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-3 p-3 bg-bg-elevated rounded-lg border border-border-muted"
+                  className="p-3 bg-bg-elevated rounded-lg border border-border-muted"
                 >
-                  <div className="w-2 h-2 bg-accent-amber rounded-full flex-shrink-0"></div>
                   <span className="text-text-secondary">{date}</span>
                 </div>
               ))}
@@ -256,7 +255,7 @@ export default function StructuredSummary({
                   className="p-3 bg-accent-rose/5 border border-accent-rose/20 rounded-lg"
                 >
                   <div className="flex items-start gap-3">
-                    <svg
+                    {/* <svg
                       className="w-4 h-4 text-accent-rose mt-0.5 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
@@ -268,7 +267,7 @@ export default function StructuredSummary({
                         strokeWidth={2}
                         d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
                       />
-                    </svg>
+                    </svg> */}
                     <span className="text-text-secondary text-sm leading-relaxed">
                       {risk}
                     </span>
@@ -315,7 +314,7 @@ export default function StructuredSummary({
                   className="p-3 bg-accent-green/5 border border-accent-green/20 rounded-lg"
                 >
                   <div className="flex items-start gap-3">
-                    <svg
+                    {/* <svg
                       className="w-4 h-4 text-accent-green mt-0.5 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
@@ -327,7 +326,7 @@ export default function StructuredSummary({
                         strokeWidth={2}
                         d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
                       />
-                    </svg>
+                    </svg> */}
                     <span className="text-text-secondary text-sm leading-relaxed">
                       {insight}
                     </span>
