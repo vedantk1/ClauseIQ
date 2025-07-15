@@ -83,7 +83,7 @@ export default function StructuredSummary({
             </svg>
           }
         >
-          <p className="text-text-secondary leading-relaxed">
+          <p className="text-text-secondary text-sm leading-relaxed">
             {structuredSummary.overview}
           </p>
         </CollapsibleSection>
@@ -122,11 +122,13 @@ export default function StructuredSummary({
               {structuredSummary.key_parties.map((party, index) => (
                 <div
                   key={index}
-                  className="p-3 bg-bg-elevated border border-border-light rounded-lg"
+                  className="p-3 bg-accent-purple/5 border border-accent-purple/20 rounded-lg"
                 >
-                  <span className="text-text-secondary text-sm leading-relaxed">
-                    {party}
-                  </span>
+                  <div className="flex items-start gap-3">
+                    <span className="text-text-secondary text-sm leading-relaxed">
+                      {party}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -166,9 +168,11 @@ export default function StructuredSummary({
               {structuredSummary.important_dates.map((date, index) => (
                 <div
                   key={index}
-                  className="p-3 bg-bg-elevated rounded-lg border border-border-muted"
+                  className="p-3 bg-accent-amber/5 border border-accent-amber/20 rounded-lg"
                 >
-                  <span className="text-text-secondary">{date}</span>
+                  <div className="flex items-start gap-3">
+                    <span className="text-text-secondary text-sm leading-relaxed">{date}</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -208,11 +212,13 @@ export default function StructuredSummary({
               {structuredSummary.major_obligations.map((obligation, index) => (
                 <div
                   key={index}
-                  className="p-3 bg-bg-elevated border border-border-light rounded-lg"
+                  className="p-3 bg-accent-blue/5 border border-accent-blue/20 rounded-lg"
                 >
-                  <span className="text-text-secondary text-sm leading-relaxed">
-                    {obligation}
-                  </span>
+                  <div className="flex items-start gap-3">
+                    <span className="text-text-secondary text-sm leading-relaxed">
+                      {obligation}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
