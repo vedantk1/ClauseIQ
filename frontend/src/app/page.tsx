@@ -294,7 +294,7 @@ export default function Home() {
               <div className="mb-10 max-w-2xl">
                 <p className="text-xl text-text-secondary leading-relaxed mb-4">
                   Upload your legal document and get instant AI-powered analysis in plain English.
-                </p>
+            </p>
                 <p className="text-lg text-text-secondary/80 leading-relaxed">
                   Chat with your contract, identify risks, and make informed decisions.
                 </p>
@@ -382,7 +382,7 @@ export default function Home() {
                   onChange={handleInputChange}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   disabled={analysisLoading}
-                  />
+                />
 
                   {file ? (
                     <div className="space-y-3">
@@ -516,7 +516,7 @@ export default function Home() {
               <p className="text-text-secondary mb-8 text-xl leading-relaxed">
                 Ask any question about your contract in natural language. Get instant answers 
                 with exact citations from your document.
-              </p>
+                </p>
               
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
