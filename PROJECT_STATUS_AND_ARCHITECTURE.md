@@ -171,9 +171,9 @@ frontend/src/
 
 #### **Production Setup**
 
-- Docker containerization (development and production)
-- Environment configuration for all services
-- MongoDB database setup scripts
+- Serverless deployment (Vercel + Render)
+- Environment configuration for all services  
+- MongoDB Atlas cloud database
 - Comprehensive deployment guide available
 
 #### **Monitoring & Maintenance**
@@ -350,7 +350,7 @@ const { flaggedClauses, addNote, toggleFlag } = useUserInteractions(documentId);
 
 ### **Infrastructure**
 
-- ✅ Docker containerization for all services
+- ✅ Serverless deployment architecture  
 - ✅ Environment-specific configuration
 - ✅ Database migration system
 - ✅ Monitoring and health checks

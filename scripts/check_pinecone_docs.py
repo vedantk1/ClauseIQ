@@ -7,8 +7,9 @@ import os
 import sys
 from typing import Dict, Any
 
-# Add backend to path
-sys.path.append('/Users/vedan/Downloads/clauseiq-project/backend')
+# Add backend to path dynamically
+backend_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend')
+sys.path.append(backend_path)
 
 from services.pinecone_vector_service import get_pinecone_vector_service
 from config.logging import get_foundational_logger

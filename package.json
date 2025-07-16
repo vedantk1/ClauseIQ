@@ -8,15 +8,9 @@
     "dev:frontend": "cd frontend && npm run dev",
     "build": "npm run build:frontend",
     "build:frontend": "cd frontend && npm run build",
-    "test": "npm run test:backend && npm run test:frontend",
-    "test:backend": "cd backend && source venv/bin/activate && pytest -v",
-    "test:frontend": "cd frontend && npm test",
     "setup": "npm run setup:backend && npm run setup:frontend",
     "setup:backend": "cd backend && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt",
-    "setup:frontend": "cd frontend && npm install",
-    "docker:build": "docker-compose build",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down"
+    "setup:frontend": "cd frontend && npm install"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

@@ -115,8 +115,6 @@ shared/shared/
 .github/
 .gitlab-ci.yml
 .travis.yml
-Dockerfile*
-docker-compose*.yml
 render.yaml
 vercel.json
 Procfile

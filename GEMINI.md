@@ -25,7 +25,7 @@ The project is structured as a monorepo, containing both the frontend and backen
 | | LangChain | `langchain` 0.3.16 (RAG orchestration) |
 | **Database** | MongoDB | Primary data store |
 | | Pinecone | Vector storage for semantic search |
-| **DevOps** | Docker | `docker-compose` for local development |
+| **DevOps** | Vercel/Render | Serverless deployment |
 | | Vercel | Frontend deployment |
 | | Render | Backend deployment |
 

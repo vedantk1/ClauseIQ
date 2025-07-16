@@ -6,7 +6,10 @@ Clear all existing documents and chat data for clean foundational deployment!
 import asyncio
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+# Add backend to path dynamically
+backend_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend')
+sys.path.append(backend_path)
 
 from database.factory import DatabaseFactory
 from services.pinecone_vector_service import get_pinecone_vector_service

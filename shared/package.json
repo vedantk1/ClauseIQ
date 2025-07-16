@@ -10,8 +10,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "generate-types": "python3 ../scripts/generate_ts_types.py clauseiq_types/common.py clauseiq_types/common_generated.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "generate-types": "python3 ../scripts/generate_ts_types.py clauseiq_types/common.py clauseiq_types/common_generated.ts"
   },
   "author": "ClauseIQ Team",
   "license": "MIT",

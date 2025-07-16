@@ -33,8 +33,6 @@ npm run test:accessibility # Accessibility tests
 **Build & Deploy:**
 ```bash
 npm run build             # Build for production
-npm run docker:build      # Build Docker containers
-npm run docker:up         # Start Docker stack
 ```
 
 ## Architecture Overview
@@ -97,12 +95,11 @@ types/       # TypeScript definitions
 ### Environment Setup
 - **Backend**: Requires `.env` with OpenAI, MongoDB, Pinecone credentials
 - **Frontend**: Uses `.env.local` for API endpoints
-- **Docker**: Supported for local development with docker-compose
 
 ### Testing Strategy
 - **Frontend**: Jest + React Testing Library + Jest-axe for accessibility
 - **Backend**: pytest with async support for FastAPI testing
-- **Integration**: Full stack testing with Docker containers
+- **Integration**: Full stack testing with local services
 
 ## Important Implementation Details
 
