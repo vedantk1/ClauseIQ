@@ -19,6 +19,11 @@ venv.bak/
 /tmp/
 *.tmp
 
+# Logs and runtime files
+logs/
+*.log
+*.log.*
+
 # Document storage (contains uploaded files)
 documents_storage/
 
