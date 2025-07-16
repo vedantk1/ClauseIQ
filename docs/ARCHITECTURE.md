@@ -55,7 +55,6 @@ backend/
 │   ├── chat.py               # RAG chat functionality
 │   ├── analytics.py          # User analytics
 │   ├── health.py             # System health checks
-│   ├── highlights.py         # Document highlights
 │   └── reports.py            # PDF report generation
 ├── services/                  # Business logic layer
 │   ├── ai_service.py         # OpenAI integration

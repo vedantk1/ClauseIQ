@@ -6,9 +6,6 @@
 // Export from manually maintained TypeScript types (primary source for enums)
 export * from "./clauseiq_types/common";
 
-// Export highlight types
-export * from "./clauseiq_types/highlights";
-
 // Export from generated TypeScript types (interfaces only)
 export type {
   Clause,

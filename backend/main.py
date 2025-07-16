@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
 import json
 from config.environments import get_environment_config
-from routers import auth, documents, analysis, analytics, health, reports, chat, highlights
+from routers import auth, documents, analysis, analytics, health, reports, chat
 from routers import ai_debug as ai_debug_router
 from middleware.rate_limiter import rate_limit_middleware
 from middleware.logging import logging_middleware
@@ -182,7 +182,6 @@ v1_router.include_router(analytics.router)
 v1_router.include_router(health.router)
 v1_router.include_router(reports.router)
 v1_router.include_router(chat.router, prefix="/chat")
-v1_router.include_router(highlights.router, prefix="/highlights")
 
 # 🤖 AI DEBUG ROUTER: Special endpoints for AI assistant troubleshooting
 v1_router.include_router(ai_debug_router.router)
