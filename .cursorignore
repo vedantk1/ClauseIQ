@@ -115,6 +115,5 @@ shared/shared/
 .github/
 .gitlab-ci.yml
 .travis.yml
-render.yaml
-vercel.json
+
 Procfile

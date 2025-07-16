@@ -21,38 +21,43 @@ ClauseIQ transforms complex legal documents into clear, understandable insights 
 ⚡ **Fast & Accurate**: Powered by OpenAI GPT models with 99%+ uptime  
 🔐 **Secure**: Enterprise-grade authentication and data protection
 
-### **🚀 Live Demo**
+## **✨ Features**
 
-- **Try it now**: [clauseiq.vercel.app](https://clauseiq.vercel.app)
-- **API Documentation**: [legal-ai-6ppy.onrender.com/docs](https://legal-ai-6ppy.onrender.com/docs)
+- **📄 PDF Analysis**: Upload contracts and get AI-powered insights 
+- **🎯 Risk Assessment**: Identify problematic clauses and legal risks
+- **💬 Interactive Chat**: Ask questions about your documents
+- **📊 Analytics Dashboard**: Track document processing and insights
+- **🔍 Advanced Search**: Find specific clauses and terms
+- **📈 Visual Reports**: Charts and summaries for quick understanding
 
----
+## **🚀 Quick Start**
 
-## ⚡ **Quick Start**
+### Prerequisites
+- Python 3.8+
+- Node.js 18+
+- MongoDB (local or Atlas)
+- OpenAI API key
 
+### Backend Setup
 ```bash
-# 1. Clone and setup
-git clone <repository-url> && cd clauseiq-project
-
-# 2. Backend setup
-cd backend && python -m venv venv && source venv/bin/activate
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-
-# 3. Frontend setup
-cd ../frontend && npm install
-
-# 4. Configure environment
-cp backend/.env.example backend/.env  # Add your API keys
-cp frontend/.env.example frontend/.env.local
-
-# 5. Start services
-cd backend && source venv/bin/activate && python main.py  # Terminal 1
-cd frontend && npm run dev  # Terminal 2
+python main.py
 ```
 
-**✅ Verify**: Backend http://localhost:8000/health | Frontend http://localhost:3000
+### Frontend Setup
+```bash
+cd frontend  
+npm install
+npm run dev
+```
 
-**Prerequisites**: Python 3.13+, Node.js 18+, OpenAI API Key, MongoDB Atlas, Pinecone API Key
+### Access the Application
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
 
 ---
 
@@ -62,7 +67,7 @@ cd frontend && npm run dev  # Terminal 2
 **Backend**: FastAPI + Python 3.13 + MongoDB + OpenAI API  
 **AI System**: RAG with Pinecone vector storage + OpenAI embeddings  
 **Authentication**: JWT-based with secure password reset  
-**Deployment**: Vercel (frontend) + Render (backend) + MongoDB Atlas
+**Database**: MongoDB (local or Atlas)
 
 ---
 
@@ -77,14 +82,14 @@ cd frontend && npm run dev  # Terminal 2
 - **[🤖 AI Agent Guide](docs/README.md#ai-agent-guide)** - Essential knowledge for automated development
 - **[🏗️ Architecture](docs/README.md#architecture)** - System design and components
 - **[🚨 Troubleshooting](docs/README.md#troubleshooting)** - Common issues and solutions
-- **[🚀 Deployment](docs/DEPLOYMENT.md)** - Production deployment guide
+
 
 ### **For Different Audiences**
 
 - **New Users**: [Platform overview](docs/README.md#what-is-clauseiq) → [How to use](docs/README.md#using-clauseiq)
 - **Developers**: [Development setup](docs/README.md#development-setup) → [Workflow](docs/README.md#development-workflow)
 - **AI Agents**: [Essential guide](docs/README.md#ai-agent-guide) → [Codebase structure](docs/README.md#codebase-structure)
-- **DevOps**: [Deployment guide](docs/DEPLOYMENT.md) → [Environment config](docs/README.md#environment-configuration)
+- **DevOps**: [Environment config](docs/README.md#environment-configuration)
 
 ---
 
@@ -105,20 +110,13 @@ Each contract type receives specialized AI analysis with relevant clause extract
 
 ---
 
-## 📊 **Production Status**
+## 🎯 **Project Goals**
 
-**🌐 Live Deployment**
-
-- **Frontend**: https://clauseiq.vercel.app
-- **Backend**: https://legal-ai-6ppy.onrender.com
-- **API Docs**: https://legal-ai-6ppy.onrender.com/docs
-
-**⚡ System Health**
-
-- **Uptime**: 99%+ (Vercel + Render)
-- **AI Models**: 4 available (GPT-4.1 to GPT-4o)
-- **Processing Speed**: 30-60 seconds per document
-- **Chat Response**: 2-5 seconds per query
+This project demonstrates:
+- **AI Integration**: Advanced LLM-powered document analysis
+- **Full-Stack Development**: Modern React/Next.js frontend with FastAPI backend
+- **Vector Search**: RAG implementation with Pinecone vector storage
+- **Production Quality**: Enterprise-level authentication, error handling, and monitoring
 
 ---
 

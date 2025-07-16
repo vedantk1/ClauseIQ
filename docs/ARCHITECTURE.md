@@ -468,8 +468,8 @@ logger.info("Document processed", extra={
 ## 🔄 **Deployment Architecture**
 
 ### **Production Environment**
-- **Frontend**: Vercel (CDN, auto-scaling)
-- **Backend**: Render (container deployment)
+- **Frontend**: Next.js development server
+- **Backend**: FastAPI with uvicorn
 - **Database**: MongoDB Atlas (managed service)
 - **Vector Storage**: Pinecone (managed service)
 - **AI Services**: OpenAI API

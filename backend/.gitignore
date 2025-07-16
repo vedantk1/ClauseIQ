@@ -1,38 +1,12 @@
-# Python
-__pycache__/
+# Python specific ignores (others handled by root .gitignore)
+
+# Python bytecode and extensions
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
-venv/
-ENV/
+
+# Python environments (specific patterns)
 env.bak/
 venv.bak/
-
-# Environment variables
-.env
-.env.local
-.env.production
-
-# Temporary files
-/tmp/
-*.tmp
-
-# Logs and runtime files
-logs/
-*.log
-*.log.*
-
-# Document storage (contains uploaded files)
-documents_storage/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
+ENV/

@@ -11,9 +11,9 @@
 ClauseIQ is a **production-ready AI-powered legal document analysis platform** that transforms complex contracts into understandable insights through advanced AI analysis and interactive chat functionality.
 
 ### **Live Deployment**
-- **Frontend**: https://clauseiq.vercel.app
-- **Backend**: https://legal-ai-6ppy.onrender.com
-- **API Docs**: https://legal-ai-6ppy.onrender.com/docs
+- **Frontend**: http://localhost:3000
+- **Backend**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
 
 ### **Core Technology Stack**
 - **Backend**: FastAPI + Python 3.13 + MongoDB + OpenAI API + Pinecone
@@ -248,7 +248,7 @@ rm -rf node_modules package-lock.json && npm install
 
 ## 🚀 **Production Status**
 
-- **Uptime**: 99%+ (Vercel + Render)
+- **Environment**: Local development
 - **Processing Speed**: 30-60 seconds per document
 - **Chat Response**: 2-5 seconds per query
 - **Security**: JWT auth, rate limiting, input validation

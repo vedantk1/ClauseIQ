@@ -81,7 +81,7 @@ frontend/
 - **Language**: TypeScript
 - **Authentication**: JWT tokens with refresh mechanism
 - **Testing**: Jest with React Testing Library
-- **Deployment**: Vercel (auto-deployment from main branch)
+- **Development**: Local development server with hot reload
 
 ## Environment Variables
 

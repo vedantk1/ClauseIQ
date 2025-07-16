@@ -17,10 +17,9 @@ ClauseIQ is a **production-ready AI-powered legal document analysis platform** t
 ⚡ **Fast & Accurate**: Powered by OpenAI GPT models with 99%+ uptime  
 🔐 **Secure**: Enterprise-grade authentication and data protection
 
-### **🚀 Live Demo**
+### **🚀 Getting Started**
 
-- **Try it now**: [clauseiq.vercel.app](https://clauseiq.vercel.app)
-- **API Documentation**: [legal-ai-6ppy.onrender.com/docs](https://legal-ai-6ppy.onrender.com/docs)
+Follow the [Quick Start Guide](../README.md#quick-start) to run locally.
 
 ---
 
@@ -72,7 +71,7 @@ cd frontend && npm run dev     # Terminal 2
 **Backend**: FastAPI + Python 3.13 + MongoDB + OpenAI API  
 **AI System**: RAG with Pinecone vector storage + OpenAI embeddings  
 **Authentication**: JWT-based with secure password reset  
-**Deployment**: Vercel (frontend) + Render (backend) + MongoDB Atlas
+**Database**: MongoDB (local or Atlas)
 
 ---
 
@@ -84,18 +83,18 @@ Each contract type receives specialized AI analysis with relevant clause extract
 
 ---
 
-## 🚀 **Production Status**
+## 🚀 **Local Development**
 
-**🌐 Live Deployment**
-- **Frontend**: https://clauseiq.vercel.app
-- **Backend**: https://legal-ai-6ppy.onrender.com
-- **API Docs**: https://legal-ai-6ppy.onrender.com/docs
+**🌐 Development URLs**
+- **Frontend**: http://localhost:3000
+- **Backend**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
 
-**⚡ System Health**
-- **Uptime**: 99%+ (Vercel + Render)
-- **AI Models**: 4 available (GPT-3.5-turbo to GPT-4o)
+**⚡ System Features**
+- **AI Models**: GPT-4o with fallback options
 - **Processing Speed**: 30-60 seconds per document
 - **Chat Response**: 2-5 seconds per query
+- **Vector Search**: Pinecone-powered semantic search
 
 ---
 

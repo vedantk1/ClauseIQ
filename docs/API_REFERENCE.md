@@ -1,7 +1,7 @@
 # 🔌 ClauseIQ API Reference
 
 **Version**: 3.1 | **Last Updated**: July 5, 2025  
-**Base URL**: `http://localhost:8000` (development) | `https://legal-ai-6ppy.onrender.com` (production)
+**Base URL**: `http://localhost:8000`
 
 ## 📋 **Quick Reference**
 

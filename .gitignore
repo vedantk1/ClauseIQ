@@ -3,6 +3,7 @@
 .env.local
 .env.production
 .env.development
+!.env.example
 
 # Dependencies
 node_modules/
@@ -13,9 +14,11 @@ __pycache__/
 
 # Build outputs
 .next/
+/out/
 dist/
 build/
 .turbo/
+*.tsbuildinfo
 
 # Logs
 *.log
@@ -73,5 +76,4 @@ documents_storage/
 # Testing
 .nyc_output
 
-# Vercel
-.vercel
+
