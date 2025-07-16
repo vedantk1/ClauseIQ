@@ -24,12 +24,7 @@ from .service import (
     get_document_service
 )
 
-# Migration system
-from .migrations import (
-    Migration,
-    MigrationManager,
-    get_migration_manager
-)
+
 
 __all__ = [
     # Interfaces and exceptions
@@ -50,8 +45,5 @@ __all__ = [
     'DocumentService',
     'get_document_service',
     
-    # Migration system
-    'Migration',
-    'MigrationManager',
-    'get_migration_manager'
+
 ]

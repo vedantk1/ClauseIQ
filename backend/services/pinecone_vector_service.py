@@ -9,7 +9,7 @@ MISSION-CRITICAL PRODUCTION SERVICE
 - Battle-tested error handling
 
 SPECIFICATIONS:
-- Storage: 2GB free tier (4x Supabase capacity)
+- Storage: 2GB free tier with excellent performance
 - Performance: Sub-10ms search times
 - Scalability: Serverless auto-scaling
 - Security: User isolation via namespaces

@@ -105,15 +105,15 @@ The main commands are defined in the root `package.json` file:
 
 ## Deployment Details
 
--   **Frontend**: Deployed on **Vercel**. The production URL is [https://clauseiq.vercel.app](https://clauseiq.vercel.app).
--   **Backend**: Deployed on **Render**. The production URL is [https://legal-ai-6ppy.onrender.com](https://legal-ai-6ppy.onrender.com).
+-   **Frontend**: Development server at http://localhost:3000
+-   **Backend**: Development server at http://localhost:8000
 
 ## Project History and Evolution
 
 -   **Initial Development**: The project started with a focus on basic document analysis and a simple file-based storage system.
--   **MongoDB Migration**: The backend was migrated to MongoDB to provide a more scalable and robust data storage solution.
+-   **MongoDB**: Uses MongoDB as the primary database for scalable and robust data storage.
 -   **RAG and Chat Implementation**: The core functionality was extended with a sophisticated RAG system and interactive chat, transforming the platform into an intelligent legal assistant.
--   **Pinecone Integration**: The RAG system was further enhanced by migrating the vector storage from Supabase to Pinecone, enabling the use of more powerful embedding models.
+-   **Pinecone Integration**: The RAG system uses Pinecone for high-performance vector storage, enabling the use of powerful embedding models.
 
 ## Security Overview
 

@@ -78,7 +78,7 @@ class DocumentService:
                     logger.warning(f"Could not clean up PDF file for document {doc_id}: {e}")
                     # Continue with document deletion even if PDF cleanup fails
             
-            # Then, clean up RAG data from Supabase
+            # Then, clean up RAG data from vector storage
             try:
                 from services.rag_service import get_rag_service
                 rag_service = get_rag_service()

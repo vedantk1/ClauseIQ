@@ -298,7 +298,7 @@ class RAGService:
             chunks = self._smart_chunk_legal_document(text, document_id)
             logger.info(f"Created {len(chunks)} chunks for document {document_id}")
             
-            # Step 2: Prepare chunks for Supabase storage
+            # Step 2: Prepare chunks for vector storage
             chunk_data = []
             for i, chunk in enumerate(chunks):
                 chunk_data.append({
@@ -789,7 +789,7 @@ RESPONSE:"""
     async def delete_document_from_rag(self, document_id: str, user_id: str) -> bool:
         """
         Delete all RAG data for a document when it's deleted from MongoDB.
-        This ensures consistency between MongoDB and Supabase.
+        This ensures consistency between MongoDB and vector storage.
         """
         try:
             pinecone_service = self._get_pinecone_service()

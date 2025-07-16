@@ -86,16 +86,7 @@ class AIConfig(BaseModel):
         return v
 
 
-class SupabaseConfig(BaseModel):
-    """Supabase configuration for vector search."""
-    url: str = Field(..., description="Supabase project URL")
-    service_key: str = Field(..., description="Supabase service role key")
-    
-    @validator('url')
-    def validate_url(cls, v):
-        if not v.startswith('https://') or not 'supabase.co' in v:
-            raise ValueError('Supabase URL must be a valid supabase.co URL')
-        return v
+
 
 
 class PineconeConfig(BaseModel):
@@ -176,9 +167,7 @@ class EnvironmentConfig(BaseSettings):
     openai_max_tokens: int = Field(default=4000, description="Maximum tokens per request")
     openai_temperature: float = Field(default=0.7, description="AI temperature")
     
-    # Supabase Vector Search
-    supabase_url: str = Field(default="https://your-project.supabase.co", description="Supabase project URL")
-    supabase_service_key: str = Field(default="your-service-key", description="Supabase service role key")
+
     
     # Pinecone Vector Search
     pinecone_api_key: str = Field(default="your-pinecone-api-key", description="Pinecone API key")
@@ -249,13 +238,7 @@ class EnvironmentConfig(BaseSettings):
             temperature=self.openai_temperature
         )
     
-    @property
-    def supabase(self) -> SupabaseConfig:
-        """Get Supabase configuration."""
-        return SupabaseConfig(
-            url=self.supabase_url,
-            service_key=self.supabase_service_key
-        )
+
     
     @property
     def pinecone(self) -> PineconeConfig:
