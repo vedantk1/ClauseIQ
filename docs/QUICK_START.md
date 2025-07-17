@@ -9,7 +9,7 @@
 - Python 3.13+
 - Node.js 18+
 - OpenAI API Key
-- MongoDB Atlas account (or local MongoDB)
+- MongoDB Atlas account
 - Pinecone API Key (for chat feature)
 
 ---
@@ -45,7 +45,7 @@ npm install
 OPENAI_API_KEY=sk-your-openai-api-key
 PINECONE_API_KEY=your-pinecone-api-key
 
-# Database
+# Database (MongoDB Atlas)
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
 MONGODB_DATABASE=clauseiq
 

@@ -71,7 +71,7 @@ cd frontend && npm run dev     # Terminal 2
 **Backend**: FastAPI + Python 3.13 + MongoDB + OpenAI API  
 **AI System**: RAG with Pinecone vector storage + OpenAI embeddings  
 **Authentication**: JWT-based with secure password reset  
-**Database**: MongoDB (local or Atlas)
+**Database**: MongoDB Atlas
 
 ---
 

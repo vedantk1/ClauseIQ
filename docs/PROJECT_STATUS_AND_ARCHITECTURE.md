@@ -207,8 +207,8 @@ npm run dev
 #### **Required Environment Variables**
 
 ```bash
-# Database
-MONGODB_URI=mongodb://localhost:27017/clauseiq
+# Database (MongoDB Atlas)
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
 DATABASE_NAME=clauseiq
 
 # AI Services

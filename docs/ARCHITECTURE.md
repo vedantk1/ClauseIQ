@@ -476,7 +476,7 @@ logger.info("Document processed", extra={
 ### **Development Environment**
 - **Frontend**: Next.js dev server
 - **Backend**: FastAPI with uvicorn
-- **Database**: Local MongoDB or Atlas
+- **Database**: MongoDB Atlas
 - **Vector Storage**: Pinecone development index
 
 ---

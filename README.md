@@ -57,7 +57,7 @@ The script will:
 - Python 3.8+
 - Node.js 18+
 - OpenAI API key
-- MongoDB (local or Atlas)
+- MongoDB Atlas
 - Pinecone API key (for chat feature)
 
 #### Backend Setup
@@ -103,7 +103,7 @@ cd frontend && npm run dev
 **Backend**: FastAPI + Python 3.13 + MongoDB + OpenAI API  
 **AI System**: RAG with Pinecone vector storage + OpenAI embeddings  
 **Authentication**: JWT-based with secure password reset  
-**Database**: MongoDB (local or Atlas)
+**Database**: MongoDB Atlas
 
 ---
 

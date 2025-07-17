@@ -60,7 +60,7 @@ OPENAI_API_KEY=sk-your-openai-api-key-here
 PINECONE_API_KEY=your-pinecone-api-key-here
 PINECONE_ENVIRONMENT=us-east-1
 
-MONGODB_URI=mongodb://localhost:27017/
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
 MONGODB_DATABASE=clauseiq
 
 JWT_SECRET_KEY=your-super-secret-jwt-key-change-this-in-production
@@ -183,7 +183,7 @@ echo ""
 echo "1. 📝 Update your API keys in backend/.env:"
 echo "   - Get OpenAI API key: https://platform.openai.com/api-keys"
 echo "   - Get Pinecone API key: https://app.pinecone.io/ (free tier available)"
-echo "   - Set up MongoDB: https://www.mongodb.com/atlas (free tier available)"
+echo "   - Set up MongoDB Atlas: https://www.mongodb.com/atlas (free tier available)"
 echo ""
 echo "2. 🚀 Start the development servers:"
 echo ""

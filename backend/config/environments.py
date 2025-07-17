@@ -136,7 +136,7 @@ class EnvironmentConfig(BaseSettings):
     environment: Environment = Field(default=Environment.DEVELOPMENT, description="Application environment")
     
     # Database - Environment variables mapped directly
-    mongodb_uri: str = Field(default="mongodb://localhost:27017", description="MongoDB connection URI")
+    mongodb_uri: str = Field(default="mongodb+srv://username:password@cluster.mongodb.net/", description="MongoDB Atlas connection URI")
     mongodb_database: str = Field(default="legal_ai", description="MongoDB database name")
     mongodb_collection: str = Field(default="documents", description="MongoDB collection name")
     

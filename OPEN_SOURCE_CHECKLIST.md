@@ -68,7 +68,7 @@
 - Prerequisites (Python 3.8+, Node.js 18+)
 - API key acquisition links
 - Step-by-step environment setup
-- Database setup options (local MongoDB or Atlas)
+- MongoDB Atlas setup
 - Development server startup commands
 
 ### **3. API Key Acquisition Guide**
