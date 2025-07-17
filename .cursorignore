@@ -100,9 +100,7 @@ pnpm-lock.yaml
 *.chunk.js
 
 # Shared types generated files (keep source, exclude builds)
-shared/clauseiq_shared_types.egg-info/
-shared/shared.egg-info/
-shared/shared/
+# These directories were removed as they were build artifacts
 
 # Backend specific
 *.pid

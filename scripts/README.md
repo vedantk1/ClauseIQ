@@ -1,30 +1,42 @@
 # ClauseIQ Utility Scripts
 
-This directory contains utility scripts for ClauseIQ system maintenance and debugging.
+This directory contains utility scripts for ClauseIQ development and maintenance.
 
 ## Scripts
 
-- **check_all_users.py** - Analyzes all users in the system and identifies cleanup targets
-- **check_pinecone_docs.py** - Checks Pinecone vector database document storage 
-- **clear_database.py** - Clears all documents, chat sessions, and vector data
+### Development Scripts
+- **dependency-audit.sh** - Checks for outdated and vulnerable dependencies in both backend and frontend
+- **setup_shared_types.sh** - Sets up the shared types package for development
+- **sync_types.py** - Synchronizes TypeScript and Python type definitions
+- **generate_ts_types.py** - Generates TypeScript types from Python Pydantic models
+- **verify_shared_types.py** - Verifies that shared types are in sync between frontend and backend
 
-## Running Scripts
+### System Maintenance Scripts
+Database maintenance scripts are located in the `backend/` directory:
+- `backend/check_all_users.py` - Analyzes all users in the system
+- `backend/check_pinecone_docs.py` - Checks Pinecone vector database document storage
+- `backend/clear_database.py` - Clears all documents, chat sessions, and vector data
 
-These scripts require the backend dependencies. Run them with the backend virtual environment:
+## Usage
 
+### Development Scripts
 ```bash
-# From project root
-cd backend && source venv/bin/activate && python3 ../scripts/script_name.py
+# Check dependencies
+./scripts/dependency-audit.sh
 
-# Or using the convenience commands:
-cd backend && source venv/bin/activate
-python3 ../scripts/check_all_users.py
-python3 ../scripts/check_pinecone_docs.py  
-python3 ../scripts/clear_database.py
+# Set up shared types
+./scripts/setup_shared_types.sh
+
+# Sync and verify types
+python3 scripts/sync_types.py
+python3 scripts/verify_shared_types.py
 ```
 
-The scripts automatically resolve the backend path and import necessary modules.
-
-## Note
-
-These scripts dynamically add the backend directory to Python's path, so they can access backend services and database connections from their new location in the scripts directory. 
+### Database Scripts
+```bash
+# From project root, with backend virtual environment
+cd backend && source venv/bin/activate
+python3 check_all_users.py
+python3 check_pinecone_docs.py
+python3 clear_database.py
+``` 

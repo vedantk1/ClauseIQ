@@ -1,9 +1,0 @@
-README.md
-setup.py
-clauseiq_shared_types.egg-info/PKG-INFO
-clauseiq_shared_types.egg-info/SOURCES.txt
-clauseiq_shared_types.egg-info/dependency_links.txt
-clauseiq_shared_types.egg-info/requires.txt
-clauseiq_shared_types.egg-info/top_level.txt
-types/__init__.py
-types/common.py
