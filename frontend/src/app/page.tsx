@@ -22,18 +22,20 @@ export default function Home() {
     isLoading: analysisLoading,
   } = useAnalysis();
 
-  // Monitor state changes for debugging
+  // Monitor file state changes for debugging (only log when file actually changes)
   useEffect(() => {
-    console.log("🔄 [DEBUG] State change detected:", {
-      hasLocalFile: !!file,
-      localFileName: file?.name || null,
-      hasAnalysisDocument: !!currentDocument.id,
-      analysisFileName: currentDocument.filename || null,
-      inputValue: fileInputRef.current?.value || null,
-      inputDisabled: fileInputRef.current?.disabled || false,
-      timestamp: new Date().toISOString(),
-    });
-  }, [file, currentDocument.id, currentDocument.filename]);
+    if (file) {
+      console.log("📁 [DEBUG] FILE STATE UPDATED - File is now available:", {
+        fileName: file.name,
+        fileSize: file.size,
+        fileSizeMB: (file.size / 1024 / 1024).toFixed(2),
+        fileType: file.type,
+        lastModified: new Date(file.lastModified).toISOString(),
+      });
+    } else {
+      console.log("📁 [DEBUG] FILE STATE CLEARED - No file available");
+    }
+  }, [file]); // Only track file changes, not other state
 
   // Monitor file input element specifically
   useEffect(() => {
@@ -53,14 +55,14 @@ export default function Home() {
     }
   }, []);
 
-  // Add effect to monitor when the component re-renders after remove
+  // Monitor file input element state when file is cleared
   useEffect(() => {
-    if (!file && fileInputRef.current) {
-      console.log("🔍 [DEBUG] No file state, checking input element:", {
+    if (!file && fileInputRef.current?.value) {
+      console.log("🔍 [DEBUG] File cleared but input still has value - resetting:", {
         inputValue: fileInputRef.current.value,
         inputDisabled: fileInputRef.current.disabled,
-        timestamp: new Date().toISOString(),
       });
+      fileInputRef.current.value = "";
     }
   }, [file]);
 
@@ -133,36 +135,48 @@ export default function Home() {
   };
 
   const handleFileChange = (selectedFile: File | null) => {
-    if (!selectedFile) return;
-
-    console.log("🔍 [DEBUG] File selection started:", {
-      fileName: selectedFile.name,
-      fileSize: selectedFile.size,
-      fileType: selectedFile.type,
-      timestamp: new Date().toISOString(),
+    console.log("🔍 [DEBUG] Processing file selection:", {
+      fileName: selectedFile?.name || "null",
+      fileSizeMB: selectedFile ? (selectedFile.size / 1024 / 1024).toFixed(2) : "null",
+      fileType: selectedFile?.type || "null",
     });
 
-    // Basic frontend validation
-    if (selectedFile.size > config.maxFileSizeMB * 1024 * 1024) {
-      console.error("❌ [DEBUG] File size validation failed:", {
-        fileSize: selectedFile.size,
-        maxSize: config.maxFileSizeMB * 1024 * 1024,
-        fileName: selectedFile.name,
-      });
-      alert(`File is too large. Max size: ${config.maxFileSizeMB}MB`);
-      return;
-    }
-    if (!selectedFile.name.toLowerCase().endsWith(".pdf")) {
-      console.error("❌ [DEBUG] File type validation failed:", {
-        fileName: selectedFile.name,
-        fileType: selectedFile.type,
-      });
-      alert("Please upload a PDF file.");
+    if (!selectedFile) {
+      console.warn("⚠️ [DEBUG] No file provided to handleFileChange");
       return;
     }
 
-    console.log("✅ [DEBUG] File validation passed, setting file state");
-    setFile(selectedFile);
+    try {
+      // File size validation
+      const maxSizeBytes = config.maxFileSizeMB * 1024 * 1024;
+      if (selectedFile.size > maxSizeBytes) {
+        console.error("❌ [DEBUG] File too large:", {
+          fileSizeMB: (selectedFile.size / 1024 / 1024).toFixed(2),
+          maxSizeMB: config.maxFileSizeMB,
+        });
+        alert(`File is too large. Max size: ${config.maxFileSizeMB}MB`);
+        return;
+      }
+
+      // File type validation
+      if (!selectedFile.name.toLowerCase().endsWith(".pdf")) {
+        console.error("❌ [DEBUG] Invalid file type:", {
+          fileName: selectedFile.name,
+          fileExtension: selectedFile.name.split('.').pop(),
+        });
+        alert("Please upload a PDF file.");
+        return;
+      }
+
+      console.log("✅ [DEBUG] File validation passed, updating state");
+      setFile(selectedFile);
+      
+    } catch (error) {
+      console.error("❌ [DEBUG] Error in handleFileChange:", {
+        error: error instanceof Error ? error.message : error,
+        fileName: selectedFile.name,
+      });
+    }
   };
 
   const handleRemoveFile = () => {
@@ -184,33 +198,50 @@ export default function Home() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("📎 [DEBUG] File input change event:", {
-      filesLength: e.target.files?.length || 0,
-      firstFileName: e.target.files?.[0]?.name || null,
-      inputDisabled: e.target.disabled,
-      timestamp: new Date().toISOString(),
+    const files = e.target.files;
+    console.log("📎 [DEBUG] File input onChange fired:", {
+      filesCount: files?.length || 0,
+      firstFileName: files?.[0]?.name || null,
     });
 
-    if (e.target.files && e.target.files.length > 0) {
-      handleFileChange(e.target.files[0]);
-    } else {
-      console.warn("⚠️ [DEBUG] File input change event but no files selected");
+    try {
+      if (files && files.length > 0) {
+        handleFileChange(files[0]);
+      } else {
+        console.warn("⚠️ [DEBUG] onChange fired but no files selected");
+      }
+    } catch (error) {
+      console.error("❌ [DEBUG] Error in handleInputChange:", {
+        error: error instanceof Error ? error.message : error,
+      });
     }
   };
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
     console.log("📌 [DEBUG] Drag event:", {
       type: e.type,
       dragActive,
+      hasFiles: e.dataTransfer?.files?.length || 0,
       timestamp: new Date().toISOString(),
     });
 
     if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
+      // Only activate if dragging files
+      if (e.dataTransfer?.types?.includes("Files")) {
+        setDragActive(true);
+      }
     } else if (e.type === "dragleave") {
-      setDragActive(false);
+      // Only deactivate if leaving the entire drop zone
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX;
+      const y = e.clientY;
+      
+      if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+        setDragActive(false);
+      }
     }
   };
 
@@ -219,30 +250,35 @@ export default function Home() {
     e.stopPropagation();
     setDragActive(false);
 
+    const droppedFiles = Array.from(e.dataTransfer.files);
     console.log("📁 [DEBUG] Drop event:", {
-      filesLength: e.dataTransfer.files?.length || 0,
-      firstFileName: e.dataTransfer.files?.[0]?.name || null,
+      filesLength: droppedFiles.length,
+      fileNames: droppedFiles.map(f => f.name),
       timestamp: new Date().toISOString(),
     });
 
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileChange(e.dataTransfer.files[0]);
-    } else {
+    if (droppedFiles.length === 0) {
       console.warn("⚠️ [DEBUG] Drop event but no files found");
-    }
-  };
-
-  const handleProcessDocument = async () => {
-    if (!file) {
-      console.error("❌ [DEBUG] Process document called without file");
       return;
     }
 
-    console.log("🚀 [DEBUG] Document processing started:", {
-      fileName: file.name,
-      fileSize: file.size,
-      timestamp: new Date().toISOString(),
-    });
+    if (droppedFiles.length > 1) {
+      console.warn("⚠️ [DEBUG] Multiple files dropped, using first file only:", {
+        totalFiles: droppedFiles.length,
+        selectedFile: droppedFiles[0].name,
+      });
+    }
+
+    handleFileChange(droppedFiles[0]);
+  };
+
+  const handleProcessDocument = async () => {
+    console.log("🚀 [DEBUG] Starting document processing:", file?.name);
+
+    if (!file) {
+      console.error("❌ [DEBUG] No file to process");
+      return;
+    }
 
     if (!isAuthenticated) {
       console.log("🔒 [DEBUG] User not authenticated, redirecting to login");
@@ -253,16 +289,14 @@ export default function Home() {
     }
 
     try {
-      console.log("📄 [DEBUG] Starting document analysis");
-      await analyzeDocument(file);
-      console.log(
-        "✅ [DEBUG] Document analysis completed successfully, opening review in new tab"
-      );
-      const documentId = currentDocument.id;
+      console.log("📄 [DEBUG] Calling analyzeDocument API...");
+      const documentId = await analyzeDocument(file);
+      
       if (documentId) {
+        console.log("✅ [DEBUG] Analysis complete, opening review:", documentId);
         window.open(`/review?documentId=${documentId}`, "_blank");
       } else {
-        console.error("❌ [DEBUG] No document ID available after analysis");
+        console.error("❌ [DEBUG] Analysis complete but no document ID found");
         const toast = (await import("react-hot-toast")).toast;
         toast.error("Document processed but unable to open review page.");
       }
@@ -270,7 +304,6 @@ export default function Home() {
       console.error("❌ [DEBUG] Document analysis failed:", {
         error: error instanceof Error ? error.message : error,
         fileName: file.name,
-        timestamp: new Date().toISOString(),
       });
       const toast = (await import("react-hot-toast")).toast;
       toast.error("Failed to process document. Please try again.");
@@ -370,19 +403,24 @@ export default function Home() {
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
                 onClick={() => {
+                  console.log("🎯 [DEBUG] Upload zone clicked, triggering file input");
                   if (fileInputRef.current && !analysisLoading) {
                     fileInputRef.current.click();
                   }
                 }}
               >
+                {/* Hidden file input - positioned off-screen but accessible */}
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept=".pdf"
                   onChange={handleInputChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  className="sr-only"
                   disabled={analysisLoading}
+                  tabIndex={-1}
                 />
+
+
 
                   {file ? (
                     <div className="space-y-3">
@@ -410,6 +448,8 @@ export default function Home() {
                     </div>
                   )}
               </div>
+
+
 
               {file && (
                   <div className="mt-6 space-y-4">

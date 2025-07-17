@@ -38,7 +38,7 @@ interface AnalysisContextType {
   error: string | null;
 
   // Actions
-  analyzeDocument: (file: File) => Promise<void>;
+  analyzeDocument: (file: File) => Promise<string | null>;
   analyzeClauses: (file: File) => Promise<void>;
   loadDocuments: () => Promise<void>;
   loadDocument: (documentId: string) => Promise<void>;
@@ -61,16 +61,17 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
   const activeRequests = useRef<Map<string, Promise<void>>>(new Map());
 
   // Action implementations
-  const analyzeDocument = async (file: File): Promise<void> => {
-    try {
-      console.log("🔄 [DEBUG] Analysis started:", {
-        fileName: file.name,
-        fileSize: file.size,
-        timestamp: new Date().toISOString(),
-      });
+  const analyzeDocument = async (file: File): Promise<string | null> => {
+    console.log("🔄 [DEBUG] Starting document analysis:", {
+      fileName: file.name,
+      fileSizeMB: (file.size / 1024 / 1024).toFixed(2),
+    });
 
+    try {
       dispatch({ type: "ANALYSIS_SET_LOADING", payload: true });
       dispatch({ type: "ANALYSIS_SET_ERROR", payload: null });
+
+      console.log("🔄 [DEBUG] Making API call to /analysis/analyze/...");
 
       const response = await apiClient.uploadFile<{
         id: string;
@@ -83,6 +84,8 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
         full_text?: string;
         contract_type?: string;
       }>("/analysis/analyze/", file);
+
+      console.log("🔄 [DEBUG] API call completed:", response.success ? "success" : "failed");
 
       if (response.success && response.data) {
         const {
@@ -129,21 +132,23 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
           },
         });
 
-        console.log("✅ [DEBUG] Document analysis completed successfully:", {
+        console.log("✅ [DEBUG] Document analysis completed:", {
           documentId: id,
           fileName: filename,
           clausesCount: clauses.length,
-          riskSummary: risk_summary,
-          timestamp: new Date().toISOString(),
         });
 
         handleAPISuccess("Document analyzed successfully!");
+        return id; // Return the document ID
       } else {
         const errorMessage =
           response.error?.message || "Failed to analyze document";
         console.error("❌ [DEBUG] Document analysis API error:", {
+          success: response.success,
           error: errorMessage,
-          response: response.error,
+          errorDetails: response.error,
+          correlationId: response.correlation_id,
+          fileName: file.name,
           timestamp: new Date().toISOString(),
         });
         dispatch({ type: "ANALYSIS_SET_ERROR", payload: errorMessage });
@@ -155,6 +160,9 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
         error instanceof Error ? error.message : "Unknown error occurred";
       console.error("❌ [DEBUG] Document analysis exception:", {
         error: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined,
+        fileName: file.name,
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
         timestamp: new Date().toISOString(),
       });
       dispatch({ type: "ANALYSIS_SET_ERROR", payload: errorMessage });
@@ -206,7 +214,9 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
       dispatch({ type: "ANALYSIS_SET_ERROR", payload: errorMessage });
       throw error;
     } finally {
+      console.log("🔄 [DEBUG] analyzeDocument FINALLY block - setting loading to false");
       dispatch({ type: "ANALYSIS_SET_LOADING", payload: false });
+      console.log("🔄 [DEBUG] analyzeDocument COMPLETED (finally block)");
     }
   };
 
