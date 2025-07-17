@@ -32,29 +32,65 @@ ClauseIQ transforms complex legal documents into clear, understandable insights 
 
 ## **🚀 Quick Start**
 
-### Prerequisites
+### **⚡ Automated Setup (Recommended)**
+
+Run our setup script for instant development environment:
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd clauseiq-project
+
+# Run the automated setup script
+bash scripts/setup-for-development.sh
+```
+
+The script will:
+- ✅ Create environment files from examples
+- ✅ Set up Python virtual environment  
+- ✅ Install all dependencies (backend + frontend)
+- ✅ Configure shared types
+
+### **📝 Manual Setup**
+
+#### Prerequisites
 - Python 3.8+
 - Node.js 18+
-- MongoDB (local or Atlas)
 - OpenAI API key
+- MongoDB (local or Atlas)
+- Pinecone API key (for chat feature)
 
-### Backend Setup
+#### Backend Setup
 ```bash
 cd backend
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-python main.py
+
+# Copy and configure environment
+cp ../env-examples/backend.env.example .env
+# Edit .env with your API keys
 ```
 
-### Frontend Setup
+#### Frontend Setup
 ```bash
 cd frontend  
 npm install
-npm run dev
+
+# Copy and configure environment
+cp ../env-examples/frontend.env.example .env.local
 ```
 
-### Access the Application
+#### Start Development Servers
+```bash
+# Backend (Terminal 1)
+cd backend && source venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+# Frontend (Terminal 2)  
+cd frontend && npm run dev
+```
+
+### **🌐 Access the Application**
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs

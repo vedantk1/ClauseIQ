@@ -5,6 +5,7 @@ This directory contains utility scripts for ClauseIQ development and maintenance
 ## Scripts
 
 ### Development Scripts
+- **setup-for-development.sh** - 🚀 **MAIN SETUP SCRIPT** - Automated development environment setup
 - **dependency-audit.sh** - Checks for outdated and vulnerable dependencies in both backend and frontend
 - **setup_shared_types.sh** - Sets up the shared types package for development
 - **sync_types.py** - Synchronizes TypeScript and Python type definitions
@@ -21,15 +22,14 @@ Database maintenance scripts are located in the `backend/` directory:
 
 ### Development Scripts
 ```bash
-# Check dependencies
-./scripts/dependency-audit.sh
+# 🚀 Complete development setup (recommended)
+./scripts/setup-for-development.sh
 
-# Set up shared types
-./scripts/setup_shared_types.sh
-
-# Sync and verify types
-python3 scripts/sync_types.py
-python3 scripts/verify_shared_types.py
+# Individual scripts
+./scripts/dependency-audit.sh  # Check dependencies
+./scripts/setup_shared_types.sh  # Set up shared types
+python3 scripts/sync_types.py  # Sync types
+python3 scripts/verify_shared_types.py  # Verify types
 ```
 
 ### Database Scripts
