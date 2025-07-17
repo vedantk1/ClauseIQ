@@ -88,7 +88,7 @@ frontend/src/
 │   ├── documents/              # Document management
 │   └── auth/                   # Authentication pages
 ├── components/                 # Reusable Components
-│   ├── ContinuousScrollPDFViewer.tsx  # Advanced PDF viewer
+│   ├── PDFViewer.tsx             # Advanced PDF viewer
 │   ├── ReviewSidebar.tsx       # Canva-inspired sidebar layout
 │   ├── review/                 # Review-specific components
 │   │   ├── SummaryContent.tsx  # Document summary display

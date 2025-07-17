@@ -55,7 +55,7 @@ app/                       # Next.js App Router
 ├── analytics/            # User analytics dashboard
 └── auth/                 # Authentication pages
 components/                # Reusable components
-├── ContinuousScrollPDFViewer.tsx  # Advanced PDF viewer
+├── PDFViewer.tsx             # Advanced PDF viewer
 ├── ReviewSidebar.tsx     # Canva-inspired sidebar
 └── review/               # Review-specific components
 context/                   # React Context providers
@@ -174,7 +174,7 @@ document = await service.get_document_for_user(doc_id, user_id)
 
 ### **Key Components**
 - **ReviewSidebar**: Canva-inspired collapsible sidebar
-- **ContinuousScrollPDFViewer**: Advanced PDF viewer with highlighting
+- **PDFViewer**: Advanced PDF viewer with highlighting
 - **DocumentCard**: Professional document display
 - **Risk Indicators**: Color-coded risk assessment
 

@@ -131,7 +131,7 @@ frontend/src/
 │       ├── login/            # Login page
 │       └── register/         # Registration page
 ├── components/                # Reusable components
-│   ├── ContinuousScrollPDFViewer.tsx  # Advanced PDF viewer
+│   ├── PDFViewer.tsx             # Advanced PDF viewer
 │   ├── ReviewSidebar.tsx     # Canva-inspired sidebar
 │   ├── DocumentChat.tsx      # Chat interface
 │   ├── review/               # Review-specific components
