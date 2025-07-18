@@ -5,7 +5,7 @@
 
 set -e  # Exit on any error
 
-echo "🚀 ClauseIQ Development Setup"
+echo "🚀 ClasueIQ Development Setup"
 echo "=============================="
 echo ""
 
@@ -35,11 +35,11 @@ print_info() {
 
 # Check if we're in the project root
 if [ ! -f "package.json" ] || [ ! -d "backend" ] || [ ! -d "frontend" ]; then
-    print_error "Please run this script from the ClauseIQ project root directory"
+    print_error "Please run this script from the ClasueIQ project root directory"
     exit 1
 fi
 
-print_info "Setting up ClauseIQ development environment..."
+print_info "Setting up ClasueIQ development environment..."
 echo ""
 
 # 1. Copy environment files

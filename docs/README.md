@@ -44,7 +44,8 @@ Follow the [Quick Start Guide](../README.md#quick-start) to run locally.
 
 ```bash
 # 1. Clone and setup
-git clone <repository-url> && cd clauseiq-project
+git clone https://github.com/vedantk1/ClasueIQ.git && cd ClasueIQ
+```
 
 # 2. Backend setup
 cd backend && python -m venv venv && source venv/bin/activate

@@ -18,8 +18,8 @@
 
 ### **1. Clone & Navigate**
 ```bash
-git clone <repository-url>
-cd clauseiq-project
+git clone https://github.com/vedantk1/ClasueIQ.git
+cd ClasueIQ
 ```
 
 ### **1.5. Install MongoDB (Required)**

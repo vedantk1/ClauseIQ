@@ -38,8 +38,8 @@ Run our setup script for instant development environment:
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd clauseiq-project
+git clone https://github.com/vedantk1/ClasueIQ.git
+cd ClasueIQ
 
 # Run the automated setup script
 bash scripts/setup-for-development.sh
