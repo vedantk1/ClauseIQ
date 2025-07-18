@@ -469,14 +469,14 @@ logger.info("Document processed", extra={
 ### **Production Environment**
 - **Frontend**: Next.js development server
 - **Backend**: FastAPI with uvicorn
-- **Database**: MongoDB Atlas (managed service)
+- **Database**: Local MongoDB
 - **Vector Storage**: Pinecone (managed service)
 - **AI Services**: OpenAI API
 
 ### **Development Environment**
 - **Frontend**: Next.js dev server
 - **Backend**: FastAPI with uvicorn
-- **Database**: MongoDB Atlas
+- **Database**: Local MongoDB
 - **Vector Storage**: Pinecone development index
 
 ---

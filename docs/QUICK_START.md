@@ -9,7 +9,7 @@
 - Python 3.13+
 - Node.js 18+
 - OpenAI API Key
-- MongoDB Atlas account
+- MongoDB (local installation)
 - Pinecone API Key (for chat feature)
 
 ---
@@ -20,6 +20,22 @@
 ```bash
 git clone <repository-url>
 cd clauseiq-project
+```
+
+### **1.5. Install MongoDB (Required)**
+```bash
+# macOS (using Homebrew)
+brew tap mongodb/brew
+brew install mongodb-community
+brew services start mongodb/brew/mongodb-community
+
+# Ubuntu/Debian
+sudo apt-get install mongodb
+sudo systemctl start mongodb
+
+# Windows
+# Download from: https://www.mongodb.com/try/download/community
+# Install and start MongoDB service
 ```
 
 ### **2. Backend Setup**
@@ -45,8 +61,8 @@ npm install
 OPENAI_API_KEY=sk-your-openai-api-key
 PINECONE_API_KEY=your-pinecone-api-key
 
-# Database (MongoDB Atlas)
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
+# Database (Local MongoDB)
+MONGODB_URI=mongodb://localhost:27017/
 MONGODB_DATABASE=clauseiq
 
 # Authentication

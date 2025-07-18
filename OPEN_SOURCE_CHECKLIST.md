@@ -12,7 +12,7 @@
 |---|---|---|---|---|
 | **OpenAI API** | AI analysis, chat, embeddings | Pay-per-use | $5 free credit | **REQUIRED** |
 | **Pinecone** | Vector storage for chat | $0-$70/month | 1GB free | **REQUIRED** for chat |
-| **MongoDB Atlas** | Primary database | $0-$57/month | 512MB free | **REQUIRED** |
+| **Local MongoDB** | Primary database | Free | Unlimited | **REQUIRED** |
 | **SMTP Email** | Password reset only | Free-$10/month | Gmail free | **OPTIONAL** |
 
 **💰 Total Cost**: Free tier supports ~500-1000 documents with chat
@@ -68,7 +68,7 @@
 - Prerequisites (Python 3.8+, Node.js 18+)
 - API key acquisition links
 - Step-by-step environment setup
-- MongoDB Atlas setup
+- Local MongoDB setup
 - Development server startup commands
 
 ### **3. API Key Acquisition Guide**
@@ -85,10 +85,10 @@
 - **Setup**: Create account → Create API key → Add to `.env`
 - **Usage**: ~10,000 document chats with free tier
 
-#### **MongoDB Atlas** (512MB free tier)
-- **URL**: https://www.mongodb.com/atlas
-- **Setup**: Create cluster → Get connection string → Add to `.env`
-- **Usage**: ~50,000 documents with free tier
+#### **Local MongoDB**
+- **Installation**: Install MongoDB Community Edition locally
+- **Setup**: Start MongoDB service → Use localhost:27017
+- **Usage**: Unlimited local storage
 
 ### **4. Optional Components**
 
