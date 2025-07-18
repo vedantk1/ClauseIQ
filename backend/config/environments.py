@@ -86,7 +86,7 @@ class AIConfig(BaseModel):
         return v
 
 
-
+    
 
 
 class PineconeConfig(BaseModel):

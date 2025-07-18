@@ -31,7 +31,7 @@ export default function Home() {
         fileSizeMB: (file.size / 1024 / 1024).toFixed(2),
         fileType: file.type,
         lastModified: new Date(file.lastModified).toISOString(),
-      });
+    });
     } else {
       console.log("📁 [DEBUG] FILE STATE CLEARED - No file available");
     }
@@ -153,23 +153,23 @@ export default function Home() {
         console.error("❌ [DEBUG] File too large:", {
           fileSizeMB: (selectedFile.size / 1024 / 1024).toFixed(2),
           maxSizeMB: config.maxFileSizeMB,
-        });
-        alert(`File is too large. Max size: ${config.maxFileSizeMB}MB`);
-        return;
-      }
+      });
+      alert(`File is too large. Max size: ${config.maxFileSizeMB}MB`);
+      return;
+    }
 
       // File type validation
-      if (!selectedFile.name.toLowerCase().endsWith(".pdf")) {
+    if (!selectedFile.name.toLowerCase().endsWith(".pdf")) {
         console.error("❌ [DEBUG] Invalid file type:", {
-          fileName: selectedFile.name,
+        fileName: selectedFile.name,
           fileExtension: selectedFile.name.split('.').pop(),
-        });
-        alert("Please upload a PDF file.");
-        return;
-      }
+      });
+      alert("Please upload a PDF file.");
+      return;
+    }
 
       console.log("✅ [DEBUG] File validation passed, updating state");
-      setFile(selectedFile);
+    setFile(selectedFile);
       
     } catch (error) {
       console.error("❌ [DEBUG] Error in handleFileChange:", {
@@ -207,7 +207,7 @@ export default function Home() {
     try {
       if (files && files.length > 0) {
         handleFileChange(files[0]);
-      } else {
+    } else {
         console.warn("⚠️ [DEBUG] onChange fired but no files selected");
       }
     } catch (error) {
@@ -231,7 +231,7 @@ export default function Home() {
     if (e.type === "dragenter" || e.type === "dragover") {
       // Only activate if dragging files
       if (e.dataTransfer?.types?.includes("Files")) {
-        setDragActive(true);
+      setDragActive(true);
       }
     } else if (e.type === "dragleave") {
       // Only deactivate if leaving the entire drop zone
@@ -240,7 +240,7 @@ export default function Home() {
       const y = e.clientY;
       
       if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
-        setDragActive(false);
+      setDragActive(false);
       }
     }
   };

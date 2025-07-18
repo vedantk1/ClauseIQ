@@ -19,7 +19,8 @@ ClauseIQ transforms complex legal documents into clear, understandable insights 
 💬 **Document Chat**: Ask questions about your contracts in natural language  
 📊 **Multi-Contract Support**: Handles 10+ contract types with specialized analysis  
 ⚡ **Fast & Accurate**: Powered by OpenAI GPT models with 99%+ uptime  
-🔐 **Secure**: Enterprise-grade authentication and data protection
+🔐 **Secure**: Enterprise-grade authentication and data protection  
+📄 **Advanced PDF Viewer**: Built-in PDF viewer with highlighting and search functionality
 
 ## **✨ Features**
 

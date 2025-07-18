@@ -63,9 +63,9 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
   // Action implementations
   const analyzeDocument = async (file: File): Promise<string | null> => {
     console.log("🔄 [DEBUG] Starting document analysis:", {
-      fileName: file.name,
+        fileName: file.name,
       fileSizeMB: (file.size / 1024 / 1024).toFixed(2),
-    });
+      });
 
     try {
       dispatch({ type: "ANALYSIS_SET_LOADING", payload: true });
