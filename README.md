@@ -32,24 +32,30 @@ ClauseIQ transforms complex legal documents into clear, understandable insights 
 
 ## **🚀 Quick Start**
 
-### **⚡ Automated Setup (Recommended)**
+### **⚡ One-Command Setup (Level 3 Automation)**
 
-Run our setup script for instant development environment:
+Our advanced setup script automatically handles everything from system prerequisites to project dependencies:
 
 ```bash
 # Clone the repository
 git clone https://github.com/vedantk1/ClasueIQ.git
 cd ClasueIQ
 
-# Run the automated setup script
-bash scripts/setup-for-development.sh
+# Run the Level 3 automated setup script
+./scripts/setup-for-development.sh
 ```
 
-The script will:
-- ✅ Create environment files from examples
-- ✅ Set up Python virtual environment  
-- ✅ Install all dependencies (backend + frontend)
-- ✅ Configure shared types
+**🎯 What it does automatically:**
+
+- **🔍 System Detection** - Detects your OS (macOS, Ubuntu, RHEL, Windows WSL)
+- **📦 Package Manager** - Installs/uses brew, apt, dnf, yum, or chocolatey  
+- **🐍 Python 3.8+** - Version check, automatic installation if needed
+- **📗 Node.js 18+** - Version check, automatic installation if needed
+- **🍃 MongoDB** - Community Edition installation and service management
+- **🔧 Project Setup** - Virtual environment, dependencies, environment files
+- **✅ Verification** - Connection testing and health checks
+
+**Supports:** macOS (Intel/M1), Ubuntu/Debian, RHEL/CentOS, Windows WSL
 
 ### **📝 Manual Setup**
 

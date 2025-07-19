@@ -14,13 +14,34 @@
 
 ---
 
-## ⚡ **5-Minute Setup**
+## ⚡ **One-Command Setup (Level 3 Automation)**
 
 ### **1. Clone & Navigate**
 ```bash
 git clone https://github.com/vedantk1/ClasueIQ.git
 cd ClasueIQ
 ```
+
+### **2. Run Level 3 Setup Script**
+```bash
+./scripts/setup-for-development.sh
+```
+
+**🎯 Level 3 Automation Features:**
+- **🔍 System Detection** - Auto-detects OS and architecture
+- **📦 Package Manager** - Installs brew/apt/dnf/yum if needed
+- **🐍 Python 3.8+** - Version check and automatic installation
+- **📗 Node.js 18+** - Version check and automatic installation  
+- **🍃 MongoDB** - Community Edition installation and service start
+- **🔧 Project Setup** - Virtual environment, dependencies, environment files
+- **✅ Verification** - Connection testing and health checks
+- **💡 Help System** - `--help` and `--version` flags available
+
+**Supports:** macOS (Intel/M1), Ubuntu/Debian, RHEL/CentOS, Windows WSL
+
+---
+
+## 📋 **Manual Setup (Advanced Users)**
 
 ### **1.5. Install MongoDB (Required)**
 ```bash
