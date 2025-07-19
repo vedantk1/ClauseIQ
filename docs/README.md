@@ -99,24 +99,6 @@ Each contract type receives specialized AI analysis with relevant clause extract
 
 ---
 
-## 🚨 **Common Issues & Solutions**
-
-### **PDF Viewer Issues**
-- **PDF won't load**: Clear browser cache, check internet connection
-- **Build errors with PDF.js**: Ensure Next.js 15+ compatibility (auto-configured)
-- **Worker errors**: Uses CDN worker for cross-platform compatibility
-
-### **Backend Issues**
-- **Import errors**: Activate virtual environment: `source backend/venv/bin/activate`
-- **MongoDB connection**: Start local MongoDB or check connection string
-- **API keys**: Verify OpenAI/Pinecone keys in `backend/.env`
-
-### **Frontend Issues**
-- **Build failures**: Delete `node_modules`, run `npm install`
-- **API connection**: Check `NEXT_PUBLIC_API_URL` in `frontend/.env.local`
-
----
-
 ## 🤝 **For Different Audiences**
 
 ### **👨‍💻 Developers**

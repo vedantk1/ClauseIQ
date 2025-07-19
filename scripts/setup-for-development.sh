@@ -158,9 +158,6 @@ print_info "Installing Node.js dependencies..."
 npm install
 print_status "Frontend dependencies installed"
 
-print_info "Configuring PDF.js for Next.js 15 compatibility..."
-print_status "PDF.js worker configured to use CDN for better compatibility"
-
 cd ..
 
 echo ""

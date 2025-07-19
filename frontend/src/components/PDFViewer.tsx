@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Worker,
   Viewer,
@@ -19,7 +19,6 @@ import Button from "./Button";
 import DropdownMenu from "./DropdownMenu";
 import config from "@/config/config";
 import "../utils/pdfConsoleFilter";
-import { setupPDFWorker, getPDFWorkerUrl } from "@/utils/pdfWorkerSetup";
 import {
   getRiskHighlightColor,
   getRiskBorderColor,
@@ -64,11 +63,6 @@ export default function PDFViewer({
     "continuous"
   );
   const [currentPage, setCurrentPage] = useState(0);
-
-  // Setup PDF.js worker on component mount
-  useEffect(() => {
-    setupPDFWorker();
-  }, []);
 
   // Create plugin instances
   const zoomPluginInstance = zoomPlugin();
@@ -498,7 +492,7 @@ export default function PDFViewer({
             </div>
           </div>
         )}
-        <Worker workerUrl={getPDFWorkerUrl()}>
+        <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
           <div style={{ height: "100%" }} className="pdf-viewer-container">
             <Viewer
               fileUrl={pdfUrl}
