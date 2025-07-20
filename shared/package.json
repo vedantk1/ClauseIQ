@@ -2,9 +2,10 @@
   "name": "@clauseiq/shared-types",
   "version": "1.0.0",
   "description": "Shared types for ClauseIQ frontend and backend",
-  "main": "index.ts",
-  "types": "index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
+    "dist/",
     "index.ts",
     "clauseiq_types/"
   ],

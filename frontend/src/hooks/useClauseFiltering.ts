@@ -1,7 +1,7 @@
 "use client";
 import { useMemo } from "react";
 import { getClauseTypeLabel } from "../components/review/clauseUtils";
-import type { Clause } from "@shared/common_generated";
+import type { Clause } from "@clauseiq/shared-types";
 
 interface UseClauseFilteringProps {
   clauses: Clause[];

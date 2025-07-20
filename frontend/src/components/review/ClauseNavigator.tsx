@@ -8,7 +8,7 @@ import {
   getClauseTypeLabel,
   highlightSearchText,
 } from "./clauseUtils";
-import type { Clause, RiskSummary } from "@shared/common_generated";
+import type { Clause, RiskSummary } from "@clauseiq/shared-types";
 
 interface ClauseNavigatorProps {
   clauses: Clause[];

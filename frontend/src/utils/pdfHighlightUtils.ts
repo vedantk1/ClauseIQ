@@ -4,7 +4,7 @@
  * Smart text matching and highlighting utilities for legal document clauses
  */
 
-import type { Clause } from "@shared/common_generated";
+import type { Clause } from "@clauseiq/shared-types";
 
 export interface HighlightStrategy {
   name: string;

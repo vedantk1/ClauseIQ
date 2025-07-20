@@ -25,7 +25,7 @@ import {
   type HighlightResult,
 } from "@/utils/pdfHighlightUtils";
 import { usePDFHighlighting } from "@/hooks/usePDFHighlighting";
-import type { Clause } from "@shared/common_generated";
+import type { Clause } from "@clauseiq/shared-types";
 
 interface PDFViewerProps {
   documentId: string;

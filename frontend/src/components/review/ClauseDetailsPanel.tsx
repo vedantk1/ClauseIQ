@@ -10,7 +10,7 @@ import {
   getClauseNegotiability,
   getIndustryBenchmark,
 } from "./clauseUtils";
-import type { Clause } from "@shared/common_generated";
+import type { Clause } from "@clauseiq/shared-types";
 
 interface Note {
   id: string;

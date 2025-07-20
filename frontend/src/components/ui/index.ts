@@ -32,7 +32,7 @@ export type {
   EmptyStateProps,
 } from "./LoadingStates";
 
-export { Toast, useNotification } from "./Toast";
+// export { Toast, useNotification } from "./Toast"; // Removed - using react-hot-toast instead
 
 export { ErrorBoundary, useErrorHandler } from "./ErrorBoundary";
 

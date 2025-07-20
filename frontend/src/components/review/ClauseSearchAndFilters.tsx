@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useCallback } from "react";
 import { getClauseTypeDisplayName } from "./clauseTypeMapping";
-import type { Clause } from "@shared/common_generated";
+import type { Clause } from "@clauseiq/shared-types";
 
 // Helper function to get clause type options from actual clauses in the document
 function getClauseTypeOptionsFromClauses(

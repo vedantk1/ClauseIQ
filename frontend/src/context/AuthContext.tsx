@@ -5,7 +5,7 @@
 "use client";
 import React, { createContext, useContext, ReactNode } from "react";
 import { toast } from "react-hot-toast";
-import { User, UserPreferences, AvailableModel } from "@clauseiq/shared-types";
+import type { User, UserPreferences, AvailableModel } from "@clauseiq/shared-types";
 import { useAppState } from "../store/appState";
 import { apiClient, handleAPIError, handleAPISuccess } from "../lib/api";
 

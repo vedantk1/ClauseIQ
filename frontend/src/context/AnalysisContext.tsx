@@ -6,8 +6,7 @@
 import React, { createContext, useContext, ReactNode, useCallback, useRef } from "react";
 import { useAppState } from "../store/appState";
 import { apiClient, handleAPIError, handleAPISuccess } from "../lib/api";
-import type { Clause, RiskSummary, Document } from "@shared/common_generated";
-import { ContractType } from "@shared/common";
+import type { Clause, RiskSummary, Document, ContractType } from "@clauseiq/shared-types";
 
 // Type for AI structured summary data
 export interface StructuredSummary {

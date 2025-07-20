@@ -2,7 +2,7 @@
 import React from "react";
 import ClauseNavigator from "@/components/review/ClauseNavigator";
 import ClauseDetailsPanel from "@/components/review/ClauseDetailsPanel";
-import type { Clause } from "@shared/common_generated";
+import type { Clause } from "@clauseiq/shared-types";
 
 interface Note {
   id: string;

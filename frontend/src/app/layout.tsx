@@ -6,7 +6,7 @@ import { AnalysisProvider } from "@/context/AnalysisContext";
 import ConditionalNavBar from "@/components/ConditionalNavBar";
 import ThemeProvider from "@/components/ThemeProvider";
 import { Toaster } from "react-hot-toast";
-import { Toast, ErrorBoundary } from "@/components/ui";
+import { ErrorBoundary } from "@/components/ui";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -45,9 +45,9 @@ export default function RootLayout({
                     <ConditionalNavBar />
                     <main className="flex-1">{children}</main>
                   </div>
-                  <Toast />
+                  {/* <Toast /> */}
                 </ErrorBoundary>
-                <Toaster
+                {/* <Toaster
                   position="top-right"
                   toastOptions={{
                     style: {
@@ -68,7 +68,7 @@ export default function RootLayout({
                       },
                     },
                   }}
-                />
+                /> */}
               </AnalysisProvider>
             </AuthProvider>
           </ThemeProvider>

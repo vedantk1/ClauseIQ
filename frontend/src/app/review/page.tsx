@@ -14,7 +14,7 @@ import SummaryContent from "@/components/review/SummaryContent";
 import ClausesContent from "@/components/review/ClausesContent";
 import ChatContent from "@/components/review/ChatContent";
 import { getClauseTypeLabel } from "@/components/review/clauseUtils";
-import type { Clause } from "@shared/common_generated";
+import type { Clause } from "@clauseiq/shared-types";
 import toast from "react-hot-toast";
 import apiClient from "@/lib/api";
 

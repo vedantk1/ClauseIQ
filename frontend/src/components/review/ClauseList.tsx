@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import type { Clause } from "@shared/common_generated";
+import type { Clause } from "@clauseiq/shared-types";
 
 interface ClauseListProps {
   clauses: Clause[];

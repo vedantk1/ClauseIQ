@@ -2,7 +2,7 @@
 import React from "react";
 import DocumentStatsBar from "@/components/DocumentStatsBar";
 import StructuredSummary from "@/components/StructuredSummary";
-import type { Clause } from "@shared/common_generated";
+import type { Clause } from "@clauseiq/shared-types";
 import type { StructuredSummary as StructuredSummaryType } from "@/context/AnalysisContext";
 
 interface SummaryContentProps {
