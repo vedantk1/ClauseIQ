@@ -2,12 +2,7 @@
 # Exclude files that don't add value to AI assistance
 
 # Dependencies and build artifacts
-node_modules/
-venv/
-env/
-.env
-.env.local
-.env.production
+# node_modules/
 __pycache__/
 *.pyc
 *.pyo

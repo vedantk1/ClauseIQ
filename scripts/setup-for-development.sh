@@ -380,6 +380,17 @@ setup_python_environment() {
     cd ..
 }
 
+setup_root_dependencies() {
+    print_step "Installing root project dependencies..."
+    
+    if [ -f "package.json" ]; then
+        npm install
+        print_success "Installed root dependencies (concurrently, dev tools)"
+    else
+        print_warning "Root package.json not found"
+    fi
+}
+
 setup_frontend_dependencies() {
     print_step "Installing frontend dependencies..."
     
@@ -502,6 +513,13 @@ test_connections() {
     fi
     cd ..
     
+    # Test root dependencies
+    if [ -d "node_modules" ]; then
+        print_success "Root dependencies installed"
+    else
+        print_warning "Root dependencies may be missing"
+    fi
+    
     # Test frontend dependencies
     cd frontend
     if [ -d "node_modules" ]; then
@@ -559,6 +577,7 @@ main() {
     print_section "Setting Up Project"
     
     setup_environment_files
+    setup_root_dependencies
     setup_python_environment
     setup_frontend_dependencies
     setup_shared_types

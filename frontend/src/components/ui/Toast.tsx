@@ -8,7 +8,7 @@ import { cn } from "../../lib/utils";
 import { useUIState, useAppState } from "../../store/appState";
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from "lucide-react";
 
-const Toast: React.FC = () => {
+const Toast = () => {
   const { notifications } = useUIState();
   const { dispatch } = useAppState();
 

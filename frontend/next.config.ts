@@ -12,16 +12,30 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true, // Skip ESLint during build for deployment
   },
 
+  // Webpack configuration for PDF.js compatibility
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Exclude Node.js-specific modules from browser bundle
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        canvas: false,
+        fs: false,
+        path: false,
+        os: false,
+        crypto: false,
+        stream: false,
+        http: false,
+        https: false,
+        zlib: false,
+        url: false,
+      };
+    }
+    return config;
+  },
+
   // Enable experimental features for better performance
   experimental: {
     optimizePackageImports: ["react-hot-toast", "clsx"],
-    turbo: {
-      rules: {
-        "**/*.worker.js": {
-          loaders: ["file-loader"],
-        },
-      },
-    },
   },
 
   // Images configuration for containerized deployment
