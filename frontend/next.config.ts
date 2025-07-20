@@ -30,6 +30,14 @@ const nextConfig: NextConfig = {
         url: false,
       };
     }
+
+    // Fix for PDF.js canvas module error - prevent webpack from trying to resolve canvas
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      canvas: false,
+      encoding: false,
+    };
+
     return config;
   },
 

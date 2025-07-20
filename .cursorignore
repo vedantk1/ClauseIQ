@@ -2,7 +2,7 @@
 # Exclude files that don't add value to AI assistance
 
 # Dependencies and build artifacts
-# node_modules/
+node_modules/
 __pycache__/
 *.pyc
 *.pyo
@@ -14,8 +14,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-# lib/
-# lib64/
+lib/
+lib64/
 parts/
 sdist/
 var/
@@ -84,9 +84,9 @@ out/
 .cache/
 
 # Package manager files
-# package-lock.json
-# yarn.lock
-# pnpm-lock.yaml
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # Large generated files
 *.min.js
