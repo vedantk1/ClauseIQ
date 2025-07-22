@@ -18,8 +18,8 @@
 
 ### **1. Clone & Navigate**
 ```bash
-git clone https://github.com/vedantk1/ClasueIQ.git
-cd ClasueIQ
+git clone https://github.com/vedantk1/ClauseIQ.git
+cd ClauseIQ
 ```
 
 ### **2. Run Level 3 Setup Script**

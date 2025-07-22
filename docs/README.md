@@ -44,7 +44,7 @@ Follow the [Quick Start Guide](../README.md#quick-start) to run locally.
 
 ```bash
 # 1. Clone and setup
-git clone https://github.com/vedantk1/ClasueIQ.git && cd ClasueIQ
+git clone https://github.com/vedantk1/ClauseIQ.git && cd ClauseIQ
 ```
 
 # 2. Backend setup

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# ClasueIQ Development Environment Setup Script
+# ClauseIQ Development Environment Setup Script
 # Level 3 Full Automation - Handles all prerequisites and dependencies
 # Supports: macOS, Ubuntu/Debian, RHEL/CentOS, Windows WSL
 
@@ -11,7 +11,7 @@ set -e  # Exit on any error
 # ============================================================================
 
 SCRIPT_VERSION="2.0.0"
-PROJECT_NAME="ClasueIQ"
+PROJECT_NAME="ClauseIQ"
 REQUIRED_PYTHON_VERSION="3.8"
 REQUIRED_NODE_VERSION="18"
 MONGODB_VERSION="7.0"
