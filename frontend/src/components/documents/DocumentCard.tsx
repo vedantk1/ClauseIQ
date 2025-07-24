@@ -16,7 +16,6 @@ import {
 import type { DocumentItem } from "@/types/documents";
 import {
   formatDate,
-  getRelativeTime,
   formatContractType,
   getContractTypeColor,
   highlightSearchText,
@@ -84,7 +83,7 @@ export const DocumentCard = ({
                 </h3>
                 <div className="flex items-center gap-2 mt-1 text-xs text-text-tertiary">
                   <Clock className="w-3 h-3" />
-                  <span>{getRelativeTime(doc.upload_date)}</span>
+                  <span>{formatDate(doc.upload_date)}</span>
                 </div>
               </div>
               {!isSelectMode && (
