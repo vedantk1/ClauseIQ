@@ -442,7 +442,7 @@ start_mongodb() {
     case "$OS" in
         "macos")
             if command_exists brew; then
-                brew services start mongodb/brew/mongodb-community
+                brew services start mongodb/brew/mongodb-community@7.0
             else
                 mongod --config /usr/local/etc/mongod.conf --fork
             fi
