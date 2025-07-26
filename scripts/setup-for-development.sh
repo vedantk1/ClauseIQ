@@ -10,7 +10,7 @@ set -e  # Exit on any error
 # CONFIGURATION & CONSTANTS
 # ============================================================================
 
-SCRIPT_VERSION="2.0.0"
+SCRIPT_VERSION="2.1.0"
 PROJECT_NAME="ClauseIQ"
 REQUIRED_PYTHON_VERSION="3.8"
 REQUIRED_NODE_VERSION="18"
@@ -136,6 +136,64 @@ detect_package_manager() {
 # PREREQUISITE INSTALLATION FUNCTIONS
 # ============================================================================
 
+install_xcode_tools() {
+    print_step "Checking Xcode Command Line Tools..."
+    
+    # Check if Command Line Tools are installed
+    if ! xcode-select -p >/dev/null 2>&1; then
+        print_step "Installing Xcode Command Line Tools..."
+        print_info "This will open a dialog box. Please click 'Install' and wait for completion."
+        xcode-select --install
+        
+        print_info "Waiting for Xcode Command Line Tools installation to complete..."
+        print_info "Once installation is finished, please re-run this script."
+        print_info "You can check installation status with: xcode-select -p"
+        exit 0
+    fi
+    
+    # Verify essential tools are available
+    local missing_tools=()
+    
+    if ! command_exists clang; then
+        missing_tools+=("clang")
+    fi
+    
+    if ! command_exists git; then
+        missing_tools+=("git")
+    fi
+    
+    if ! command_exists make; then
+        missing_tools+=("make")
+    fi
+    
+    if [ ${#missing_tools[@]} -gt 0 ]; then
+        print_error "Essential development tools are missing: ${missing_tools[*]}"
+        print_info "Please install Xcode Command Line Tools: xcode-select --install"
+        print_info "Or reinstall them: sudo xcode-select --reset && xcode-select --install"
+        exit 1
+    fi
+    
+    print_success "Xcode Command Line Tools are properly installed"
+}
+
+check_system_prerequisites() {
+    print_section "Checking System Prerequisites"
+    
+    if [[ "$OS" == "macos" ]]; then
+        # Install/verify Xcode Command Line Tools first
+        install_xcode_tools
+        
+        # Check available disk space (Homebrew + MongoDB need ~3GB)
+        local available_space=$(df -g . | tail -1 | awk '{print $4}')
+        if [ "$available_space" -lt 4 ]; then
+            print_warning "Low disk space detected: ${available_space}GB available"
+            print_warning "MongoDB and dependencies require ~3GB. Consider freeing up space."
+        else
+            print_success "Sufficient disk space available: ${available_space}GB"
+        fi
+    fi
+}
+
 install_homebrew() {
     print_step "Installing Homebrew package manager..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -146,6 +204,51 @@ install_homebrew() {
         eval "$(/opt/homebrew/bin/brew shellenv)"
     fi
     PKG_MANAGER="brew"
+}
+
+validate_homebrew() {
+    if [[ "$PKG_MANAGER" == "brew" ]]; then
+        print_step "Validating Homebrew installation..."
+        
+        # Update Homebrew first
+        if ! brew update; then
+            print_error "Failed to update Homebrew"
+            print_info "Check your internet connection and try again"
+            exit 1
+        fi
+        
+        # Test basic Homebrew functionality
+        if ! brew --version >/dev/null 2>&1; then
+            print_error "Homebrew is not functioning properly"
+            print_info "Try reinstalling Homebrew or check the installation logs"
+            exit 1
+        fi
+        
+        # Test that Homebrew can access its formulae
+        if ! brew search --formula hello >/dev/null 2>&1; then
+            print_error "Homebrew cannot access package formulae"
+            print_info "Check your internet connection and Homebrew configuration"
+            exit 1
+        fi
+        
+        # For macOS, verify compilation capability with a simple test
+        if [[ "$OS" == "macos" ]]; then
+            print_step "Testing Homebrew compilation capability..."
+            
+            # Create a temporary test to verify compilation works
+            if ! echo 'int main(){return 0;}' | clang -x c -o /tmp/homebrew_test - 2>/dev/null; then
+                print_error "System cannot compile C programs"
+                print_info "Xcode Command Line Tools may not be properly installed"
+                print_info "Run: sudo xcode-select --reset && xcode-select --install"
+                exit 1
+            fi
+            
+            # Clean up test file
+            rm -f /tmp/homebrew_test
+        fi
+        
+        print_success "Homebrew is properly configured and functional"
+    fi
 }
 
 install_python() {
@@ -242,22 +345,65 @@ install_mongodb() {
     
     case "$PKG_MANAGER" in
         "brew")
-            brew tap mongodb/brew
-            brew install mongodb-community@7.0
+            # Ensure Homebrew is updated before MongoDB installation
+            print_step "Updating Homebrew before MongoDB installation..."
+            if ! brew update; then
+                print_error "Failed to update Homebrew"
+                print_info "Check your internet connection and try: brew doctor"
+                exit 1
+            fi
+            
+            # Add MongoDB tap with error handling
+            print_step "Adding MongoDB tap..."
+            if ! brew tap mongodb/brew; then
+                print_error "Failed to add MongoDB tap to Homebrew"
+                print_info "This usually indicates:"
+                print_info "  1. Internet connection issues"
+                print_info "  2. Missing Xcode Command Line Tools"
+                print_info "  3. Homebrew configuration problems"
+                print_info "Try: brew doctor"
+                exit 1
+            fi
+            
+            # Install MongoDB with better error handling
+            print_step "Installing MongoDB Community Edition 7.0..."
+            if ! brew install mongodb-community@7.0; then
+                print_error "MongoDB installation failed"
+                print_info "Common causes and solutions:"
+                print_info "  1. Missing Xcode Command Line Tools:"
+                print_info "     Run: xcode-select --install"
+                print_info "  2. Homebrew needs update:"
+                print_info "     Run: brew update && brew doctor"
+                print_info "  3. Insufficient disk space:"
+                print_info "     Free up at least 2GB of space"
+                print_info "  4. Architecture conflicts (rare):"
+                print_info "     Run: arch -arm64 brew install mongodb-community@7.0"
+                exit 1
+            fi
             ;;
         "apt")
             # Import MongoDB public GPG key
-            curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
+            print_step "Adding MongoDB GPG key..."
+            if ! curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor; then
+                print_error "Failed to add MongoDB GPG key"
+                exit 1
+            fi
             
             # Add MongoDB repository
+            print_step "Adding MongoDB repository..."
             echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
             
             # Install MongoDB
+            print_step "Installing MongoDB..."
             sudo apt update
-            sudo apt install -y mongodb-org
+            if ! sudo apt install -y mongodb-org; then
+                print_error "MongoDB installation failed"
+                exit 1
+            fi
             ;;
         "dnf"|"yum")
             # Add MongoDB repository
+            print_step "Adding MongoDB repository..."
             sudo tee /etc/yum.repos.d/mongodb-org-7.0.repo > /dev/null <<EOF
 [mongodb-org-7.0]
 name=MongoDB Repository
@@ -268,10 +414,17 @@ gpgkey=https://www.mongodb.org/static/pgp/server-7.0.asc
 EOF
             
             # Install MongoDB
-            sudo $PKG_MANAGER install -y mongodb-org
+            print_step "Installing MongoDB..."
+            if ! sudo $PKG_MANAGER install -y mongodb-org; then
+                print_error "MongoDB installation failed"
+                exit 1
+            fi
             ;;
         "choco")
-            choco install mongodb
+            if ! choco install mongodb; then
+                print_error "MongoDB installation failed"
+                exit 1
+            fi
             ;;
         *)
             print_error "Unable to install MongoDB automatically on this system"
@@ -556,10 +709,20 @@ main() {
     print_info "Package Manager: $PKG_MANAGER"
     echo ""
     
+    # NEW: Check system prerequisites BEFORE installing anything
+    check_system_prerequisites
+    echo ""
+    
     # Install package manager if needed (macOS)
     if [[ "$OS" == "macos" ]] && [[ "$PKG_MANAGER" == "none" ]]; then
         print_section "Installing Package Manager"
         install_homebrew
+        echo ""
+    fi
+    
+    # NEW: Validate package manager health after installation
+    if [[ "$PKG_MANAGER" == "brew" ]]; then
+        validate_homebrew
         echo ""
     fi
     
@@ -623,16 +786,36 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             echo "Usage: $0 [options]"
             echo ""
+            echo "ClauseIQ Development Environment Setup Script v$SCRIPT_VERSION"
+            echo "================================================================"
+            echo ""
+            echo "This script automatically installs and configures your complete"
+            echo "development environment for ClauseIQ."
+            echo ""
+            echo "Prerequisites (will be installed automatically on macOS):"
+            echo "  • Xcode Command Line Tools (macOS only)"
+            echo "  • Package manager (Homebrew/apt/dnf/yum)"
+            echo "  • Internet connection"
+            echo "  • ~4GB free disk space"
+            echo ""
+            echo "What this script installs:"
+            echo "  • Python 3.8+ with virtual environment"
+            echo "  • Node.js 18+ and npm"
+            echo "  • MongoDB Community Edition 7.0"
+            echo "  • All project dependencies (backend & frontend)"
+            echo "  • Environment configuration files"
+            echo ""
             echo "Options:"
             echo "  -h, --help     Show this help message"
             echo "  --version      Show script version"
             echo ""
-            echo "This script will automatically install and configure:"
-            echo "  • Python 3.8+"
-            echo "  • Node.js 18+"
-            echo "  • MongoDB Community Edition"
-            echo "  • Project dependencies"
-            echo "  • Environment files"
+            echo "Supported Systems:"
+            echo "  • macOS (Intel & Apple Silicon)"
+            echo "  • Ubuntu/Debian Linux"
+            echo "  • RHEL/CentOS/Fedora Linux"
+            echo "  • Windows WSL"
+            echo ""
+            echo "For troubleshooting, see: docs/QUICK_START.md"
             exit 0
             ;;
         --version)
