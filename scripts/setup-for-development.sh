@@ -509,10 +509,91 @@ setup_python_environment() {
     
     # Create virtual environment if it doesn't exist
     if [ ! -d "venv" ]; then
-        python3 -m venv venv
-        print_success "Created Python virtual environment"
+        # Use the correct Python version based on what we installed
+        local python_cmd=""
+        
+        case "$PKG_MANAGER" in
+            "brew")
+                # Homebrew installs Python 3.11 as python3.11
+                if command_exists python3.11; then
+                    python_cmd="python3.11"
+                elif command_exists /opt/homebrew/bin/python3.11; then
+                    python_cmd="/opt/homebrew/bin/python3.11"
+                elif command_exists /usr/local/bin/python3.11; then
+                    python_cmd="/usr/local/bin/python3.11"
+                else
+                    print_error "Python 3.11 not found after installation"
+                    print_info "Try: brew install python@3.11"
+                    exit 1
+                fi
+                ;;
+            "apt"|"dnf"|"yum")
+                # Linux package managers install as python3.11
+                if command_exists python3.11; then
+                    python_cmd="python3.11"
+                else
+                    print_error "Python 3.11 not found after installation"
+                    exit 1
+                fi
+                ;;
+            "choco")
+                # Windows/Chocolatey should have python3
+                if command_exists python3; then
+                    python_cmd="python3"
+                else
+                    print_error "Python 3 not found after installation"
+                    exit 1
+                fi
+                ;;
+            *)
+                # Fallback - try to find python3.11 first, then python3
+                if command_exists python3.11; then
+                    python_cmd="python3.11"
+                elif command_exists python3; then
+                    python_cmd="python3"
+                else
+                    print_error "No suitable Python found"
+                    exit 1
+                fi
+                ;;
+        esac
+        
+        print_step "Creating virtual environment with $python_cmd..."
+        
+        # Verify the Python version before creating venv
+        local py_version=$($python_cmd --version 2>&1 | cut -d' ' -f2 | cut -d'.' -f1,2)
+        if ! version_compare "$py_version" "$REQUIRED_PYTHON_VERSION"; then
+            print_error "Found Python $py_version, but need $REQUIRED_PYTHON_VERSION+"
+            print_info "The wrong Python version is being used for venv creation"
+            exit 1
+        fi
+        
+        print_info "Using Python $py_version for virtual environment"
+        
+        # Create the virtual environment with the correct Python
+        if ! $python_cmd -m venv venv; then
+            print_error "Failed to create virtual environment"
+            exit 1
+        fi
+        
+        print_success "Created Python virtual environment with $python_cmd"
     else
         print_info "Virtual environment already exists"
+        
+        # Verify existing venv uses correct Python version
+        if [ -f "venv/bin/python" ]; then
+            local venv_version=$(venv/bin/python --version 2>&1 | cut -d' ' -f2 | cut -d'.' -f1,2)
+            if ! version_compare "$venv_version" "$REQUIRED_PYTHON_VERSION"; then
+                print_warning "Existing venv uses Python $venv_version, but need $REQUIRED_PYTHON_VERSION+"
+                print_warning "Removing old venv and recreating with correct Python version..."
+                rm -rf venv
+                # Recursively call this function to recreate venv
+                setup_python_environment
+                return $?
+            else
+                print_success "Existing venv uses Python $venv_version (compatible)"
+            fi
+        fi
     fi
     
     # Activate virtual environment
