@@ -754,3 +754,120 @@ async def delete_clause_note(
             message=f"Failed to delete note: {str(e)}",
             correlation_id=correlation_id
         )
+
+
+@router.post("/analyze-sample/", response_model=APIResponse[dict])
+@versioned_response
+async def analyze_sample_document(
+    request: Request,
+    file: UploadFile = File(...)
+):
+    """Analyze sample document without authentication requirement."""
+    correlation_id = getattr(request.state, 'correlation_id', None)
+    
+    try:
+        # Validate file
+        validate_file(file)
+        
+        # Only allow sample-contract.pdf
+        if file.filename != "sample-contract.pdf":
+            return create_error_response(
+                code="INVALID_SAMPLE_FILE",
+                message="Only sample-contract.pdf is allowed for unauthenticated analysis",
+                correlation_id=correlation_id
+            )
+        
+        service = get_document_service()
+        temp_file_path = None
+        
+        try:
+            # Create temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+                temp_file_path = temp_file.name
+                content = await file.read()
+                temp_file.write(content)
+            
+            # Extract text from PDF
+            extracted_text = ""
+            with pdfplumber.open(temp_file_path) as pdf:
+                for page in pdf.pages:
+                    extracted_text += page.extract_text() or ""
+            
+            if not extracted_text.strip():
+                return create_error_response(
+                    code="PDF_EXTRACTION_FAILED",
+                    message="No text could be extracted from the PDF",
+                    correlation_id=correlation_id
+                )
+
+            # Check if LLM processing is available
+            if not is_llm_processing_available():
+                return create_error_response(
+                    code="LLM_NOT_AVAILABLE",
+                    message="AI processing is not available. Please check OpenAI API configuration.",
+                    correlation_id=correlation_id
+                )
+            
+            print("Using LLM-based document processing for sample")
+            # Use default model for sample contracts (no user preference)
+            contract_type, clauses = await process_document_with_llm(
+                extracted_text, file.filename, "gpt-4o-mini"  # Use default model
+            )
+            
+            # Generate structured summary for sample
+            ai_structured_summary = await generate_structured_document_summary(
+                extracted_text, clauses, contract_type
+            )
+            
+            # Create sample document record (no user_id for sample)
+            document_id = str(uuid.uuid4())
+            document_data = {
+                "id": document_id,
+                "filename": file.filename,
+                "text": extracted_text,
+                "ai_full_summary": f"Sample {contract_type.title()} Contract Analysis",
+                "ai_structured_summary": ai_structured_summary,
+                "contract_type": contract_type,
+                "clauses": [clause.dict() for clause in clauses],
+                "risk_summary": service.calculate_risk_summary(clauses),
+                "upload_date": datetime.utcnow().isoformat(),
+                "user_id": None,  # No user for sample
+                "user_interactions": None
+            }
+            
+            # Store sample document temporarily (with shorter TTL)
+            await service.store_sample_document(document_data)
+            
+            # Prepare response
+            response_data = {
+                "id": document_id,
+                "filename": file.filename,
+                "summary": document_data["ai_full_summary"],
+                "ai_structured_summary": ai_structured_summary,
+                "clauses": clauses,
+                "total_clauses": len(clauses),
+                "risk_summary": document_data["risk_summary"],
+                "full_text": extracted_text,
+                "contract_type": contract_type
+            }
+            
+            return create_success_response(
+                data=response_data,
+                message=f"Sample {contract_type} document analyzed successfully",
+                correlation_id=correlation_id
+            )
+            
+        finally:
+            # Clean up temporary file
+            if temp_file_path and os.path.exists(temp_file_path):
+                os.unlink(temp_file_path)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error analyzing sample document: {str(e)}")
+        return create_error_response(
+            code="SAMPLE_ANALYSIS_FAILED",
+            message=f"An error occurred while analyzing sample document: {str(e)}",
+            correlation_id=correlation_id
+        )

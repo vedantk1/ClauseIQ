@@ -70,7 +70,11 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
       dispatch({ type: "ANALYSIS_SET_LOADING", payload: true });
       dispatch({ type: "ANALYSIS_SET_ERROR", payload: null });
 
-      console.log("🔄 [DEBUG] Making API call to /analysis/analyze/...");
+      // Check if this is a sample contract
+      const isSampleContract = file.name === 'sample-contract.pdf';
+      const endpoint = isSampleContract ? "/analysis/analyze-sample/" : "/analysis/analyze/";
+      
+      console.log(`🔄 [DEBUG] Making API call to ${endpoint}...`);
 
       const response = await apiClient.uploadFile<{
         id: string;
@@ -82,7 +86,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
         risk_summary: RiskSummary;
         full_text?: string;
         contract_type?: string;
-      }>("/analysis/analyze/", file);
+      }>(endpoint, file);
 
       console.log("🔄 [DEBUG] API call completed:", response.success ? "success" : "failed");
 
