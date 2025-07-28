@@ -517,11 +517,6 @@ export default function Home() {
               )}
 
                 <div className="mt-6 space-y-4">
-                  <div className="text-center">
-                <p className="text-sm text-text-secondary">
-                      🔒 Secure & private - documents deleted after analysis
-                    </p>
-                  </div>
                   
                   {/* Sample Contract Link */}
                   <div className="text-center">
