@@ -13,7 +13,6 @@ export default function Home() {
   const { isAuthenticated } = useAuthRedirect();
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [sampleLoading, setSampleLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const {
@@ -281,10 +280,7 @@ export default function Home() {
       return;
     }
 
-    // Check if this is a sample contract (bypasses authentication)
-    const isSampleContract = file.name === 'sample-contract.pdf';
-    
-    if (!isAuthenticated && !isSampleContract) {
+    if (!isAuthenticated) {
       console.log("🔒 [DEBUG] User not authenticated, redirecting to login");
       const toast = (await import("react-hot-toast")).toast;
       toast.error("Please sign in to analyze documents");
@@ -311,40 +307,6 @@ export default function Home() {
       });
       const toast = (await import("react-hot-toast")).toast;
       toast.error("Failed to process document. Please try again.");
-    }
-  };
-
-  const handleLoadSampleContract = async () => {
-    console.log("📋 [DEBUG] Loading sample contract...");
-    setSampleLoading(true);
-    
-    try {
-      const response = await fetch('/sample-contract.pdf');
-      
-      if (!response.ok) {
-        throw new Error(`Failed to load sample contract: ${response.status}`);
-      }
-      
-      const blob = await response.blob();
-      const sampleFile = new File([blob], 'sample-contract.pdf', { 
-        type: 'application/pdf',
-        lastModified: Date.now()
-      });
-      
-      console.log("✅ [DEBUG] Sample contract loaded successfully:", {
-        fileName: sampleFile.name,
-        fileSize: sampleFile.size,
-        fileSizeMB: (sampleFile.size / 1024 / 1024).toFixed(2)
-      });
-      
-      handleFileChange(sampleFile);
-      
-    } catch (error) {
-      console.error("❌ [DEBUG] Failed to load sample contract:", error);
-      const toast = (await import("react-hot-toast")).toast;
-      toast.error("Failed to load sample contract. Please try uploading your own document.");
-    } finally {
-      setSampleLoading(false);
     }
   };
 
@@ -469,11 +431,6 @@ export default function Home() {
                       </div>
                       <p className="font-semibold text-text-primary">{file.name}</p>
                       <p className="text-sm text-text-secondary">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                      {file.name === 'sample-contract.pdf' && (
-                        <div className="inline-flex items-center px-2 py-1 bg-accent-purple/10 text-accent-purple text-xs font-medium rounded-full">
-                          📋 Sample Contract
-                        </div>
-                      )}
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -516,19 +473,7 @@ export default function Home() {
                 </div>
               )}
 
-                <div className="mt-6 space-y-4">
-                  
-                  {/* Sample Contract Link */}
-                  <div className="text-center">
-                    <button 
-                      onClick={handleLoadSampleContract}
-                      disabled={sampleLoading || analysisLoading}
-                      className="text-sm text-accent-purple hover:text-accent-purple/80 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {sampleLoading ? "Loading sample..." : "Try with sample contract →"}
-                    </button>
-                  </div>
-                </div>
+
               </Card>
             </div>
           </div>

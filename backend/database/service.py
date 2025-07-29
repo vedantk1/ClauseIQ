@@ -593,19 +593,6 @@ class DocumentService:
     # Note: Document-based PDF methods are above in the "PDF File Operations" section
     # The methods below provide direct file storage access if needed
 
-    async def store_sample_document(self, document_data: Dict[str, Any]) -> str:
-        """Store sample document temporarily with special handling."""
-        db = await self._get_db()
-        
-        # Add sample-specific metadata
-        document_data["is_sample"] = True
-        document_data["user_id"] = None  # No user for samples
-        
-        # Store using regular save_document method
-        # The database implementation can handle TTL based on is_sample flag
-        return await db.save_document(document_data)
-
-
 def get_document_service() -> DocumentService:
     """Get async document service instance."""
     return DocumentService()
