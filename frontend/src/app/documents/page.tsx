@@ -231,7 +231,11 @@ export default function Documents() {
       <DeleteAllModal
         isOpen={isDeleteAllDialogOpen}
         onClose={() => setIsDeleteAllDialogOpen(false)}
-        onConfirm={handleDeleteAllDocuments}
+        onConfirm={async () => {
+          await handleDeleteAllDocuments();
+          setIsDeleteAllDialogOpen(false);
+        }}
+        deletingAll={deletingAll}
       />
 
       {/* Delete Single Document Confirmation Dialog */}
@@ -241,14 +245,15 @@ export default function Documents() {
           setIsDeleteDocumentDialogOpen(false);
           setDocumentToDelete(null);
         }}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (documentToDelete) {
-            handleDeleteDocument(documentToDelete.id);
+            await handleDeleteDocument(documentToDelete.id);
           }
           setIsDeleteDocumentDialogOpen(false);
           setDocumentToDelete(null);
         }}
         documentName={documentToDelete?.name || ""}
+        deleting={documentToDelete ? deletingDocId === documentToDelete.id : false}
       />
     </div>
   );
