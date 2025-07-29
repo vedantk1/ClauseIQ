@@ -49,7 +49,7 @@ class APIClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit & { timeout?: number } = {}
   ): Promise<APIResponse<T>> {
     const requestId = Math.random().toString(36).substr(2, 9);
     const url = `${this.baseURL}${endpoint}`;
@@ -87,21 +87,41 @@ class APIClient {
       console.log(`⚠️ [APIClient-${requestId}] No auth token available`);
     }
 
+    // Setup timeout if specified
+    const { timeout, ...fetchOptions } = options;
+    let timeoutId: NodeJS.Timeout | undefined;
+    let abortController: AbortController | undefined;
+    
+    if (timeout) {
+      abortController = new AbortController();
+      timeoutId = setTimeout(() => {
+        console.log(`⏱️ [APIClient-${requestId}] Request timeout after ${timeout}ms`);
+        abortController?.abort();
+      }, timeout);
+      fetchOptions.signal = abortController.signal;
+    }
+
     console.log(`📤 [APIClient-${requestId}] Making fetch request:`, {
       url,
-      method: options.method || "GET",
+      method: fetchOptions.method || "GET",
       headers: {
         ...headers,
         Authorization: headers.Authorization ? "[HIDDEN]" : undefined,
       },
-      bodyType: options.body ? typeof options.body : "none",
+      bodyType: fetchOptions.body ? typeof fetchOptions.body : "none",
+      timeout: timeout ? `${timeout}ms` : "default",
     });
 
     try {
       const response = await fetch(url, {
-        ...options,
+        ...fetchOptions,
         headers,
       });
+      
+      // Clear timeout on successful response
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
 
       console.log(`📥 [APIClient-${requestId}] Fetch response received:`, {
         status: response.status,
@@ -135,7 +155,7 @@ class APIClient {
               `🔁 [APIClient-${requestId}] Retrying request with new token`
             );
             const retryResponse = await fetch(url, {
-              ...options,
+              ...fetchOptions,
               headers,
             });
 
@@ -170,12 +190,35 @@ class APIClient {
       );
       return this.parseResponse<T>(response);
     } catch (error) {
+      // Clear timeout on error
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      
+      // Handle abort error (timeout)
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.error(`⏱️ [APIClient-${requestId}] Request timed out:`, {
+          timeout: timeout ? `${timeout}ms` : "unknown",
+          url,
+          method: fetchOptions.method || "GET",
+        });
+        
+        return {
+          success: false,
+          error: {
+            code: "REQUEST_TIMEOUT",
+            message: `Request timed out after ${timeout ? timeout/1000 : '?'} seconds`,
+            details: { timeout, url, method: fetchOptions.method || "GET" },
+          },
+        };
+      }
+      
       console.error(`❌ [APIClient-${requestId}] API request failed:`, {
         error,
         message: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
         url,
-        method: options.method || "GET",
+        method: fetchOptions.method || "GET",
       });
       return {
         success: false,
@@ -302,9 +345,9 @@ class APIClient {
     return this.request<T>(url, { method: "GET" });
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<APIResponse<T>> {
+  async post<T>(endpoint: string, data?: any, options?: { timeout?: number }): Promise<APIResponse<T>> {
     const body = data instanceof FormData ? data : JSON.stringify(data);
-    return this.request<T>(endpoint, { method: "POST", body });
+    return this.request<T>(endpoint, { method: "POST", body, timeout: options?.timeout });
   }
 
   async put<T>(endpoint: string, data?: any): Promise<APIResponse<T>> {
@@ -325,7 +368,8 @@ class APIClient {
   async uploadFile<T>(
     endpoint: string,
     file: File,
-    additionalData?: Record<string, any>
+    additionalData?: Record<string, any>,
+    options?: { timeout?: number }
   ): Promise<APIResponse<T>> {
     const formData = new FormData();
     formData.append("file", file);
@@ -339,7 +383,15 @@ class APIClient {
       });
     }
 
-    return this.post<T>(endpoint, formData);
+    // Set longer timeout for document analysis endpoints
+    const timeout = options?.timeout || 
+      (endpoint.includes('/analysis/') ? 120000 : undefined); // 2 minutes for analysis
+
+    return this.request<T>(endpoint, { 
+      method: "POST", 
+      body: formData,
+      timeout 
+    });
   }
 }
 

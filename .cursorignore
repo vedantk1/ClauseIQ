@@ -1,112 +1,112 @@
-# Cursor AI Context Optimization
-# Exclude files that don't add value to AI assistance
+# # Cursor AI Context Optimization
+# # Exclude files that don't add value to AI assistance
 
-# Dependencies and build artifacts
-node_modules/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+# # Dependencies and build artifacts
+# node_modules/
+# __pycache__/
+# *.pyc
+# *.pyo
+# *.pyd
+# .Python
+# build/
+# develop-eggs/
+# dist/
+# downloads/
+# eggs/
+# .eggs/
+# lib/
+# lib64/
+# parts/
+# sdist/
+# var/
+# wheels/
+# *.egg-info/
+# .installed.cfg
+# *.egg
 
-# IDE and editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-Thumbs.db
+# # IDE and editor files
+# .vscode/
+# .idea/
+# *.swp
+# *.swo
+# *~
+# .DS_Store
+# Thumbs.db
 
-# Logs and temporary files
-logs/
-*.log
-*.log.*
-tmp/
-temp/
-.tmp/
+# # Logs and temporary files
+# logs/
+# *.log
+# *.log.*
+# tmp/
+# temp/
+# .tmp/
 
-# Database files
-*.db
-*.sqlite
-*.sqlite3
+# # Database files
+# *.db
+# *.sqlite
+# *.sqlite3
 
-# Media and binary files
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.svg
-*.ico
-*.pdf
-*.mp4
-*.mov
-*.avi
-*.mkv
-*.zip
-*.tar.gz
-*.rar
+# # Media and binary files
+# *.png
+# *.jpg
+# *.jpeg
+# *.gif
+# *.svg
+# *.ico
+# *.pdf
+# *.mp4
+# *.mov
+# *.avi
+# *.mkv
+# *.zip
+# *.tar.gz
+# *.rar
 
-# Documentation images and assets (keep text docs)
-docs/Suggestions/*.png
-docs/Suggestions/*.pdf
-docs/archive/
-docs/completed-features/
+# # Documentation images and assets (keep text docs)
+# docs/Suggestions/*.png
+# docs/Suggestions/*.pdf
+# docs/archive/
+# docs/completed-features/
 
-# Test coverage and reports
-coverage/
-.coverage
-.nyc_output
-htmlcov/
-.pytest_cache/
-.tox/
+# # Test coverage and reports
+# coverage/
+# .coverage
+# .nyc_output
+# htmlcov/
+# .pytest_cache/
+# .tox/
 
-# Frontend build artifacts
-.next/
-out/
-.nuxt/
-.vite/
-.cache/
+# # Frontend build artifacts
+# .next/
+# out/
+# .nuxt/
+# .vite/
+# .cache/
 
-# Package manager files
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+# # Package manager files
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
 
-# Large generated files
-*.min.js
-*.min.css
-*.bundle.js
-*.chunk.js
+# # Large generated files
+# *.min.js
+# *.min.css
+# *.bundle.js
+# *.chunk.js
 
-# Shared types generated files (keep source, exclude builds)
-# These directories were removed as they were build artifacts
+# # Shared types generated files (keep source, exclude builds)
+# # These directories were removed as they were build artifacts
 
-# Backend specific
-*.pid
-*.seed
-*.pid.lock
-.coverage
-.pytest_cache/
+# # Backend specific
+# *.pid
+# *.seed
+# *.pid.lock
+# .coverage
+# .pytest_cache/
 
-# Deployment and CI
-.github/
-.gitlab-ci.yml
-.travis.yml
+# # Deployment and CI
+# .github/
+# .gitlab-ci.yml
+# .travis.yml
 
-Procfile
+# Procfile
