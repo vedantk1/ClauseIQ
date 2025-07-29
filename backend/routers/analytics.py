@@ -174,7 +174,7 @@ async def get_analytics_dashboard(
                     except:
                         continue
                 
-                week_label = f"Week {week_start.strftime('%m/%d')}"
+                week_label = week_start.strftime('%m/%d')
                 time_stats.append(AnalyticsMonthlyStats(
                     month=week_label,
                     documents=week_docs,

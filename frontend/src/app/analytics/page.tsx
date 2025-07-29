@@ -562,33 +562,33 @@ export default function AnalyticsDashboard() {
             </h3>
             <div className="flex items-center gap-2">
               {/* Time Period Toggles */}
-              <div className="flex items-center gap-1 bg-surface-secondary rounded-lg p-1">
+              <div className="flex items-center gap-1 bg-surface-secondary rounded-lg p-1 border border-border-muted">
                 <button
                   onClick={() => setTimePeriod("daily")}
-                  className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 cursor-pointer ${
                     timePeriod === "daily"
-                      ? "bg-bg-surface text-text-primary shadow-sm"
-                      : "text-text-secondary hover:text-text-primary"
+                      ? "bg-accent-purple text-white shadow-md transform scale-105"
+                      : "text-text-secondary hover:text-text-primary hover:bg-surface-primary/50"
                   }`}
                 >
                   Daily
                 </button>
                 <button
                   onClick={() => setTimePeriod("weekly")}
-                  className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 cursor-pointer ${
                     timePeriod === "weekly"
-                      ? "bg-bg-surface text-text-primary shadow-sm"
-                      : "text-text-secondary hover:text-text-primary"
+                      ? "bg-accent-purple text-white shadow-md transform scale-105"
+                      : "text-text-secondary hover:text-text-primary hover:bg-surface-primary/50"
                   }`}
                 >
                   Weekly
                 </button>
                 <button
                   onClick={() => setTimePeriod("monthly")}
-                  className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 cursor-pointer ${
                     timePeriod === "monthly"
-                      ? "bg-bg-surface text-text-primary shadow-sm"
-                      : "text-text-secondary hover:text-text-primary"
+                      ? "bg-accent-purple text-white shadow-md transform scale-105"
+                      : "text-text-secondary hover:text-text-primary hover:bg-surface-primary/50"
                   }`}
                 >
                   Monthly
