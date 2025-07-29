@@ -13,7 +13,7 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 @versioned_response
 async def get_analytics_dashboard(
     request: Request,
-    time_period: Literal["daily", "weekly", "monthly"] = Query(default="weekly", description="Time period for analytics"),
+    time_range: Literal["7d", "30d", "90d", "1y"] = Query(default="30d", description="Time range for analytics"),
     current_user: dict = Depends(get_current_user)
 ):
     """Get analytics dashboard data with real user document statistics."""
@@ -24,6 +24,32 @@ async def get_analytics_dashboard(
         
         # Get all documents for the user
         documents = await service.get_documents_for_user(current_user["id"])
+        
+        # Filter documents based on time range
+        now = datetime.now()
+        if time_range == "7d":
+            start_date = now - timedelta(days=7)
+        elif time_range == "30d":
+            start_date = now - timedelta(days=30)
+        elif time_range == "90d":
+            start_date = now - timedelta(days=90)
+        elif time_range == "1y":
+            start_date = now - timedelta(days=365)
+        else:
+            start_date = now - timedelta(days=30)  # Default to 30 days
+        
+        # Filter documents within the time range
+        filtered_documents = []
+        for doc in documents:
+            try:
+                upload_date = datetime.fromisoformat(doc.get('upload_date', '').replace('Z', '+00:00'))
+                if upload_date >= start_date:
+                    filtered_documents.append(doc)
+            except:
+                # Skip documents with invalid dates
+                continue
+        
+        documents = filtered_documents
         
         # Calculate basic statistics
         total_documents = len(documents)
@@ -122,13 +148,35 @@ async def get_analytics_dashboard(
         else:
             avg_time = fastest_time = slowest_time = total_time = 0
         
-        # Generate time period stats based on actual document dates
+        # Generate chart data with automatic granularity based on time range
         time_stats = []
         
-        if time_period == "daily":
-            # Generate daily stats for the last 7 days
-            for i in range(7):
-                day_start = now - timedelta(days=6-i)
+        # Calculate the actual date range based on time range
+        if time_range == "7d":
+            start_date = now - timedelta(days=7)
+            granularity = "daily"
+            data_points = 7
+        elif time_range == "30d":
+            start_date = now - timedelta(days=30)
+            granularity = "weekly"
+            data_points = 5  # 30 days = ~5 weeks
+        elif time_range == "90d":
+            start_date = now - timedelta(days=90)
+            granularity = "weekly"
+            data_points = 13  # 90 days = ~13 weeks
+        elif time_range == "1y":
+            start_date = now - timedelta(days=365)
+            granularity = "monthly"
+            data_points = 12  # 12 months
+        else:
+            start_date = now - timedelta(days=30)
+            granularity = "weekly"
+            data_points = 5
+        
+        if granularity == "daily":
+            # Generate daily stats - work backwards from today
+            for i in range(data_points):
+                day_start = now - timedelta(days=data_points-1-i)
                 day_start = day_start.replace(hour=0, minute=0, second=0, microsecond=0)
                 day_end = day_start + timedelta(days=1)
                 
@@ -153,10 +201,10 @@ async def get_analytics_dashboard(
                     risks=day_risks
                 ))
                 
-        elif time_period == "weekly":
-            # Generate weekly stats for the last 6 weeks
-            for i in range(6):
-                week_start = now - timedelta(weeks=5-i)
+        elif granularity == "weekly":
+            # Generate weekly stats - work backwards from today
+            for i in range(data_points):
+                week_start = now - timedelta(weeks=data_points-1-i)
                 week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
                 week_end = week_start + timedelta(days=7)
                 
@@ -166,6 +214,7 @@ async def get_analytics_dashboard(
                 for doc in documents:
                     try:
                         upload_date = datetime.fromisoformat(doc.get('upload_date', '').replace('Z', '+00:00'))
+                        # Only count documents if they fall within the week AND the time range
                         if week_start <= upload_date < week_end:
                             week_docs += 1
                             risk_summary = doc.get('risk_summary', {})
@@ -181,16 +230,16 @@ async def get_analytics_dashboard(
                     risks=week_risks
                 ))
                 
-        elif time_period == "monthly":
-            # Generate monthly stats for the last 6 months
+        elif granularity == "monthly":
+            # Generate monthly stats - work backwards from today
             months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
             current_year = now.year
             current_month = now.month
-            
             month_data = {}
             
-            for i in range(6):
-                target_month = current_month - (5 - i)
+            for i in range(data_points):
+                # Calculate month working backwards from current month
+                target_month = current_month - (data_points-1-i)
                 target_year = current_year
                 
                 if target_month <= 0:

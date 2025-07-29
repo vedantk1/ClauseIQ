@@ -64,7 +64,7 @@ export default function AnalyticsDashboard() {
     null
   );
   const [loading, setLoading] = useState(true);
-  const [timePeriod, setTimePeriod] = useState<"daily" | "weekly" | "monthly">("weekly");
+
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [isTimeRangeDropdownOpen, setTimeRangeDropdownOpen] = useState(false);
   const timeRangeDropdownRef = useRef<HTMLDivElement>(null);
@@ -118,7 +118,7 @@ export default function AnalyticsDashboard() {
         }
 
         const response = await fetch(
-          `${config.apiUrl}/api/v1/analytics/dashboard?time_period=${timePeriod}`,
+          `${config.apiUrl}/api/v1/analytics/dashboard?time_range=${timeRange}`,
           {
             method: "GET",
             headers: {
@@ -177,7 +177,7 @@ export default function AnalyticsDashboard() {
     };
 
     fetchAnalytics();
-  }, [timePeriod]);
+  }, [timeRange]);
 
   const formatRelativeTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -385,10 +385,10 @@ export default function AnalyticsDashboard() {
               className="px-3 py-2 bg-bg-elevated border border-border-muted rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-purple/20 focus:border-accent-purple transition-colors hover:bg-bg-elevated/80 flex items-center gap-2 min-w-[140px] justify-between"
             >
               <span>
-                {timeRange === "7d" && "Last 7 days"}
-                {timeRange === "30d" && "Last 30 days"}
-                {timeRange === "90d" && "Last 90 days"}
-                {timeRange === "1y" && "Last year"}
+                {timeRange === "7d" && "7 days"}
+                {timeRange === "30d" && "30 days"}
+                {timeRange === "90d" && "90 days"}
+                {timeRange === "1y" && "1 year"}
               </span>
               <ChevronDown
                 className={`w-4 h-4 text-text-tertiary transition-transform ${
@@ -409,7 +409,7 @@ export default function AnalyticsDashboard() {
                       : ""
                   }`}
                 >
-                  Last 7 days
+                  7 days
                 </button>
                 <button
                   onClick={() => {
@@ -422,7 +422,7 @@ export default function AnalyticsDashboard() {
                       : ""
                   }`}
                 >
-                  Last 30 days
+                  30 days 
                 </button>
                 <button
                   onClick={() => {
@@ -435,7 +435,7 @@ export default function AnalyticsDashboard() {
                       : ""
                   }`}
                 >
-                  Last 90 days
+                  90 days
                 </button>
                 <button
                   onClick={() => {
@@ -448,7 +448,7 @@ export default function AnalyticsDashboard() {
                       : ""
                   }`}
                 >
-                  Last year
+                  1 year
                 </button>
               </div>
             )}
@@ -557,40 +557,6 @@ export default function AnalyticsDashboard() {
               Analysis Trend
             </h3>
             <div className="flex items-center gap-2">
-              {/* Time Period Toggles */}
-              <div className="flex items-center gap-1 bg-surface-secondary rounded-lg p-1 border border-border-muted">
-                <button
-                  onClick={() => setTimePeriod("daily")}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 cursor-pointer ${
-                    timePeriod === "daily"
-                      ? "bg-accent-purple text-white shadow-md transform scale-105"
-                      : "text-text-secondary hover:text-text-primary hover:bg-surface-primary/50"
-                  }`}
-                >
-                  Daily
-                </button>
-                <button
-                  onClick={() => setTimePeriod("weekly")}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 cursor-pointer ${
-                    timePeriod === "weekly"
-                      ? "bg-accent-purple text-white shadow-md transform scale-105"
-                      : "text-text-secondary hover:text-text-primary hover:bg-surface-primary/50"
-                  }`}
-                >
-                  Weekly
-                </button>
-                <button
-                  onClick={() => setTimePeriod("monthly")}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 cursor-pointer ${
-                    timePeriod === "monthly"
-                      ? "bg-accent-purple text-white shadow-md transform scale-105"
-                      : "text-text-secondary hover:text-text-primary hover:bg-surface-primary/50"
-                  }`}
-                >
-                  Monthly
-                </button>
-              </div>
-              
               {/* Chart Toggles */}
               <div className="flex items-center gap-2">
                 <button
