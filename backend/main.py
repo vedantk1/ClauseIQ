@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
 import json
 from config.environments import get_environment_config
-from routers import auth, documents, analysis, analytics, health, reports, chat, async_jobs
+from routers import auth, documents, analysis, analytics, health, reports, chat
 from routers import ai_debug as ai_debug_router
 from middleware.rate_limiter import rate_limit_middleware
 from middleware.logging import logging_middleware
@@ -178,7 +178,6 @@ v1_router = VersionedAPIRouter(version=APIVersion.V1)
 v1_router.include_router(auth.router)
 v1_router.include_router(documents.router)
 v1_router.include_router(analysis.router, prefix="/analysis")
-v1_router.include_router(async_jobs.router, prefix="/async")
 v1_router.include_router(analytics.router)
 v1_router.include_router(health.router)
 v1_router.include_router(reports.router)

@@ -59,137 +59,9 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
   // API call deduplication to prevent duplicate requests
   const activeRequests = useRef<Map<string, Promise<void>>>(new Map());
 
-  // Helper function to poll job completion
-  const pollJobCompletion = async (jobId: string, isSample: boolean): Promise<string | null> => {
-    const statusEndpoint = isSample ? `/async/jobs/${jobId}/status-public` : `/async/jobs/${jobId}/status`;
-    const resultEndpoint = isSample ? `/async/jobs/${jobId}/result-public` : `/async/jobs/${jobId}/result`;
-    
-    console.log(`🔄 [DEBUG] Starting job polling for ${jobId}...`);
-    
-    // Poll every 2 seconds, max 5 minutes
-    const maxAttempts = 150; // 5 minutes
-    let attempts = 0;
-    
-    while (attempts < maxAttempts) {
-      try {
-        console.log(`📊 [DEBUG] Polling attempt ${attempts + 1}/${maxAttempts} for job ${jobId}`);
-        
-        const statusResponse = await apiClient.get<{
-          job_id: string;
-          status: string;
-          progress?: {
-            stage: string;
-            percentage: number;
-            message: string;
-          };
-          error_message?: string;
-          estimated_completion_seconds?: number;
-        }>(statusEndpoint);
-
-        if (!statusResponse.success || !statusResponse.data) {
-          console.error("❌ [DEBUG] Failed to get job status:", statusResponse.error?.message);
-          throw new Error(statusResponse.error?.message || "Failed to check job status");
-        }
-
-        const { status, progress, error_message, estimated_completion_seconds } = statusResponse.data;
-        
-        // Log progress updates
-        if (progress) {
-          console.log(`📋 [DEBUG] Job ${jobId} progress: ${progress.stage} (${progress.percentage}%) - ${progress.message}`);
-        }
-        
-        console.log(`📊 [DEBUG] Job ${jobId} status: ${status}, estimated remaining: ${estimated_completion_seconds}s`);
-
-        if (status === "completed") {
-          console.log(`✅ [DEBUG] Job ${jobId} completed! Fetching results...`);
-          
-          // Get the results
-          const resultResponse = await apiClient.get<{
-            job_id: string;
-            status: string;
-            result?: {
-              document_id: string;
-              filename: string;
-              summary: string;
-              ai_structured_summary?: StructuredSummary;
-              clauses: Clause[];
-              total_clauses: number;
-              risk_summary: RiskSummary;
-              full_text: string;
-              contract_type: string;
-            };
-          }>(resultEndpoint);
-
-          if (!resultResponse.success || !resultResponse.data?.result) {
-            console.error("❌ [DEBUG] Failed to get job results:", resultResponse.error?.message);
-            throw new Error(resultResponse.error?.message || "Failed to get analysis results");
-          }
-
-          const result = resultResponse.data.result;
-          console.log(`🎉 [DEBUG] Analysis results received for document: ${result.document_id}`);
-
-          // Add to documents list and set as current
-          const newDocument: Document = {
-            id: result.document_id,
-            filename: result.filename,
-            upload_date: new Date().toISOString(),
-            contract_type: result.contract_type as ContractType | null,
-            text: result.full_text,
-            ai_full_summary: result.summary,
-            ai_structured_summary: result.ai_structured_summary || null,
-            clauses: result.clauses,
-            risk_summary: result.risk_summary,
-            user_id: "", // Will be set by backend
-            user_interactions: null,
-          };
-
-          dispatch({ type: "ANALYSIS_ADD_DOCUMENT", payload: newDocument });
-
-          // Set as current document
-          dispatch({
-            type: "ANALYSIS_SET_CURRENT_DOCUMENT",
-            payload: {
-              id: result.document_id,
-              filename: result.filename,
-              contract_type: result.contract_type,
-              summary: result.summary,
-              structuredSummary: result.ai_structured_summary || null,
-              clauses: result.clauses,
-              riskSummary: result.risk_summary,
-              fullText: result.full_text,
-              selectedClause: null,
-            },
-          });
-
-          return result.document_id;
-          
-        } else if (status === "failed") {
-          console.error(`❌ [DEBUG] Job ${jobId} failed:`, error_message);
-          throw new Error(error_message || "Document analysis failed");
-          
-        } else if (status === "cancelled") {
-          console.error(`❌ [DEBUG] Job ${jobId} was cancelled`);
-          throw new Error("Document analysis was cancelled");
-        }
-        
-        // Still processing, wait and try again
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
-        attempts++;
-        
-      } catch (error) {
-        console.error(`❌ [DEBUG] Error polling job ${jobId}:`, error);
-        throw error;
-      }
-    }
-    
-    // Timeout
-    console.error(`⏰ [DEBUG] Job ${jobId} polling timeout after ${maxAttempts} attempts`);
-    throw new Error("Analysis job timed out. Please try again.");
-  };
-
-  // Action implementations - Updated for async job pattern
+  // Action implementations
   const analyzeDocument = async (file: File): Promise<string | null> => {
-    console.log("🔄 [DEBUG] Starting async document analysis:", {
+    console.log("🔄 [DEBUG] Starting document analysis:", {
         fileName: file.name,
       fileSizeMB: (file.size / 1024 / 1024).toFixed(2),
       });
@@ -200,40 +72,96 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
 
       // Check if this is a sample contract
       const isSampleContract = file.name === 'sample-contract.pdf';
-      const startEndpoint = isSampleContract ? "/async/jobs/analysis/start-sample" : "/async/jobs/analysis/start";
+      const endpoint = isSampleContract ? "/analysis/analyze-sample/" : "/analysis/analyze/";
       
-      console.log(`🔄 [DEBUG] Starting analysis job via ${startEndpoint}...`);
+      console.log(`🔄 [DEBUG] Making API call to ${endpoint}...`);
 
-      // Step 1: Start the analysis job
-      const startResponse = await apiClient.uploadFile<{
-        job_id: string;
-        status: string;
-        job_type: string;
-        created_at: string;
-        estimated_completion_seconds?: number;
-      }>(startEndpoint, file);
+      const response = await apiClient.uploadFile<{
+        id: string;
+        filename: string;
+        summary: string;
+        ai_structured_summary?: StructuredSummary;
+        clauses: Clause[];
+        total_clauses: number;
+        risk_summary: RiskSummary;
+        full_text?: string;
+        contract_type?: string;
+      }>(endpoint, file);
 
-      if (!startResponse.success || !startResponse.data) {
-        const errorMessage = startResponse.error?.message || "Failed to start analysis job";
-        console.error("❌ [DEBUG] Job start failed:", errorMessage);
+      console.log("🔄 [DEBUG] API call completed:", response.success ? "success" : "failed");
+
+      if (response.success && response.data) {
+        const {
+          id,
+          filename,
+          summary,
+          ai_structured_summary,
+          clauses,
+          risk_summary,
+          full_text,
+          contract_type,
+        } = response.data;
+        
+        console.log("🔍 [DEBUG] Extracted document ID:", id);
+        console.log("🔍 [DEBUG] Extracted filename:", filename);
+
+        // Add to documents list
+        const newDocument: Document = {
+          id,
+          filename,
+          upload_date: new Date().toISOString(),
+          contract_type: contract_type as ContractType | null,
+          text: full_text || "",
+          ai_full_summary: summary,
+          ai_structured_summary: ai_structured_summary || null,
+          clauses,
+          risk_summary: risk_summary,
+          user_id: "", // Will be set by backend
+          user_interactions: null,
+        };
+
+        dispatch({ type: "ANALYSIS_ADD_DOCUMENT", payload: newDocument });
+
+        // Set as current document
+        dispatch({
+          type: "ANALYSIS_SET_CURRENT_DOCUMENT",
+          payload: {
+            id,
+            filename,
+            contract_type,
+            summary,
+            structuredSummary: ai_structured_summary || null,
+            clauses,
+            riskSummary: risk_summary,
+            fullText: full_text || "",
+            selectedClause: null,
+          },
+        });
+
+        console.log("✅ [DEBUG] Document analysis completed:", {
+          documentId: id,
+          fileName: filename,
+          clausesCount: clauses.length,
+        });
+
+        handleAPISuccess("Document analyzed successfully!");
+        return id; // Return the document ID
+      } else {
+        const errorMessage =
+          response.error?.message || "Failed to analyze document";
+        console.error("❌ [DEBUG] Document analysis API error:", {
+          success: response.success,
+          error: errorMessage,
+          errorDetails: response.error,
+          correlationId: response.correlation_id,
+          fileName: file.name,
+          timestamp: new Date().toISOString(),
+
+        });
         dispatch({ type: "ANALYSIS_SET_ERROR", payload: errorMessage });
-        handleAPIError(startResponse, "Failed to start document analysis");
+        handleAPIError(response, "Document analysis failed");
         throw new Error(errorMessage);
       }
-
-      const { job_id, estimated_completion_seconds } = startResponse.data;
-      console.log(`🚀 [DEBUG] Analysis job started: ${job_id}, estimated: ${estimated_completion_seconds}s`);
-
-      // Step 2: Poll for job completion
-      const documentId = await pollJobCompletion(job_id, isSampleContract);
-      
-      if (documentId) {
-        handleAPISuccess("Document analyzed successfully!");
-        return documentId;
-      } else {
-        throw new Error("Analysis completed but no document ID returned");
-      }
-      
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
