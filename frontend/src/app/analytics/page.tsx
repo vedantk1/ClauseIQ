@@ -11,7 +11,6 @@ import {
   Clock,
   BarChart3,
   Activity,
-  Download,
   Filter,
   ArrowUp,
   Minus,
@@ -454,10 +453,7 @@ export default function AnalyticsDashboard() {
               </div>
             )}
           </div>
-          <Button variant="secondary">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
+
         </div>
       </div>
 
