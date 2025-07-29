@@ -65,6 +65,7 @@ export default function AnalyticsDashboard() {
     null
   );
   const [loading, setLoading] = useState(true);
+  const [timePeriod, setTimePeriod] = useState<"daily" | "weekly" | "monthly">("weekly");
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [isTimeRangeDropdownOpen, setTimeRangeDropdownOpen] = useState(false);
   const timeRangeDropdownRef = useRef<HTMLDivElement>(null);
@@ -118,7 +119,7 @@ export default function AnalyticsDashboard() {
         }
 
         const response = await fetch(
-          `${config.apiUrl}/api/v1/analytics/dashboard`,
+          `${config.apiUrl}/api/v1/analytics/dashboard?time_period=${timePeriod}`,
           {
             method: "GET",
             headers: {
@@ -177,7 +178,7 @@ export default function AnalyticsDashboard() {
     };
 
     fetchAnalytics();
-  }, [timeRange]);
+  }, [timePeriod]);
 
   const formatRelativeTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -560,32 +561,69 @@ export default function AnalyticsDashboard() {
               Analysis Trend
             </h3>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowDocuments(!showDocuments)}
-                className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg transition-colors ${
-                  showDocuments
-                    ? "bg-accent-purple/20 text-accent-purple"
-                    : "text-text-secondary hover:text-accent-purple"
-                }`}
-              >
-                <div className={`w-3 h-3 rounded-full ${
-                  showDocuments ? "bg-accent-purple" : "bg-text-tertiary"
-                }`}></div>
-                <span>Documents</span>
-              </button>
-              <button
-                onClick={() => setShowRisks(!showRisks)}
-                className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg transition-colors ${
-                  showRisks
-                    ? "bg-status-error/20 text-status-error"
-                    : "text-text-secondary hover:text-status-error"
-                }`}
-              >
-                <div className={`w-3 h-3 rounded-full ${
-                  showRisks ? "bg-status-error" : "bg-text-tertiary"
-                }`}></div>
-                <span>Risks</span>
-              </button>
+              {/* Time Period Toggles */}
+              <div className="flex items-center gap-1 bg-surface-secondary rounded-lg p-1">
+                <button
+                  onClick={() => setTimePeriod("daily")}
+                  className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                    timePeriod === "daily"
+                      ? "bg-bg-surface text-text-primary shadow-sm"
+                      : "text-text-secondary hover:text-text-primary"
+                  }`}
+                >
+                  Daily
+                </button>
+                <button
+                  onClick={() => setTimePeriod("weekly")}
+                  className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                    timePeriod === "weekly"
+                      ? "bg-bg-surface text-text-primary shadow-sm"
+                      : "text-text-secondary hover:text-text-primary"
+                  }`}
+                >
+                  Weekly
+                </button>
+                <button
+                  onClick={() => setTimePeriod("monthly")}
+                  className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                    timePeriod === "monthly"
+                      ? "bg-bg-surface text-text-primary shadow-sm"
+                      : "text-text-secondary hover:text-text-primary"
+                  }`}
+                >
+                  Monthly
+                </button>
+              </div>
+              
+              {/* Chart Toggles */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowDocuments(!showDocuments)}
+                  className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg transition-colors ${
+                    showDocuments
+                      ? "bg-accent-purple/20 text-accent-purple"
+                      : "text-text-secondary hover:text-accent-purple"
+                  }`}
+                >
+                  <div className={`w-3 h-3 rounded-full ${
+                    showDocuments ? "bg-accent-purple" : "bg-text-tertiary"
+                  }`}></div>
+                  <span>Documents</span>
+                </button>
+                <button
+                  onClick={() => setShowRisks(!showRisks)}
+                  className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg transition-colors ${
+                    showRisks
+                      ? "bg-status-error/20 text-status-error"
+                      : "text-text-secondary hover:text-status-error"
+                  }`}
+                >
+                  <div className={`w-3 h-3 rounded-full ${
+                    showRisks ? "bg-status-error" : "bg-text-tertiary"
+                  }`}></div>
+                  <span>Risks</span>
+                </button>
+              </div>
             </div>
           </div>
           {/* Interactive Chart */}

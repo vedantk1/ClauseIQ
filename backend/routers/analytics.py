@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, Request
-from typing import List
-from datetime import datetime
+from fastapi import APIRouter, Depends, Request, Query
+from typing import List, Literal
+from datetime import datetime, timedelta
 from models.analytics import AnalyticsData, AnalyticsActivity, AnalyticsMonthlyStats, AnalyticsRiskBreakdown
 from database.service import get_document_service
 from middleware.api_standardization import APIResponse, create_success_response, create_error_response
@@ -13,6 +13,7 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 @versioned_response
 async def get_analytics_dashboard(
     request: Request,
+    time_period: Literal["daily", "weekly", "monthly"] = Query(default="weekly", description="Time period for analytics"),
     current_user: dict = Depends(get_current_user)
 ):
     """Get analytics dashboard data with real user document statistics."""
@@ -121,24 +122,113 @@ async def get_analytics_dashboard(
         else:
             avg_time = fastest_time = slowest_time = total_time = 0
         
-        # Generate monthly stats for the last 6 months
-        monthly_stats = []
-        months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-        current_month = now.month
+        # Generate time period stats based on actual document dates
+        time_stats = []
         
-        for i in range(6):
-            month_index = (current_month - 6 + i) % 12
-            month_name = months[month_index]
+        if time_period == "daily":
+            # Generate daily stats for the last 7 days
+            for i in range(7):
+                day_start = now - timedelta(days=6-i)
+                day_start = day_start.replace(hour=0, minute=0, second=0, microsecond=0)
+                day_end = day_start + timedelta(days=1)
+                
+                day_docs = 0
+                day_risks = 0
+                
+                for doc in documents:
+                    try:
+                        upload_date = datetime.fromisoformat(doc.get('upload_date', '').replace('Z', '+00:00'))
+                        if day_start <= upload_date < day_end:
+                            day_docs += 1
+                            risk_summary = doc.get('risk_summary', {})
+                            doc_risks = risk_summary.get('high', 0) + risk_summary.get('medium', 0)
+                            day_risks += doc_risks
+                    except:
+                        continue
+                
+                day_label = day_start.strftime('%m/%d')
+                time_stats.append(AnalyticsMonthlyStats(
+                    month=day_label,
+                    documents=day_docs,
+                    risks=day_risks
+                ))
+                
+        elif time_period == "weekly":
+            # Generate weekly stats for the last 6 weeks
+            for i in range(6):
+                week_start = now - timedelta(weeks=5-i)
+                week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+                week_end = week_start + timedelta(days=7)
+                
+                week_docs = 0
+                week_risks = 0
+                
+                for doc in documents:
+                    try:
+                        upload_date = datetime.fromisoformat(doc.get('upload_date', '').replace('Z', '+00:00'))
+                        if week_start <= upload_date < week_end:
+                            week_docs += 1
+                            risk_summary = doc.get('risk_summary', {})
+                            doc_risks = risk_summary.get('high', 0) + risk_summary.get('medium', 0)
+                            week_risks += doc_risks
+                    except:
+                        continue
+                
+                week_label = f"Week {week_start.strftime('%m/%d')}"
+                time_stats.append(AnalyticsMonthlyStats(
+                    month=week_label,
+                    documents=week_docs,
+                    risks=week_risks
+                ))
+                
+        elif time_period == "monthly":
+            # Generate monthly stats for the last 6 months
+            months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+            current_year = now.year
+            current_month = now.month
             
-            # Count documents for this month (simplified - just distribute evenly for demo)
-            month_docs = max(0, total_documents // 6 + (i % 3))  # Vary the distribution
-            month_risks = max(0, total_risky_clauses // 6 + (i % 2))  # Vary the risks
+            month_data = {}
             
-            monthly_stats.append(AnalyticsMonthlyStats(
-                month=month_name,
-                documents=month_docs,
-                risks=month_risks
-            ))
+            for i in range(6):
+                target_month = current_month - (5 - i)
+                target_year = current_year
+                
+                if target_month <= 0:
+                    target_month += 12
+                    target_year -= 1
+                
+                month_key = f"{target_year}-{target_month:02d}"
+                month_name = months[target_month - 1]
+                month_data[month_key] = {
+                    "name": month_name,
+                    "documents": 0,
+                    "risks": 0
+                }
+            
+            for doc in documents:
+                try:
+                    upload_date = datetime.fromisoformat(doc.get('upload_date', '').replace('Z', '+00:00'))
+                    month_key = f"{upload_date.year}-{upload_date.month:02d}"
+                    
+                    if month_key in month_data:
+                        month_data[month_key]["documents"] += 1
+                        risk_summary = doc.get('risk_summary', {})
+                        doc_risks = risk_summary.get('high', 0) + risk_summary.get('medium', 0)
+                        month_data[month_key]["risks"] += doc_risks
+                except:
+                    continue
+            
+            for month_key in sorted(month_data.keys()):
+                data = month_data[month_key]
+                time_stats.append(AnalyticsMonthlyStats(
+                    month=data["name"],
+                    documents=data["documents"],
+                    risks=data["risks"]
+                ))
+                
+
+        
+        monthly_stats = time_stats
         
         # Create analytics response
         analytics_data = AnalyticsData(
