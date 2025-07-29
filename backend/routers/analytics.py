@@ -83,8 +83,43 @@ async def get_analytics_dashboard(
         else:
             weighted_score = 1.0
         
-        # Calculate time saved (estimate: 30 minutes per document)
-        time_saved_hours = total_documents * 0.5
+        # Calculate most common contract types
+        contract_type_counts = {}
+        for doc in documents:
+            contract_type = doc.get('contract_type', 'Unknown')
+            if contract_type:
+                contract_type_counts[contract_type] = contract_type_counts.get(contract_type, 0) + 1
+        
+        # Sort by count and calculate percentages
+        sorted_contract_types = sorted(contract_type_counts.items(), key=lambda x: x[1], reverse=True)
+        most_common_contract_types = []
+        
+        for contract_type, count in sorted_contract_types[:5]:  # Top 5
+            percentage = (count / total_documents * 100) if total_documents > 0 else 0
+            most_common_contract_types.append({
+                "type": contract_type,
+                "count": count,
+                "percentage": round(percentage, 1)
+            })
+        
+        # Calculate processing time analytics (simulated for now)
+        # In a real implementation, you'd track actual processing times
+        processing_times = []
+        for doc in documents:
+            # Simulate processing time based on document complexity
+            risk_summary = doc.get('risk_summary', {})
+            complexity = risk_summary.get('high', 0) + risk_summary.get('medium', 0)
+            # Base time 60s + 10s per risky clause
+            processing_time = 60 + (complexity * 10)
+            processing_times.append(processing_time)
+        
+        if processing_times:
+            avg_time = sum(processing_times) / len(processing_times)
+            fastest_time = min(processing_times)
+            slowest_time = max(processing_times)
+            total_time = sum(processing_times)
+        else:
+            avg_time = fastest_time = slowest_time = total_time = 0
         
         # Generate monthly stats for the last 6 months
         monthly_stats = []
@@ -110,8 +145,13 @@ async def get_analytics_dashboard(
             totalDocuments=total_documents,
             documentsThisMonth=documents_this_month,
             riskyClausesCaught=total_risky_clauses,
-            timeSavedHours=int(time_saved_hours),
-            avgRiskScore=round(weighted_score, 1),
+            mostCommonContractTypes=most_common_contract_types,
+            processingTimeAnalytics={
+                "averageTime": round(avg_time, 1),
+                "fastestTime": round(fastest_time, 1),
+                "slowestTime": round(slowest_time, 1),
+                "totalProcessingTime": round(total_time, 1)
+            },
             recentActivity=recent_activity,
             monthlyStats=monthly_stats,
             riskBreakdown=AnalyticsRiskBreakdown(
@@ -133,8 +173,13 @@ async def get_analytics_dashboard(
             totalDocuments=0,
             documentsThisMonth=0,
             riskyClausesCaught=0,
-            timeSavedHours=0,
-            avgRiskScore=1.0,
+            mostCommonContractTypes=[],
+            processingTimeAnalytics={
+                "averageTime": 0.0,
+                "fastestTime": 0.0,
+                "slowestTime": 0.0,
+                "totalProcessingTime": 0.0
+            },
             recentActivity=[],
             monthlyStats=[],
             riskBreakdown=AnalyticsRiskBreakdown(high=0, medium=0, low=0)

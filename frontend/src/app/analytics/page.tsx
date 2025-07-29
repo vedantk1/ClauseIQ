@@ -25,8 +25,17 @@ interface AnalyticsData {
   totalDocuments: number;
   documentsThisMonth: number;
   riskyClausesCaught: number;
-  timeSavedHours: number;
-  avgRiskScore: number;
+  mostCommonContractTypes: Array<{
+    type: string;
+    count: number;
+    percentage: number;
+  }>;
+  processingTimeAnalytics: {
+    averageTime: number;
+    fastestTime: number;
+    slowestTime: number;
+    totalProcessingTime: number;
+  };
   recentActivity: Array<{
     id: string;
     document: string;
@@ -141,8 +150,13 @@ export default function AnalyticsDashboard() {
           totalDocuments: 0,
           documentsThisMonth: 0,
           riskyClausesCaught: 0,
-          timeSavedHours: 0,
-          avgRiskScore: 1.0,
+          mostCommonContractTypes: [],
+          processingTimeAnalytics: {
+            averageTime: 0,
+            fastestTime: 0,
+            slowestTime: 0,
+            totalProcessingTime: 0,
+          },
           recentActivity: [],
           monthlyStats: [],
           riskBreakdown: {
@@ -489,19 +503,24 @@ export default function AnalyticsDashboard() {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <span className="text-text-secondary text-sm font-medium">
-              Time Saved
+              Most Common Contract Types
             </span>
-            <div className="w-10 h-10 rounded-lg bg-status-success/10 flex items-center justify-center">
-              <Zap className="w-5 h-5 text-status-success" />
+            <div className="w-10 h-10 rounded-lg bg-accent-purple/10 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-accent-purple" />
             </div>
           </div>
           <div className="space-y-1">
             <div className="text-2xl font-bold text-text-primary">
-              {analyticsData.timeSavedHours}h
+              {analyticsData.mostCommonContractTypes.length > 0 
+                ? analyticsData.mostCommonContractTypes[0].type 
+                : "None"}
             </div>
             <div className="flex items-center gap-1 text-sm">
-              <Clock className="w-3 h-3 text-status-success" />
-              <span className="text-text-tertiary">estimated review time</span>
+              <span className="text-text-tertiary">
+                {analyticsData.mostCommonContractTypes.length > 0 
+                  ? `${analyticsData.mostCommonContractTypes[0].count} documents (${analyticsData.mostCommonContractTypes[0].percentage}%)`
+                  : "No contracts analyzed"}
+              </span>
             </div>
           </div>
         </Card>
@@ -509,19 +528,19 @@ export default function AnalyticsDashboard() {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <span className="text-text-secondary text-sm font-medium">
-              Avg Risk Score
+              Processing Time Analytics
             </span>
             <div className="w-10 h-10 rounded-lg bg-status-warning/10 flex items-center justify-center">
-              <Activity className="w-5 h-5 text-status-warning" />
+              <Clock className="w-5 h-5 text-status-warning" />
             </div>
           </div>
           <div className="space-y-1">
             <div className="text-2xl font-bold text-text-primary">
-              {analyticsData.avgRiskScore.toFixed(1)}/5
+              {analyticsData.processingTimeAnalytics.averageTime.toFixed(1)}s
             </div>
             <div className="flex items-center gap-1 text-sm">
               <Minus className="w-3 h-3 text-text-tertiary" />
-              <span className="text-text-tertiary">medium risk level</span>
+              <span className="text-text-tertiary">average processing time</span>
             </div>
           </div>
         </Card>

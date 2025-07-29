@@ -25,12 +25,25 @@ class AnalyticsRiskBreakdown(BaseModel):
     low: int
 
 
+class ContractTypeCount(BaseModel):
+    type: str
+    count: int
+    percentage: float
+
+
+class ProcessingTimeAnalytics(BaseModel):
+    averageTime: float
+    fastestTime: float
+    slowestTime: float
+    totalProcessingTime: float
+
+
 class AnalyticsData(BaseModel):
     totalDocuments: int
     documentsThisMonth: int
     riskyClausesCaught: int
-    timeSavedHours: int
-    avgRiskScore: float
+    mostCommonContractTypes: List[ContractTypeCount]
+    processingTimeAnalytics: ProcessingTimeAnalytics
     recentActivity: List[AnalyticsActivity]
     monthlyStats: List[AnalyticsMonthlyStats]
     riskBreakdown: AnalyticsRiskBreakdown
