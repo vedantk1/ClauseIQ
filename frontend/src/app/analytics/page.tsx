@@ -5,6 +5,7 @@ import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import Skeleton from "@/components/Skeleton";
+import { AnalysisTrendChart } from "@/components/AnalysisTrendChart";
 import {
   FileText,
   Clock,
@@ -67,6 +68,10 @@ export default function AnalyticsDashboard() {
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [isTimeRangeDropdownOpen, setTimeRangeDropdownOpen] = useState(false);
   const timeRangeDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Chart toggle states
+  const [showDocuments, setShowDocuments] = useState(true);
+  const [showRisks, setShowRisks] = useState(true);
 
   // Risk filter states
   const [isRiskFilterOpen, setRiskFilterOpen] = useState(false);
@@ -555,25 +560,40 @@ export default function AnalyticsDashboard() {
               Analysis Trend
             </h3>
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-3 h-3 rounded-full bg-accent-purple"></div>
-                <span className="text-text-secondary">Documents</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-3 h-3 rounded-full bg-status-error"></div>
-                <span className="text-text-secondary">Risks</span>
-              </div>
+              <button
+                onClick={() => setShowDocuments(!showDocuments)}
+                className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg transition-colors ${
+                  showDocuments
+                    ? "bg-accent-purple/20 text-accent-purple"
+                    : "text-text-secondary hover:text-accent-purple"
+                }`}
+              >
+                <div className={`w-3 h-3 rounded-full ${
+                  showDocuments ? "bg-accent-purple" : "bg-text-tertiary"
+                }`}></div>
+                <span>Documents</span>
+              </button>
+              <button
+                onClick={() => setShowRisks(!showRisks)}
+                className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg transition-colors ${
+                  showRisks
+                    ? "bg-status-error/20 text-status-error"
+                    : "text-text-secondary hover:text-status-error"
+                }`}
+              >
+                <div className={`w-3 h-3 rounded-full ${
+                  showRisks ? "bg-status-error" : "bg-text-tertiary"
+                }`}></div>
+                <span>Risks</span>
+              </button>
             </div>
           </div>
-          {/* Chart Placeholder */}
-          <div className="h-64 bg-surface-secondary rounded-lg flex items-center justify-center">
-            <div className="text-center">
-              <BarChart3 className="w-12 h-12 text-text-tertiary mx-auto mb-2" />
-              <p className="text-text-tertiary">
-                Chart visualization coming soon
-              </p>
-            </div>
-          </div>
+          {/* Interactive Chart */}
+          <AnalysisTrendChart
+            monthlyStats={analyticsData.monthlyStats}
+            showDocuments={showDocuments}
+            showRisks={showRisks}
+          />
         </Card>
 
         {/* Risk Distribution */}
