@@ -18,6 +18,7 @@ import {
   Shield,
   Zap,
   ChevronDown,
+  TrendingUp,
 } from "lucide-react";
 import config from "@/config/config";
 
@@ -508,7 +509,7 @@ export default function AnalyticsDashboard() {
               Most Common Contract Types
             </span>
             <div className="w-10 h-10 rounded-lg bg-accent-purple/10 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-accent-purple" />
+              <BarChart3 className="w-5 h-5 text-accent-purple" />
             </div>
           </div>
           <div className="space-y-1">
@@ -533,7 +534,7 @@ export default function AnalyticsDashboard() {
               Average Risk Score
             </span>
             <div className="w-10 h-10 rounded-lg bg-status-error/10 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-status-error" />
+              <TrendingUp className="w-5 h-5 text-status-error" />
             </div>
           </div>
           <div className="space-y-1">
