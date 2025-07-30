@@ -157,11 +157,11 @@ export default function AnalyticsDashboard() {
           documentsThisMonth: 0,
           riskyClausesCaught: 0,
           mostCommonContractTypes: [],
-          processingTimeAnalytics: {
-            averageTime: 0,
-            fastestTime: 0,
-            slowestTime: 0,
-            totalProcessingTime: 0,
+          riskScoreAnalytics: {
+            averageScore: 0,
+            highestScore: 0,
+            lowestScore: 0,
+            totalScore: 0,
           },
           recentActivity: [],
           monthlyStats: [],
@@ -554,37 +554,31 @@ export default function AnalyticsDashboard() {
         {/* Document Analysis Trend */}
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-text-primary">
-              Analysis Trend
-            </h3>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
+              <h3 className="text-lg font-semibold text-text-primary">
+                Analysis Trend
+              </h3>
               {/* Chart Toggles */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowDocuments(!showDocuments)}
-                  className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg transition-colors ${
+                  className={`text-sm px-4 py-2 rounded-lg border transition-all duration-200 ${
                     showDocuments
-                      ? "bg-accent-purple/20 text-accent-purple"
-                      : "text-text-secondary hover:text-accent-purple"
+                      ? "bg-accent-purple/20 border-accent-purple text-accent-purple"
+                      : "bg-transparent border-border-muted text-text-secondary hover:text-accent-purple hover:border-accent-purple/50 hover:bg-accent-purple/10"
                   }`}
                 >
-                  <div className={`w-3 h-3 rounded-full ${
-                    showDocuments ? "bg-accent-purple" : "bg-text-tertiary"
-                  }`}></div>
-                  <span>Documents</span>
+                  Documents
                 </button>
                 <button
                   onClick={() => setShowRisks(!showRisks)}
-                  className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg transition-colors ${
+                  className={`text-sm px-4 py-2 rounded-lg border transition-all duration-200 ${
                     showRisks
-                      ? "bg-status-error/20 text-status-error"
-                      : "text-text-secondary hover:text-status-error"
+                      ? "bg-red-500/20 border-red-500 text-red-500"
+                      : "bg-transparent border-border-muted text-text-secondary hover:text-red-500 hover:border-red-500/50 hover:bg-red-500/10"
                   }`}
                 >
-                  <div className={`w-3 h-3 rounded-full ${
-                    showRisks ? "bg-status-error" : "bg-text-tertiary"
-                  }`}></div>
-                  <span>Risks</span>
+                  Risks
                 </button>
               </div>
             </div>
