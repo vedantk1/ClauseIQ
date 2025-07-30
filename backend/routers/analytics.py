@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request, Query
 from typing import List, Literal
 from datetime import datetime, timedelta
-from models.analytics import AnalyticsData, AnalyticsActivity, AnalyticsMonthlyStats, AnalyticsRiskBreakdown
+from models.analytics import AnalyticsData, AnalyticsActivity, AnalyticsMonthlyStats, AnalyticsRiskBreakdown, RiskScoreAnalytics
 from database.service import get_document_service
 from middleware.api_standardization import APIResponse, create_success_response, create_error_response
 from middleware.versioning import versioned_response
@@ -129,24 +129,27 @@ async def get_analytics_dashboard(
                 "percentage": round(percentage, 1)
             })
         
-        # Calculate processing time analytics (simulated for now)
-        # In a real implementation, you'd track actual processing times
-        processing_times = []
+        # Calculate average risk score analytics
+        risk_scores = []
         for doc in documents:
-            # Simulate processing time based on document complexity
             risk_summary = doc.get('risk_summary', {})
-            complexity = risk_summary.get('high', 0) + risk_summary.get('medium', 0)
-            # Base time 60s + 10s per risky clause
-            processing_time = 60 + (complexity * 10)
-            processing_times.append(processing_time)
+            high = risk_summary.get('high', 0)
+            medium = risk_summary.get('medium', 0)
+            low = risk_summary.get('low', 0)
+            
+            total_clauses = high + medium + low
+            if total_clauses > 0:
+                # Weight: High=5, Medium=3, Low=1
+                doc_risk_score = (high * 5 + medium * 3 + low * 1) / total_clauses
+                risk_scores.append(doc_risk_score)
         
-        if processing_times:
-            avg_time = sum(processing_times) / len(processing_times)
-            fastest_time = min(processing_times)
-            slowest_time = max(processing_times)
-            total_time = sum(processing_times)
+        if risk_scores:
+            avg_risk_score = sum(risk_scores) / len(risk_scores)
+            highest_risk_score = max(risk_scores)
+            lowest_risk_score = min(risk_scores)
+            total_risk_score = sum(risk_scores)
         else:
-            avg_time = fastest_time = slowest_time = total_time = 0
+            avg_risk_score = highest_risk_score = lowest_risk_score = total_risk_score = 1.0
         
         # Generate chart data with automatic granularity based on time range
         time_stats = []
@@ -285,12 +288,12 @@ async def get_analytics_dashboard(
             documentsThisMonth=documents_this_month,
             riskyClausesCaught=total_risky_clauses,
             mostCommonContractTypes=most_common_contract_types,
-            processingTimeAnalytics={
-                "averageTime": round(avg_time, 1),
-                "fastestTime": round(fastest_time, 1),
-                "slowestTime": round(slowest_time, 1),
-                "totalProcessingTime": round(total_time, 1)
-            },
+            riskScoreAnalytics=RiskScoreAnalytics(
+                averageScore=round(avg_risk_score, 1),
+                highestScore=round(highest_risk_score, 1),
+                lowestScore=round(lowest_risk_score, 1),
+                totalScore=round(total_risk_score, 1)
+            ),
             recentActivity=recent_activity,
             monthlyStats=monthly_stats,
             riskBreakdown=AnalyticsRiskBreakdown(
@@ -313,12 +316,12 @@ async def get_analytics_dashboard(
             documentsThisMonth=0,
             riskyClausesCaught=0,
             mostCommonContractTypes=[],
-            processingTimeAnalytics={
-                "averageTime": 0.0,
-                "fastestTime": 0.0,
-                "slowestTime": 0.0,
-                "totalProcessingTime": 0.0
-            },
+            riskScoreAnalytics=RiskScoreAnalytics(
+                averageScore=1.0,
+                highestScore=1.0,
+                lowestScore=1.0,
+                totalScore=1.0
+            ),
             recentActivity=[],
             monthlyStats=[],
             riskBreakdown=AnalyticsRiskBreakdown(high=0, medium=0, low=0)

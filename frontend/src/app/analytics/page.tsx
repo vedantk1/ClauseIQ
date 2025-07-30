@@ -30,11 +30,11 @@ interface AnalyticsData {
     count: number;
     percentage: number;
   }>;
-  processingTimeAnalytics: {
-    averageTime: number;
-    fastestTime: number;
-    slowestTime: number;
-    totalProcessingTime: number;
+  riskScoreAnalytics: {
+    averageScore: number;
+    highestScore: number;
+    lowestScore: number;
+    totalScore: number;
   };
   recentActivity: Array<{
     id: string;
@@ -530,19 +530,19 @@ export default function AnalyticsDashboard() {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <span className="text-text-secondary text-sm font-medium">
-              Processing Time Analytics
+              Average Risk Score
             </span>
-            <div className="w-10 h-10 rounded-lg bg-status-warning/10 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-status-warning" />
+            <div className="w-10 h-10 rounded-lg bg-status-error/10 flex items-center justify-center">
+              <Shield className="w-5 h-5 text-status-error" />
             </div>
           </div>
           <div className="space-y-1">
             <div className="text-2xl font-bold text-text-primary">
-              {analyticsData.processingTimeAnalytics.averageTime.toFixed(1)}s
+              {analyticsData.riskScoreAnalytics.averageScore.toFixed(1)}
             </div>
             <div className="flex items-center gap-1 text-sm">
               <Minus className="w-3 h-3 text-text-tertiary" />
-              <span className="text-text-tertiary">average processing time</span>
+              <span className="text-text-tertiary">out of 5.0 scale</span>
             </div>
           </div>
         </Card>

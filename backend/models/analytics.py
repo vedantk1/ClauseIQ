@@ -31,11 +31,11 @@ class ContractTypeCount(BaseModel):
     percentage: float
 
 
-class ProcessingTimeAnalytics(BaseModel):
-    averageTime: float
-    fastestTime: float
-    slowestTime: float
-    totalProcessingTime: float
+class RiskScoreAnalytics(BaseModel):
+    averageScore: float
+    highestScore: float
+    lowestScore: float
+    totalScore: float
 
 
 class AnalyticsData(BaseModel):
@@ -43,7 +43,7 @@ class AnalyticsData(BaseModel):
     documentsThisMonth: int
     riskyClausesCaught: int
     mostCommonContractTypes: List[ContractTypeCount]
-    processingTimeAnalytics: ProcessingTimeAnalytics
+    riskScoreAnalytics: RiskScoreAnalytics
     recentActivity: List[AnalyticsActivity]
     monthlyStats: List[AnalyticsMonthlyStats]
     riskBreakdown: AnalyticsRiskBreakdown
