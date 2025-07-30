@@ -166,6 +166,7 @@ class Document(BaseModel):
     risk_summary: Optional[RiskSummary] = None
     user_id: str
     user_interactions: Optional[Dict[str, UserInteraction]] = None  # clause_id -> UserInteraction
+    last_viewed: Optional[str] = None  # ISO timestamp of when document was last viewed
 
 
 class AvailableModel(BaseModel):

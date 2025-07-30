@@ -39,6 +39,7 @@ export interface Document {
   risk_summary: RiskSummary | null;
   user_id?: string;
   user_interactions: Record<string, UserInteraction> | null;
+  last_viewed?: string | null;  // ISO timestamp of when document was last viewed
 }
 
 export interface Note {

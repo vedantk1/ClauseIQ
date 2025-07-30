@@ -15,6 +15,7 @@ class DocumentListItem(BaseModel):
     pinecone_stored: Optional[bool] = None
     chunk_count: Optional[int] = None
     embedding_model: Optional[str] = None
+    last_viewed: Optional[str] = None
 
 
 class DocumentListResponse(BaseModel):
@@ -40,6 +41,7 @@ class DocumentDetailResponse(BaseModel):
     embedding_model: Optional[str] = None
     rag_processed_at: Optional[str] = None
     storage_service: Optional[str] = None
+    last_viewed: Optional[str] = None
 
 
 class AnalyzeDocumentResponse(BaseModel):

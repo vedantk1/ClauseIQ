@@ -48,6 +48,16 @@ class DocumentService:
         db = await self._get_db()
         return await db.get_document(doc_id, user_id)
     
+    async def update_document_last_viewed(self, doc_id: str, user_id: str) -> bool:
+        """Update the last_viewed timestamp for a document."""
+        try:
+            db = await self._get_db()
+            current_time = datetime.utcnow().isoformat()
+            return await db.update_document_field(doc_id, user_id, "last_viewed", current_time)
+        except Exception as e:
+            logger.error(f"Failed to update last_viewed for document {doc_id}: {e}")
+            return False
+    
     async def get_documents_for_user(self, user_id: str, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
         """Get documents for user with pagination."""
         db = await self._get_db()

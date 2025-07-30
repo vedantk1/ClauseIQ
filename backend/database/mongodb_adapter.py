@@ -257,6 +257,24 @@ class MongoDBAdapter(DatabaseInterface):
             logger.error(f"Error updating document: {e}")
             raise DatabaseError(f"Failed to update document: {e}")
     
+    async def update_document_field(self, document_id: str, user_id: str, field_name: str, field_value) -> bool:
+        """Update a specific field in a document."""
+        try:
+            documents_collection = self._get_collection("documents")
+            
+            result = await documents_collection.update_one(
+                {"id": document_id, "user_id": user_id},
+                {"$set": {
+                    field_name: field_value,
+                    "updated_at": datetime.utcnow().isoformat()
+                }}
+            )
+            
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Error updating document field {field_name}: {e}")
+            raise DatabaseError(f"Failed to update document field: {e}")
+    
     async def delete_document(self, document_id: str, user_id: str) -> bool:
         """Delete document."""
         try:

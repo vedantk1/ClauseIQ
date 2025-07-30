@@ -32,6 +32,7 @@ interface AnalysisContextType {
     riskSummary: RiskSummary;
     selectedClause: Clause | null;
     contract_type?: string;
+    last_viewed?: string | null;
   };
   isLoading: boolean;
   error: string | null;
@@ -272,6 +273,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
           ai_structured_summary?: StructuredSummary;
           clauses: Clause[];
           risk_summary: RiskSummary;
+          last_viewed?: string | null;
         }>(`/documents/${documentId}`);
 
         if (response.success && response.data) {
@@ -284,6 +286,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
             ai_structured_summary,
             clauses,
             risk_summary,
+            last_viewed,
           } = response.data;
 
           dispatch({
@@ -298,6 +301,7 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({
               clauses: clauses || [],
               riskSummary: risk_summary || { high: 0, medium: 0, low: 0 },
               selectedClause: null,
+              last_viewed,
             },
           });
 

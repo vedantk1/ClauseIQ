@@ -14,6 +14,7 @@ interface SummaryContentProps {
   sectionStates: Record<string, boolean>;
   onSectionToggle: (sectionId: string, isExpanded: boolean) => void;
   onClausesClick?: () => void;
+  lastViewed?: string | null;
 }
 
 export default function SummaryContent({
@@ -25,6 +26,7 @@ export default function SummaryContent({
   sectionStates,
   onSectionToggle,
   onClausesClick,
+  lastViewed,
 }: SummaryContentProps) {
   return (
     <div className="h-full flex flex-col">
@@ -45,6 +47,7 @@ export default function SummaryContent({
             riskSummary={riskSummary}
             clauses={clauses}
             onClausesClick={onClausesClick}
+            lastViewed={lastViewed}
           />
 
           {/* Structured Summary */}

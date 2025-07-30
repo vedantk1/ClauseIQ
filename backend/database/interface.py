@@ -133,6 +133,11 @@ class DatabaseInterface(ABC):
         pass
     
     @abstractmethod
+    async def update_document_field(self, document_id: str, user_id: str, field_name: str, field_value: Any) -> bool:
+        """Update a specific field in a document."""
+        pass
+    
+    @abstractmethod
     async def delete_document(self, document_id: str, user_id: str) -> bool:
         """Delete document."""
         pass

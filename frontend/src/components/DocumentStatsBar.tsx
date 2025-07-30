@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { useDocumentViewing } from "@/hooks/useDocumentViewing";
 
 interface RiskSummary {
   high?: number;
@@ -17,6 +18,7 @@ interface DocumentStatsBarProps {
   riskSummary?: RiskSummary;
   clauses?: Clause[];
   onClausesClick?: () => void;
+  lastViewed?: string | null;
 }
 
 export default function DocumentStatsBar({
@@ -25,7 +27,9 @@ export default function DocumentStatsBar({
   riskSummary = { high: 0, medium: 0, low: 0 },
   clauses = [],
   onClausesClick,
+  lastViewed,
 }: DocumentStatsBarProps) {
+  const { formatLastViewed } = useDocumentViewing();
   // Document statistics
   const wordCount = fullText
     ? fullText.split(/\s+/).filter((word) => word.length > 0).length
@@ -66,24 +70,7 @@ export default function DocumentStatsBar({
 
   const complexity = calculateComplexity();
 
-  // Format last viewed (placeholder for now - would need backend support)
-  const getLastViewed = () => {
-    // For now, return a placeholder. In real implementation, this would come from backend
-    const now = new Date();
-    const mockLastViewed = new Date(
-      now.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000
-    ); // Random time in last week
 
-    const diffMs = now.getTime() - mockLastViewed.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffMins < 60) return `${diffMins} min ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return mockLastViewed.toLocaleDateString();
-  };
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -133,7 +120,7 @@ export default function DocumentStatsBar({
       </div>
       <div className="p-3 bg-bg-elevated rounded-xl border border-border-muted text-center">
         <div className="text-lg font-bold text-text-primary mb-1">
-          {getLastViewed()}
+          {formatLastViewed(lastViewed)}
         </div>
         <div className="text-xs text-text-secondary font-medium">
           Last Viewed

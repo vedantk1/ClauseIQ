@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useUserInteractions } from "@/hooks/useUserInteractions";
 import { useClauseFiltering } from "@/hooks/useClauseFiltering";
+import { useDocumentViewing } from "@/hooks/useDocumentViewing";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import Modal from "@/components/ui/Modal";
@@ -23,6 +24,7 @@ export default function ReviewWorkspace() {
   const { currentDocument, setSelectedClause, loadDocument } = useAnalysis();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { trackDocumentView } = useDocumentViewing();
 
   // Load document when component mounts or documentId changes
   useEffect(() => {
@@ -44,6 +46,9 @@ export default function ReviewWorkspace() {
           console.log(`📄 Loading document ${documentId} for review page`);
           await loadDocument(documentId);
           console.log(`✅ Document ${documentId} loaded successfully`);
+          
+          // Track that this document has been viewed
+          await trackDocumentView(documentId);
         } catch (error) {
           console.error(`❌ Failed to load document ${documentId}:`, error);
           toast.error("Failed to load document. Please try again.");
@@ -61,6 +66,7 @@ export default function ReviewWorkspace() {
     currentDocument.id,
     loadDocument,
     router,
+    trackDocumentView,
   ]);
 
   // Extract data from currentDocument for easier access
@@ -74,6 +80,7 @@ export default function ReviewWorkspace() {
     selectedClause,
     id: documentId,
     contract_type,
+    last_viewed: lastViewed,
   } = currentDocument;
 
   // Safe access with defaults - now memoized
@@ -166,6 +173,7 @@ export default function ReviewWorkspace() {
         sectionStates={sectionStates}
         onSectionToggle={handleSectionToggle}
         onClausesClick={() => setActiveSidebarTab("clauses")}
+        lastViewed={lastViewed}
       />
     ),
     [

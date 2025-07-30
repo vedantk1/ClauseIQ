@@ -186,6 +186,46 @@ async def retrieve_document(document_id: str, current_user: dict = Depends(get_c
         )
 
 
+@router.post("/documents/{document_id}/view", response_model=APIResponse[dict])
+@versioned_response("1.0")
+async def track_document_view(document_id: str, current_user: dict = Depends(get_current_user)):
+    """Track that a document has been viewed by updating the last_viewed timestamp."""
+    try:
+        service = get_document_service()
+        
+        # First verify the document exists and belongs to the user
+        document = await service.get_document_for_user(document_id, current_user["id"])
+        if not document:
+            return ErrorResponse(
+                error="DOCUMENT_NOT_FOUND",
+                message="Document not found",
+                status_code=404
+            )
+        
+        # Update the last_viewed timestamp
+        success = await service.update_document_last_viewed(document_id, current_user["id"])
+        
+        if success:
+            return APIResponse(
+                success=True,
+                data={"last_viewed": datetime.now().isoformat()},
+                message="Document view tracked successfully"
+            )
+        else:
+            return ErrorResponse(
+                error="VIEW_TRACKING_FAILED",
+                message="Failed to track document view",
+                status_code=500
+            )
+            
+    except Exception as e:
+        return ErrorResponse(
+            error="VIEW_TRACKING_FAILED",
+            message=f"Failed to track document view: {str(e)}",
+            status_code=500
+        )
+
+
 @router.delete("/documents/{document_id}", response_model=APIResponse[dict])
 @versioned_response("1.0")
 async def delete_document(document_id: str, current_user: dict = Depends(get_current_user)):
