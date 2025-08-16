@@ -156,15 +156,17 @@ def calculate_token_budget(model: str = "gpt-4o", response_tokens: int = 1000, s
 
 def get_optimal_response_tokens(use_case: str, model: str = "gpt-4o") -> int:
     """
-    Get optimal response token allocation for different use cases.
-    Maximizes output quality for billion-dollar legal analysis.
-    
+    Get optimal response token allocation for different use cases and models.
+
+    Note:
+        The returned token count will not exceed the model's maximum completion token limit (`max_completion`).
+
     Args:
         use_case: Type of analysis (summary, extraction, classification, etc.)
         model: Model being used
-    
+
     Returns:
-        Optimal response token count (respects model limits)
+        Optimal response token count (respects model limits and enforces max_completion constraint)
     """
     # Base allocations by use case
     base_allocations = {
