@@ -114,6 +114,10 @@ class Clause(BaseModel):
     key_points: Optional[List[str]] = None
     position_start: Optional[int] = None
     position_end: Optional[int] = None
+    # First-class LLM analysis fields (required for every new clause)
+    risk_reasoning: str
+    key_terms: List[str]
+    relationships: List[str]
 
 
 class RiskSummary(BaseModel):

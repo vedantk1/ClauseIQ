@@ -399,6 +399,58 @@ export default function ClauseDetailsPanel({
           </div>
         )}
 
+        {/* LLM Risk Reasoning */}
+        {selectedClause.risk_reasoning && (
+          <div>
+            <h4 className="font-medium text-text-primary mb-2">
+              Risk Reasoning
+            </h4>
+            <p className="text-text-secondary text-sm leading-relaxed whitespace-pre-line">
+              {selectedClause.risk_reasoning}
+            </p>
+          </div>
+        )}
+
+        {/* Key Terms */}
+        {selectedClause.key_terms && selectedClause.key_terms.length > 0 && (
+          <div>
+            <h4 className="font-medium text-text-primary mb-2">Key Terms</h4>
+            <ul className="flex flex-wrap gap-2">
+              {selectedClause.key_terms.map((term: string, idx: number) => (
+                <li
+                  key={idx}
+                  className="text-xs bg-accent-purple/10 text-accent-purple px-2 py-1 rounded-full border border-accent-purple/20"
+                >
+                  {term}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Relationships */}
+        {selectedClause.relationships &&
+          selectedClause.relationships.length > 0 && (
+            <div>
+              <h4 className="font-medium text-text-primary mb-2">
+                Clause Relationships
+              </h4>
+              <ul className="space-y-1">
+                {selectedClause.relationships.map(
+                  (rel: string, idx: number) => (
+                    <li
+                      key={idx}
+                      className="flex items-start gap-2 text-sm text-text-secondary"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent-blue mt-2 flex-shrink-0"></span>
+                      {rel}
+                    </li>
+                  )
+                )}
+              </ul>
+            </div>
+          )}
+
         {/* Key Points */}
         {selectedClause.key_points && selectedClause.key_points.length > 0 && (
           <div>

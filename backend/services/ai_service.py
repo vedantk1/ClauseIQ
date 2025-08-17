@@ -265,16 +265,11 @@ async def extract_clauses_with_llm(document_text: str, contract_type: ContractTy
                     heading=clause_data.get("heading", "Unnamed Clause"),
                     text=clause_data.get("text", ""),
                     clause_type=clause_type,
-                    risk_level=risk_level
+                    risk_level=risk_level,
+                    risk_reasoning=clause_data.get("risk_reasoning", ""),
+                    key_terms=clause_data.get("key_terms", []) or [],
+                    relationships=clause_data.get("relationships", []) or [],
                 )
-                
-                # Store additional analysis data as metadata (if needed for future features)
-                if hasattr(clause, 'metadata'):
-                    clause.metadata = {
-                        'risk_reasoning': clause_data.get("risk_reasoning", ""),
-                        'key_terms': clause_data.get("key_terms", []),
-                        'relationships': clause_data.get("relationships", [])
-                    }
                 
                 clauses.append(clause)
             
@@ -306,7 +301,10 @@ async def extract_clauses_with_llm(document_text: str, contract_type: ContractTy
                             heading=clause_data.get("heading", "Unnamed Clause"),
                             text=clause_data.get("text", ""),
                             clause_type=clause_type,
-                            risk_level=risk_level
+                            risk_level=risk_level,
+                            risk_reasoning=clause_data.get("risk_reasoning", ""),
+                            key_terms=clause_data.get("key_terms", []) or [],
+                            relationships=clause_data.get("relationships", []) or [],
                         )
                         clauses.append(clause)
                     print(f"✅ Successfully recovered from wrapped JSON response with {len(clauses)} clauses")

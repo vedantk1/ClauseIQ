@@ -7,75 +7,79 @@
 import { ClauseType, RiskLevel, ContractType } from "./common";
 
 export interface AvailableModel {
-  id?: string;
-  name?: string;
-  description?: string;
+  id?: str;
+  name?: str;
+  description?: str;
 }
 
-export interface BaseModel {}
+export interface BaseModel {
+}
 
 export interface Clause {
-  id?: string;
-  heading?: string;
-  text?: string;
+  id?: str;
+  heading?: str;
+  text?: str;
   clause_type?: ClauseType;
   risk_level?: RiskLevel;
-  risk_assessment: string | null;
-  recommendations: string[] | null;
-  key_points: string[] | null;
-  position_start: number | null;
-  position_end: number | null;
+  risk_assessment?: str | null;
+  recommendations?: str[] | null;
+  key_points?: str[] | null;
+  position_start?: int | null;
+  position_end?: int | null;
+  risk_reasoning?: str;
+  key_terms?: str[];
+  relationships?: str[];
 }
 
 export interface Document {
-  id?: string;
-  filename?: string;
-  upload_date?: string;
-  contract_type: ContractType | null;
-  text: string | null;
-  ai_full_summary: string | null;
-  ai_structured_summary: Record<string, any> | null;
-  clauses: Clause[] | null;
-  risk_summary: RiskSummary | null;
-  user_id?: string;
-  user_interactions: Record<string, UserInteraction> | null;
-  last_viewed?: string | null;  // ISO timestamp of when document was last viewed
+  id?: str;
+  filename?: str;
+  upload_date?: str;
+  contract_type?: ContractType | null;
+  text?: str | null;
+  ai_full_summary?: str | null;
+  ai_structured_summary?: Record<str, Any> | null;
+  clauses?: Clause[] | null;
+  risk_summary?: RiskSummary | null;
+  user_id?: str;
+  user_interactions?: Record<str, UserInteraction> | null;
+  last_viewed?: str | null;
 }
 
 export interface Note {
-  id?: string;
-  text?: string;
-  created_at?: string;
+  id?: str;
+  text?: str;
+  created_at?: str;
 }
 
 export interface RiskSummary {
-  high?: number;
-  medium?: number;
-  low?: number;
+  high?: int;
+  medium?: int;
+  low?: int;
 }
 
 export interface User {
-  id?: string;
-  email?: string;
-  full_name?: string;
-  created_at?: string;
+  id?: str;
+  email?: str;
+  full_name?: str;
+  created_at?: str;
 }
 
 export interface UserInteraction {
-  clause_id?: string;
-  user_id?: string;
+  clause_id?: str;
+  user_id?: str;
   notes?: Note[];
-  is_flagged?: boolean;
-  created_at?: string;
-  updated_at?: string;
+  is_flagged?: bool;
+  created_at?: str;
+  updated_at?: str;
 }
 
 export interface UserInteractions {
-  document_id?: string;
-  user_id?: string;
-  interactions?: Record<string, UserInteraction>;
+  document_id?: str;
+  user_id?: str;
+  interactions?: Record<str, UserInteraction>;
 }
 
 export interface UserPreferences {
-  preferred_model?: string;
+  preferred_model?: str;
 }

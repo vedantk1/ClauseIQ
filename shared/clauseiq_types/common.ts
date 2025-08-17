@@ -110,6 +110,10 @@ export interface Clause {
   key_points?: string[];
   position_start?: number;
   position_end?: number;
+  // New required AI analysis fields (first-class)
+  risk_reasoning: string; // explanation of why clause assessed at this risk level
+  key_terms: string[]; // extracted decisive terms
+  relationships: string[]; // relationships to other clauses / dependencies
 }
 
 export interface RiskSummary {
