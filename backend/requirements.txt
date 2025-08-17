@@ -89,5 +89,5 @@ pytest-asyncio>=0.20,<1
 iniconfig==2.1.0
 pluggy==1.6.0
 
-# Local shared types package (disabled during clean env bootstrap; re-enable if packaging needed)
-# -e ../shared
+# Local shared types package (editable install for single-dev workflow)
+-e ../shared
