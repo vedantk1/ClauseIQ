@@ -87,37 +87,6 @@ export const getClauseTypeLabel = (type?: string) => {
   return labels[type || ""] || type || "Unknown";
 };
 
-// getClauseNegotiability removed (previously hardcoded). Reintroduce via API when real data available.
-
-export const getIndustryBenchmark = (
-  clauseType?: string,
-  riskLevel?: string
-) => {
-  const benchmarks: Record<string, Record<string, string>> = {
-    termination: {
-      high: "This termination clause is more restrictive than 85% of similar contracts. Consider negotiating for more reasonable notice periods.",
-      medium:
-        "Standard termination terms, found in 60% of employment contracts. Generally acceptable with minor adjustments.",
-      low: "Favorable termination conditions. This clause protects your interests well.",
-    },
-    compensation: {
-      high: "Compensation terms may be below market standards. Consider benchmarking against industry averages.",
-      medium: "Compensation structure aligns with typical market practices.",
-      low: "Competitive compensation package that exceeds many industry standards.",
-    },
-    non_compete: {
-      high: "Non-compete restrictions are stricter than 90% of contracts. Strong negotiation recommended.",
-      medium:
-        "Standard non-compete terms, but review geographic and time limitations.",
-      low: "Reasonable non-compete clause with fair limitations.",
-    },
-  };
-  return (
-    benchmarks[clauseType || ""]?.[riskLevel || ""] ||
-    "Industry comparison data not available for this clause type."
-  );
-};
-
 // Token highlighting patterns for legal documents
 const LEGAL_TOKEN_PATTERNS = {
   // Money patterns - simple and working

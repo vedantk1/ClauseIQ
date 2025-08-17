@@ -4,11 +4,7 @@ import Card from "@/components/Card";
 import Button from "@/components/Button";
 import TextInputModal from "@/components/TextInputModal";
 import ConfirmationModal from "@/components/ConfirmationModal";
-import {
-  getRiskColor,
-  getClauseTypeLabel,
-  getIndustryBenchmark,
-} from "./clauseUtils";
+import { getRiskColor, getClauseTypeLabel } from "./clauseUtils";
 import type { Clause } from "@clauseiq/shared-types";
 
 interface Note {
@@ -491,52 +487,7 @@ export default function ClauseDetailsPanel({
             </div>
           )}
 
-        {/* Industry Comparison */}
-        <div className="bg-accent-green/5 border border-accent-green/20 rounded-lg p-3">
-          <h4 className="font-medium text-accent-green text-sm mb-2">
-            📊 Industry Benchmark
-          </h4>
-          <p className="text-sm text-text-secondary mb-3">
-            {getIndustryBenchmark(
-              selectedClause.clause_type,
-              selectedClause.risk_level
-            )}
-          </p>
-          <div className="bg-bg-elevated rounded p-2 text-xs">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <span className="font-medium">Market Position:</span>
-                <br />
-                <span
-                  className={
-                    selectedClause.risk_level === "high"
-                      ? "text-accent-rose"
-                      : selectedClause.risk_level === "medium"
-                      ? "text-accent-amber"
-                      : "text-accent-green"
-                  }
-                >
-                  {selectedClause.risk_level === "high"
-                    ? "Below Market"
-                    : selectedClause.risk_level === "medium"
-                    ? "Market Standard"
-                    : "Above Market"}
-                </span>
-              </div>
-              <div>
-                <span className="font-medium">Prevalence:</span>
-                <br />
-                <span>
-                  {selectedClause.risk_level === "high"
-                    ? "15% of contracts"
-                    : selectedClause.risk_level === "medium"
-                    ? "65% of contracts"
-                    : "85% of contracts"}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Industry Benchmark section removed (was placeholder/fabricated) */}
 
         {/* Clause Insights removed */}
 
