@@ -87,78 +87,7 @@ export const getClauseTypeLabel = (type?: string) => {
   return labels[type || ""] || type || "Unknown";
 };
 
-export const getClauseNegotiability = (clauseType?: string) => {
-  const negotiabilityMap: Record<string, string> = {
-    // Employment-specific clauses
-    compensation: "High",
-    termination: "Medium",
-    non_compete: "High",
-    benefits: "Medium",
-    working_conditions: "Medium",
-    probation: "Low",
-    severance: "High",
-    overtime_pay: "Medium",
-    vacation_policy: "Medium",
-    stock_options: "High",
-    background_check: "Low",
-
-    // Universal clauses
-    confidentiality: "Low",
-    intellectual_property: "Low",
-    dispute_resolution: "Medium",
-    liability: "Medium",
-    indemnification: "Medium",
-    force_majeure: "Low",
-    governing_law: "Low",
-    assignment_rights: "Medium",
-    amendment_procedures: "Low",
-    notices: "Low",
-    entire_agreement: "Low",
-    severability: "Low",
-
-    // NDA-specific clauses
-    disclosure_obligations: "Medium",
-    return_of_information: "Medium",
-    definition_of_confidential: "Medium",
-    exceptions_to_confidentiality: "High",
-    duration_of_obligations: "Medium",
-
-    // Service Agreement clauses
-    scope_of_work: "High",
-    deliverables: "High",
-    payment_terms: "High",
-    service_level: "High",
-    warranties: "Medium",
-    service_credits: "Medium",
-    data_protection: "Medium",
-    third_party_services: "Medium",
-    change_management: "Medium",
-
-    // Lease-specific clauses
-    rent: "High",
-    security_deposit: "Medium",
-    maintenance: "Medium",
-    use_restrictions: "Medium",
-    utilities: "Medium",
-    parking: "Medium",
-    pet_policy: "Medium",
-    subletting: "Medium",
-    early_termination: "High",
-    renewal_options: "Medium",
-    property_inspection: "Medium",
-
-    // Purchase/Sales Agreement clauses
-    delivery_terms: "High",
-    inspection_rights: "Medium",
-    title_transfer: "High",
-    risk_of_loss: "High",
-    returns_refunds: "Medium",
-
-    // Generic/fallback
-    general: "Medium",
-  };
-  return negotiabilityMap[clauseType || ""] || "Medium";
-};
+// getClauseNegotiability removed (previously hardcoded). Reintroduce via API when real data available.
 
 export const getIndustryBenchmark = (
   clauseType?: string,

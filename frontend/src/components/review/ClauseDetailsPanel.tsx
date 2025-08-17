@@ -7,7 +7,6 @@ import ConfirmationModal from "@/components/ConfirmationModal";
 import {
   getRiskColor,
   getClauseTypeLabel,
-  getClauseNegotiability,
   getIndustryBenchmark,
 } from "./clauseUtils";
 import type { Clause } from "@clauseiq/shared-types";
@@ -117,42 +116,7 @@ export default function ClauseDetailsPanel({
     setEditingNote(null);
   };
 
-  // Get fairness score based on risk level
-  const getFairnessScore = (riskLevel?: string) => {
-    switch (riskLevel) {
-      case "high":
-        return { score: 2, color: "bg-accent-rose" };
-      case "medium":
-        return { score: 6, color: "bg-accent-amber" };
-      case "low":
-        return { score: 8, color: "bg-accent-green" };
-      default:
-        return { score: 5, color: "bg-gray-400" };
-    }
-  };
-
-  // Fairness Score Bar Component
-  const FairnessScoreBar = ({ riskLevel }: { riskLevel?: string }) => {
-    const { score, color } = getFairnessScore(riskLevel);
-
-    return (
-      <div className="flex items-center gap-1">
-        <div className="flex gap-0.5">
-          {Array.from({ length: 10 }, (_, index) => (
-            <div
-              key={index}
-              className={`w-1.5 h-3 rounded-sm ${
-                index < score
-                  ? color
-                  : "bg-bg-surface border border-border-muted"
-              }`}
-            />
-          ))}
-        </div>
-        <span className="text-xs text-text-secondary ml-1">{score}/10</span>
-      </div>
-    );
-  };
+  // Clause Insights (fairness, negotiability, etc.) removed as they were hardcoded placeholders.
 
   if (!selectedClause) {
     return (
@@ -522,34 +486,7 @@ export default function ClauseDetailsPanel({
           </div>
         </div>
 
-        {/* Clause Insights */}
-        <div className="bg-bg-elevated rounded-lg p-3">
-          <h5 className="font-medium text-text-primary text-sm mb-2">
-            📊 Clause Insights
-          </h5>
-          <div className="space-y-2 text-xs">
-            <div className="flex justify-between">
-              <span className="text-text-secondary">Fairness Score:</span>
-              <FairnessScoreBar riskLevel={selectedClause.risk_level} />
-            </div>
-            <div className="flex justify-between">
-              <span className="text-text-secondary">Industry Standard:</span>
-              <span className="text-text-primary">
-                {selectedClause.risk_level === "high"
-                  ? "Below Average"
-                  : selectedClause.risk_level === "medium"
-                  ? "Typical"
-                  : "Above Average"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-text-secondary">Negotiability:</span>
-              <span className="text-accent-green">
-                {getClauseNegotiability(selectedClause.clause_type)}
-              </span>
-            </div>
-          </div>
-        </div>
+        {/* Clause Insights removed */}
 
         {/* Full Clause Text */}
         <div>
