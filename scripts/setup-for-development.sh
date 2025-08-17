@@ -2,7 +2,7 @@
 
 # ClauseIQ Development Environment Setup Script
 # Level 3 Full Automation - Handles all prerequisites and dependencies
-# Supports: macOS, Ubuntu/Debian, RHEL/CentOS, Windows WSL
+# Supports: macOS, Ubuntu/Debian, Windows WSL
 
 set -e  # Exit on any error
 
@@ -13,7 +13,7 @@ set -e  # Exit on any error
 SCRIPT_VERSION="2.1.0"
 PROJECT_NAME="ClauseIQ"
 REQUIRED_PYTHON_VERSION="3.11"
-REQUIRED_NODE_VERSION="18"
+REQUIRED_NODE_VERSION="20"
 MONGODB_VERSION="7.0"
 
 # Colors for output
@@ -91,8 +91,6 @@ detect_os() {
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
         if [ -f /etc/debian_version ]; then
             OS="debian"
-        elif [ -f /etc/redhat-release ]; then
-            OS="redhat"
         else
             OS="linux"
         fi
@@ -115,12 +113,6 @@ detect_package_manager() {
         fi
     elif [[ "$OS" == "debian" ]]; then
         PKG_MANAGER="apt"
-    elif [[ "$OS" == "redhat" ]]; then
-        if command_exists dnf; then
-            PKG_MANAGER="dnf"
-        elif command_exists yum; then
-            PKG_MANAGER="yum"
-        fi
     elif [[ "$OS" == "windows" ]]; then
         if command_exists choco; then
             PKG_MANAGER="choco"
@@ -273,12 +265,6 @@ install_python() {
             sudo apt update
             sudo apt install -y python3.11 python3.11-venv python3.11-pip python3.11-dev
             ;;
-        "dnf")
-            sudo dnf install -y python3.11 python3.11-pip python3.11-devel
-            ;;
-        "yum")
-            sudo yum install -y python3.11 python3.11-pip python3.11-devel
-            ;;
         "choco")
             choco install python --version=3.11.0
             ;;
@@ -309,17 +295,11 @@ install_nodejs() {
     case "$PKG_MANAGER" in
         "brew")
             brew install node@20
+            brew link --overwrite --force node@20
             ;;
         "apt")
             curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
             sudo apt-get install -y nodejs
-            ;;
-        "dnf")
-            sudo dnf install -y nodejs@20 npm
-            ;;
-        "yum")
-            curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
-            sudo yum install -y nodejs
             ;;
         "choco")
             choco install nodejs --version=20.0.0
@@ -401,25 +381,6 @@ install_mongodb() {
                 exit 1
             fi
             ;;
-        "dnf"|"yum")
-            # Add MongoDB repository
-            print_step "Adding MongoDB repository..."
-            sudo tee /etc/yum.repos.d/mongodb-org-7.0.repo > /dev/null <<EOF
-[mongodb-org-7.0]
-name=MongoDB Repository
-baseurl=https://repo.mongodb.org/yum/redhat/8/mongodb-org/7.0/x86_64/
-gpgcheck=1
-enabled=1
-gpgkey=https://www.mongodb.org/static/pgp/server-7.0.asc
-EOF
-            
-            # Install MongoDB
-            print_step "Installing MongoDB..."
-            if ! sudo $PKG_MANAGER install -y mongodb-org; then
-                print_error "MongoDB installation failed"
-                exit 1
-            fi
-            ;;
         "choco")
             if ! choco install mongodb; then
                 print_error "MongoDB installation failed"
@@ -447,7 +408,7 @@ start_mongodb() {
                 mongod --config /usr/local/etc/mongod.conf --fork
             fi
             ;;
-        "debian"|"redhat"|"linux")
+        "debian"|"linux")
             sudo systemctl start mongod
             sudo systemctl enable mongod
             ;;
@@ -527,7 +488,7 @@ setup_python_environment() {
                     exit 1
                 fi
                 ;;
-            "apt"|"dnf"|"yum")
+            "apt")
                 # Linux package managers install as python3.11
                 if command_exists python3.11; then
                     python_cmd="python3.11"
@@ -875,13 +836,13 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Prerequisites (will be installed automatically on macOS):"
             echo "  • Xcode Command Line Tools (macOS only)"
-            echo "  • Package manager (Homebrew/apt/dnf/yum)"
+                echo "  • Package manager (Homebrew/apt)"
             echo "  • Internet connection"
             echo "  • ~4GB free disk space"
             echo ""
             echo "What this script installs:"
-            echo "  • Python 3.8+ with virtual environment"
-            echo "  • Node.js 18+ and npm"
+            echo "  • Python 3.11+ with virtual environment"
+            echo "  • Node.js 20+ and npm"
             echo "  • MongoDB Community Edition 7.0"
             echo "  • All project dependencies (backend & frontend)"
             echo "  • Environment configuration files"
@@ -893,8 +854,8 @@ while [[ $# -gt 0 ]]; do
             echo "Supported Systems:"
             echo "  • macOS (Intel & Apple Silicon)"
             echo "  • Ubuntu/Debian Linux"
-            echo "  • RHEL/CentOS/Fedora Linux"
             echo "  • Windows WSL"
+            echo "  • (RHEL/CentOS/Fedora support has been removed from this script)"
             echo ""
             echo "For troubleshooting, see: docs/QUICK_START.md"
             exit 0
