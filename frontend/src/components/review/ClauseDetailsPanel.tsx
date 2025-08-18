@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import TextInputModal from "@/components/TextInputModal";
@@ -112,49 +112,7 @@ export default function ClauseDetailsPanel({
     setEditingNote(null);
   };
 
-  // --- UI Enhancement State ---
-  const [activeTerms, setActiveTerms] = useState<Set<string>>(new Set());
-
-  const toggleTerm = (term: string) => {
-    setActiveTerms((prev) => {
-      const next = new Set(prev);
-      if (next.has(term)) next.delete(term);
-      else next.add(term);
-      return next;
-    });
-  };
-
-  const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-  const highlightedFullText = useMemo(() => {
-    if (!selectedClause?.text) return null;
-    if (!activeTerms.size) return selectedClause.text;
-    const terms = Array.from(activeTerms)
-      .sort((a, b) => b.length - a.length)
-      .map(escapeRegex);
-    try {
-      const r = new RegExp(`(${terms.join("|")})`, "gi");
-      const parts = selectedClause.text.split(r);
-      return parts.map((part, idx) => {
-        if (part === "") return null;
-        if (r.test(part)) {
-          // reset lastIndex for subsequent tests
-          r.lastIndex = 0;
-          return (
-            <mark
-              key={idx}
-              className="bg-accent-purple/30 text-text-primary px-0.5 rounded-sm"
-            >
-              {part}
-            </mark>
-          );
-        }
-        return <span key={idx}>{part}</span>;
-      });
-    } catch {
-      return selectedClause.text;
-    }
-  }, [activeTerms, selectedClause]);
+  // Key terms + highlighting removed per design decision (UI-only removal).
 
   const getRiskBorderClass = (risk?: string) => {
     switch (risk) {
@@ -449,44 +407,7 @@ export default function ClauseDetailsPanel({
           </div>
         )}
 
-        {/* Key Terms */}
-        {selectedClause.key_terms && selectedClause.key_terms.length > 0 && (
-          <div className={cardSection}>
-            <h4 className="font-medium text-text-primary mb-2 text-sm tracking-wide uppercase">
-              Key Terms
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {selectedClause.key_terms.map((term: string) => {
-                const active = activeTerms.has(term);
-                return (
-                  <button
-                    key={term}
-                    onClick={() => toggleTerm(term)}
-                    className={`text-xs px-2 py-1 rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple/50 cursor-pointer select-none ${
-                      active
-                        ? "bg-accent-purple/30 text-accent-purple border-accent-purple"
-                        : "bg-accent-purple/10 text-accent-purple border-accent-purple/30 hover:bg-accent-purple/20"
-                    }`}
-                    aria-pressed={active}
-                    title={
-                      active
-                        ? "Click to remove highlight"
-                        : "Click to highlight in text"
-                    }
-                  >
-                    {term}
-                  </button>
-                );
-              })}
-            </div>
-            {activeTerms.size > 0 && (
-              <p className="mt-3 text-xs text-text-secondary">
-                Highlighting {activeTerms.size} term
-                {activeTerms.size > 1 && "s"} in the full text below.
-              </p>
-            )}
-          </div>
-        )}
+        {/* Key Terms section removed */}
 
         {/* Relationships */}
         {selectedClause.relationships &&
@@ -563,21 +484,13 @@ export default function ClauseDetailsPanel({
             selectedClause.risk_level
           )}`}
         >
-          <div className="flex items-center justify-between mb-2">
+          <div className="mb-2">
             <h4 className="font-medium text-text-primary text-sm tracking-wide uppercase mb-0">
               Full Text
             </h4>
-            {activeTerms.size > 0 && (
-              <button
-                onClick={() => setActiveTerms(new Set())}
-                className="text-xs text-accent-purple hover:underline"
-              >
-                Clear highlights
-              </button>
-            )}
           </div>
           <div className="rounded p-3 bg-bg-primary/40 max-h-56 overflow-y-auto text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
-            {highlightedFullText}
+            {selectedClause.text}
           </div>
         </div>
       </div>
