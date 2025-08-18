@@ -205,8 +205,8 @@ export default function ClauseDetailsPanel({
               Risk
             </div>
           </div>
-          {/* Meta chips */}
-          <div className="flex items-center justify-between gap-2 mb-4">
+          {/* Meta + compact actions row */}
+          <div className="flex items-start justify-between gap-3 mb-6">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-text-secondary bg-bg-elevated px-2 py-1 rounded">
                 {getClauseTypeLabel(selectedClause.clause_type)}
@@ -225,13 +225,7 @@ export default function ClauseDetailsPanel({
                 </span>
               )}
             </div>
-            {/* Status indicators moved to the right */}
-            <div className="flex items-center gap-2">
-              {selectedClause.id && flaggedClauses.has(selectedClause.id) && (
-                <span className="text-xs bg-accent-rose/10 text-accent-rose px-2 py-1 rounded-full">
-                  🚩 Flagged for Review
-                </span>
-              )}
+            <div className="flex items-center gap-2 flex-wrap">
               {selectedClause.id && hasNotes(selectedClause.id) && (
                 <button
                   onClick={toggleNotesDrawer}
@@ -242,30 +236,36 @@ export default function ClauseDetailsPanel({
                     getNotesCount(selectedClause.id) !== 1 ? "s" : ""
                   }, click to ${isNotesDrawerOpen ? "close" : "open"}`}
                 >
-                  📝 Has {getNotesCount(selectedClause.id)} Note
+                  📝 {getNotesCount(selectedClause.id)} Note
                   {getNotesCount(selectedClause.id) !== 1 ? "s" : ""}{" "}
                   {isNotesDrawerOpen ? "▲" : "▼"}
                 </button>
               )}
+              <button
+                onClick={() => handleAddNote()}
+                className="text-xs px-2 py-1 rounded-full border border-border-muted bg-bg-elevated text-text-secondary hover:bg-bg-elevated/80 transition-colors"
+              >
+                ✚ Add Note
+              </button>
+              <button
+                onClick={(event) => onFlagForReview(selectedClause, event)}
+                className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                  flaggedClauses.has(selectedClause.id || "")
+                    ? "border-accent-rose/40 bg-accent-rose/10 text-accent-rose hover:bg-accent-rose/15"
+                    : "border-border-muted bg-bg-elevated text-text-secondary hover:bg-bg-elevated/80"
+                }`}
+                title={
+                  flaggedClauses.has(selectedClause.id || "")
+                    ? "Remove flag from this clause"
+                    : "Flag this clause for legal review"
+                }
+                aria-pressed={flaggedClauses.has(selectedClause.id || "")}
+              >
+                {flaggedClauses.has(selectedClause.id || "")
+                  ? "🚩 Unflag"
+                  : "🚩 Flag"}
+              </button>
             </div>
-          </div>
-          {/* Inline Actions (moved from sticky bar) */}
-          <div className="flex items-center gap-2 mt-2">
-            <Button size="sm" variant="secondary" onClick={handleAddNote}>
-              Add Note
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={(event) => onFlagForReview(selectedClause, event)}
-              title={
-                flaggedClauses.has(selectedClause.id || "")
-                  ? "Remove flag from this clause"
-                  : "Flag this clause for legal review"
-              }
-            >
-              {flaggedClauses.has(selectedClause.id || "") ? "Unflag" : "Flag"}
-            </Button>
           </div>
         </div>
 
