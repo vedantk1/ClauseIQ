@@ -112,10 +112,15 @@ export default function ClauseDetailsPanel({
 
   // Key terms + highlighting removed per design decision (UI-only removal).
 
-  // Risk-based left border removed for cleaner look.
-
+  // Content section styling with semantic visual hierarchy
   const cardSection =
     "rounded-lg border border-border-muted bg-bg-elevated p-4";
+  const riskCardSection =
+    "rounded-lg border border-accent-rose/40 bg-accent-rose/5 p-5";
+  const relationshipCardSection =
+    "rounded-lg border border-accent-blue/40 bg-bg-elevated p-4";
+  const fullTextCardSection =
+    "rounded-lg border border-border-muted bg-bg-primary/20 p-4";
 
   // Clause Insights (fairness, negotiability, etc.) removed as they were hardcoded placeholders.
 
@@ -390,11 +395,11 @@ export default function ClauseDetailsPanel({
 
         {/* Risk Assessment */}
         {selectedClause.risk_assessment && (
-          <div className={cardSection}>
-            <h4 className="font-medium text-text-primary mb-2 text-sm tracking-wide uppercase">
+          <div className={riskCardSection}>
+            <h4 className="font-semibold text-accent-rose text-base tracking-wide uppercase mb-2">
               Risk Assessment
             </h4>
-            <p className="text-text-secondary text-sm leading-relaxed">
+            <p className="text-text-secondary text-sm leading-loose">
               {selectedClause.risk_assessment}
             </p>
           </div>
@@ -402,11 +407,11 @@ export default function ClauseDetailsPanel({
 
         {/* LLM Risk Reasoning */}
         {selectedClause.risk_reasoning && (
-          <div className={cardSection}>
-            <h4 className="font-medium text-text-primary mb-2 text-sm tracking-wide uppercase">
+          <div className={riskCardSection}>
+            <h4 className="font-semibold text-accent-rose text-base tracking-wide uppercase mb-2">
               Risk Reasoning
             </h4>
-            <p className="text-text-secondary text-sm leading-relaxed whitespace-pre-line">
+            <p className="text-text-secondary text-base leading-loose whitespace-pre-line">
               {selectedClause.risk_reasoning}
             </p>
           </div>
@@ -417,8 +422,8 @@ export default function ClauseDetailsPanel({
         {/* Relationships */}
         {selectedClause.relationships &&
           selectedClause.relationships.length > 0 && (
-            <div className={cardSection}>
-              <h4 className="font-medium text-text-primary mb-2 text-sm tracking-wide uppercase">
+            <div className={relationshipCardSection}>
+              <h4 className="font-medium text-accent-blue text-sm tracking-wide uppercase mb-2">
                 Clause Relationships
               </h4>
               <ul className="space-y-1">
@@ -484,7 +489,7 @@ export default function ClauseDetailsPanel({
         {/* Clause Insights removed */}
 
         {/* Full Clause Text */}
-        <div className={cardSection}>
+        <div className={fullTextCardSection}>
           <div className="mb-2">
             <h4 className="font-medium text-text-primary text-sm tracking-wide uppercase mb-0">
               Full Text
