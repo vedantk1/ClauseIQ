@@ -667,6 +667,7 @@ export default function ReviewWorkspace() {
           getAllNotes={getAllNotes}
           getNotesCount={getNotesCount}
           contractType={contract_type}
+          documentId={documentId || undefined}
           onAddNote={handleAddNote}
           onEditNote={handleEditNote}
           onDeleteNote={handleDeleteNote}

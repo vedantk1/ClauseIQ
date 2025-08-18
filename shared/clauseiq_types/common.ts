@@ -114,6 +114,9 @@ export interface Clause {
   risk_reasoning: string; // explanation of why clause assessed at this risk level
   key_terms: string[]; // extracted decisive terms
   relationships: string[]; // relationships to other clauses / dependencies
+  // Rewrite suggestion fields (optional)
+  rewrite_suggestion?: string;
+  rewrite_generated_at?: string;
 }
 
 export interface RiskSummary {

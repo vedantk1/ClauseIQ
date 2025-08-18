@@ -31,6 +31,7 @@ interface ClausesContentProps {
   flaggedClauses: Set<string>;
   hasNotes: (clauseId: string) => boolean;
   contractType?: string;
+  documentId?: string; // Add document ID for rewrite functionality
   // Note management and clause interaction props - used in details view
   getAllNotes: (clauseId: string) => Note[];
   getNotesCount: (clauseId: string) => number;
@@ -76,6 +77,7 @@ export default function ClausesContent({
   getAllNotes,
   getNotesCount,
   contractType,
+  documentId,
   onAddNote,
   onEditNote,
   onDeleteNote,
@@ -96,6 +98,7 @@ export default function ClausesContent({
           onDeleteNote={onDeleteNote}
           onFlagForReview={onFlagForReview}
           onBack={() => onClauseSelect(null)}
+          documentId={documentId}
         />
       </div>
     );

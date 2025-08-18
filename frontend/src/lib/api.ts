@@ -364,6 +364,15 @@ class APIClient {
     return this.request<T>(endpoint, { method: "DELETE" });
   }
 
+  // Clause rewrite helper
+  async generateClauseRewrite(clauseId: string, documentId: string): Promise<APIResponse<{
+    rewrite_suggestion: string;
+    rewrite_generated_at: string;
+    cached: boolean;
+  }>> {
+    return this.post(`/analysis/clauses/${clauseId}/rewrite`, { document_id: documentId });
+  }
+
   // File upload helper
   async uploadFile<T>(
     endpoint: string,

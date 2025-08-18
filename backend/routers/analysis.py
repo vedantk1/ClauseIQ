@@ -7,6 +7,7 @@ import uuid
 import logging
 from datetime import datetime
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Request
+from pydantic import BaseModel
 import pdfplumber
 from auth import get_current_user
 from database.service import get_document_service
@@ -14,7 +15,7 @@ from middleware.api_standardization import APIResponse, create_success_response,
 from middleware.versioning import versioned_response
 from services.document_service import validate_file, process_document_with_llm, is_llm_processing_available
 # PHASE 3 MIGRATION: Main AI functions still from ai_service for stability
-from services.ai_service import generate_structured_document_summary
+from services.ai_service import generate_structured_document_summary, generate_clause_rewrite
 # RAG integration for chat functionality
 from services.rag_service import get_rag_service
 from models.analysis import ClauseAnalysisResponse
@@ -752,5 +753,101 @@ async def delete_clause_note(
         return create_error_response(
             code="NOTE_DELETE_FAILED",
             message=f"Failed to delete note: {str(e)}",
+            correlation_id=correlation_id
+        )
+
+
+class ClauseRewriteRequest(BaseModel):
+    document_id: str
+
+
+@router.post("/clauses/{clause_id}/rewrite", response_model=APIResponse[dict])
+@versioned_response
+async def generate_clause_rewrite_endpoint(
+    clause_id: str,
+    request: Request,
+    rewrite_request: ClauseRewriteRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate a rewrite suggestion for a specific clause."""
+    correlation_id = getattr(request.state, 'correlation_id', None)
+    
+    try:
+        service = get_document_service()
+        
+        # Get user's preferred model
+        user_model = await service.get_user_preferred_model(current_user["id"])
+        
+        # Fetch the document to get full text and contract type
+        document = await service.get_document_for_user(rewrite_request.document_id, current_user["id"])
+        if not document:
+            return create_error_response(
+                code="DOCUMENT_NOT_FOUND",
+                message="Document not found",
+                correlation_id=correlation_id
+            )
+        
+        # Find the specific clause
+        clause = None
+        if document.get("clauses"):
+            for c in document["clauses"]:
+                if c.get("id") == clause_id:
+                    clause = c
+                    break
+        
+        if not clause:
+            return create_error_response(
+                code="CLAUSE_NOT_FOUND",
+                message="Clause not found in document",
+                correlation_id=correlation_id
+            )
+        
+        # Check if rewrite already exists
+        if clause.get("rewrite_suggestion"):
+            return create_success_response(
+                data={
+                    "rewrite_suggestion": clause["rewrite_suggestion"],
+                    "rewrite_generated_at": clause["rewrite_generated_at"],
+                    "cached": True
+                },
+                correlation_id=correlation_id
+            )
+        
+        # Generate rewrite using AI
+        from clauseiq_types.common import Clause, ContractType
+        
+        # Convert dict to Clause object
+        clause_obj = Clause(**clause)
+        contract_type = ContractType(document.get("contract_type", "OTHER"))
+        
+        rewrite_suggestion = await generate_clause_rewrite(
+            clause=clause_obj,
+            document_text=document["text"],
+            contract_type=contract_type,
+            model=user_model
+        )
+        
+        # Save rewrite to database
+        updated_clause = await service.update_clause_rewrite(
+            document_id=rewrite_request.document_id,
+            clause_id=clause_id,
+            user_id=current_user["id"],
+            rewrite_suggestion=rewrite_suggestion
+        )
+        
+        return create_success_response(
+            data={
+                "rewrite_suggestion": rewrite_suggestion,
+                "rewrite_generated_at": updated_clause["rewrite_generated_at"],
+                "cached": False
+            },
+            correlation_id=correlation_id
+        )
+        
+    except Exception as e:
+        print(f"Error generating clause rewrite: {str(e)}")
+        return create_error_response(
+            code="REWRITE_GENERATION_FAILED",
+            message=f"Failed to generate clause rewrite: {str(e)}",
             correlation_id=correlation_id
         )

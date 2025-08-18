@@ -567,6 +567,85 @@ async def generate_structured_document_summary(document_text: str, filename: str
 
 
 
+async def generate_clause_rewrite(
+    clause: Clause,
+    document_text: str,
+    contract_type: ContractType,
+    model: str = None
+) -> str:
+    """Generate a rewrite suggestion for a clause using full document context."""
+    # Get model from settings if not provided
+    if model is None:
+        from config.environments import get_environment_config
+        config = get_environment_config()
+        model = config.ai.default_model
+        
+    openai_client = get_openai_client()
+    if not openai_client:
+        raise Exception("OpenAI client not available")
+    
+    try:
+        # Use optimal token allocation for rewrite generation
+        optimal_response_tokens = get_optimal_response_tokens("rewrite", model)
+        max_input_tokens = calculate_token_budget(model, response_tokens=optimal_response_tokens)
+        
+        print(f"✏️ Clause rewrite using {optimal_response_tokens} response tokens, {max_input_tokens} input tokens for {model}")
+        
+        prompt = f"""You are a legal expert specializing in contract clause optimization. 
+
+Given this clause from a {contract_type.value} contract:
+"{clause.text}"
+
+Risk Assessment: {clause.risk_reasoning}
+
+Full Document Context:
+{document_text}
+
+Please provide a clear, improved version of this clause that:
+1. Maintains the same legal intent and obligations
+2. Improves clarity and readability
+3. Addresses any identified risks or ambiguities
+4. Uses plain language where possible while preserving legal precision
+5. Follows best practices for {contract_type.value} contracts
+6. Maintains consistency with the broader document context
+
+Provide ONLY the rewritten clause text, no explanations or commentary."""
+        
+        # Calculate token overhead for prompt
+        prompt_overhead = get_token_count(prompt.replace(document_text, ""), model)
+        available_tokens = max_input_tokens - prompt_overhead
+        
+        # Truncate document text if needed, but preserve clause text
+        if get_token_count(document_text, model) > available_tokens:
+            # Keep clause text intact, truncate document context
+            clause_tokens = get_token_count(clause.text, model)
+            risk_tokens = get_token_count(clause.risk_reasoning, model)
+            available_for_context = available_tokens - clause_tokens - risk_tokens - 100  # buffer
+            
+            truncated_document = truncate_text_by_tokens(document_text, available_for_context, model)
+            prompt = prompt.replace(document_text, truncated_document)
+            print(f"📄 Document context truncated to {available_for_context} tokens for rewrite generation")
+        
+        response = await openai_client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": f"You are an elite legal AI assistant specializing in {contract_type.value} contract optimization. Provide clear, improved clause rewrites that maintain legal precision while enhancing clarity and addressing identified risks."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=optimal_response_tokens,
+            temperature=0.3
+        )
+        
+        rewrite_suggestion = response.choices[0].message.content.strip()
+        print(f"✅ Generated rewrite suggestion ({len(rewrite_suggestion)} characters)")
+        
+        return rewrite_suggestion
+        
+    except Exception as e:
+        print(f"Error generating clause rewrite: {str(e)}")
+        raise Exception(f"Failed to generate clause rewrite: {str(e)}")
+
+
 # =============================================================================
 # LEGACY UTILITY FUNCTIONS - KEPT FOR BACKWARD COMPATIBILITY
 def _get_relevant_clause_types(contract_type: ContractType) -> List[ClauseType]:

@@ -118,6 +118,9 @@ class Clause(BaseModel):
     risk_reasoning: str
     key_terms: List[str]
     relationships: List[str]
+    # Rewrite suggestion fields (optional)
+    rewrite_suggestion: Optional[str] = None
+    rewrite_generated_at: Optional[str] = None
 
 
 class RiskSummary(BaseModel):

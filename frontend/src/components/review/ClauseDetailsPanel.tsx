@@ -6,6 +6,8 @@ import TextInputModal from "@/components/TextInputModal";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { getRiskColor, getClauseTypeLabel } from "./clauseUtils";
 import type { Clause } from "@clauseiq/shared-types";
+import { apiClient, handleAPIError } from "@/lib/api";
+import { toast } from "react-hot-toast";
 
 interface Note {
   id: string;
@@ -24,6 +26,7 @@ interface ClauseDetailsPanelProps {
   onDeleteNote: (clause: Clause, noteId?: string) => void;
   onFlagForReview: (clause: Clause, event?: React.MouseEvent) => void;
   onBack?: () => void; // Optional back navigation function
+  documentId?: string; // Add document ID for rewrite functionality
 }
 
 export default function ClauseDetailsPanel({
@@ -37,6 +40,7 @@ export default function ClauseDetailsPanel({
   onDeleteNote,
   onFlagForReview,
   onBack,
+  documentId,
 }: ClauseDetailsPanelProps) {
   // New state for notes drawer - keyed by clause ID to preserve context
   const [notesDrawerState, setNotesDrawerState] = useState<
@@ -53,6 +57,10 @@ export default function ClauseDetailsPanel({
     clauseId: string;
     noteId: string;
   } | null>(null);
+
+  // State for rewrite functionality
+  const [isGeneratingRewrite, setIsGeneratingRewrite] = useState(false);
+  const [rewriteSuggestion, setRewriteSuggestion] = useState<string | null>(null);
 
   // Helper to get/set drawer state for current clause
   const isNotesDrawerOpen = selectedClause?.id
@@ -108,6 +116,37 @@ export default function ClauseDetailsPanel({
     // Close modal and clear editing state
     setIsNoteModalOpen(false);
     setEditingNote(null);
+  };
+
+  // Handle rewrite generation
+  const handleGenerateRewrite = async () => {
+    if (!selectedClause || !documentId) {
+      toast.error("Missing clause or document information");
+      return;
+    }
+
+    setIsGeneratingRewrite(true);
+    setRewriteSuggestion(null);
+
+    try {
+      const response = await apiClient.generateClauseRewrite(selectedClause.id, documentId);
+      
+      if (response.success && response.data) {
+        setRewriteSuggestion(response.data.rewrite_suggestion);
+        if (response.data.cached) {
+          toast.success("Loaded cached rewrite suggestion");
+        } else {
+          toast.success("Generated new rewrite suggestion");
+        }
+      } else {
+        handleAPIError(response, "Failed to generate rewrite suggestion");
+      }
+    } catch (error) {
+      console.error("Error generating rewrite:", error);
+      toast.error("Failed to generate rewrite suggestion");
+    } finally {
+      setIsGeneratingRewrite(false);
+    }
   };
 
   // Key terms + highlighting removed per design decision (UI-only removal).
@@ -518,6 +557,50 @@ export default function ClauseDetailsPanel({
             {selectedClause.text}
           </div>
         </div>
+
+        {/* Rewrite Suggestion */}
+        {(rewriteSuggestion || selectedClause.rewrite_suggestion) && (
+          <div className={fullTextCardSection}>
+            <div className="mb-2">
+              <h4 className="font-medium text-text-primary text-sm tracking-wide uppercase mb-0">
+                Rewriting Suggestion
+              </h4>
+            </div>
+            <div className="rounded p-3 bg-accent-blue/10 border border-accent-blue/20 max-h-56 overflow-y-auto text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
+              {rewriteSuggestion || selectedClause.rewrite_suggestion}
+            </div>
+          </div>
+        )}
+
+        {/* Suggest Rewrite Button - Only show if no rewrite exists */}
+        {!selectedClause.rewrite_suggestion && (
+          <div className="flex justify-center pt-4">
+            <Button
+              onClick={handleGenerateRewrite}
+              disabled={isGeneratingRewrite}
+              variant="secondary"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              {isGeneratingRewrite ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Suggest Rewrite
+                </>
+              )}
+            </Button>
+          </div>
+        )}
 
         {/* Inline relationship moved above Risk Reasoning */}
       </div>

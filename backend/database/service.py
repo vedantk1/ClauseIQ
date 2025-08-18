@@ -600,6 +600,42 @@ class DocumentService:
         db = await self._get_db()
         return await db.clear_chat_messages(document_id, user_id)
 
+    async def update_clause_rewrite(self, document_id: str, clause_id: str, user_id: str, rewrite_suggestion: str) -> Optional[Dict[str, Any]]:
+        """Update a clause with a rewrite suggestion."""
+        try:
+            db = await self._get_db()
+            
+            # Get the current document
+            document = await db.get_document(document_id, user_id)
+            if not document:
+                raise ValueError("Document not found")
+            
+            # Find and update the specific clause
+            clauses = document.get("clauses", [])
+            updated_clause = None
+            
+            for clause in clauses:
+                if clause.get("id") == clause_id:
+                    clause["rewrite_suggestion"] = rewrite_suggestion
+                    clause["rewrite_generated_at"] = datetime.utcnow().isoformat()
+                    updated_clause = clause
+                    break
+            
+            if not updated_clause:
+                raise ValueError("Clause not found")
+            
+            # Update the document with the modified clauses
+            success = await db.update_document_field(document_id, user_id, "clauses", clauses)
+            
+            if success:
+                return updated_clause
+            else:
+                raise Exception("Failed to update document with rewrite suggestion")
+                
+        except Exception as e:
+            logger.error(f"Failed to update clause rewrite for document {document_id}, clause {clause_id}: {e}")
+            raise
+
     # Note: Document-based PDF methods are above in the "PDF File Operations" section
     # The methods below provide direct file storage access if needed
 
