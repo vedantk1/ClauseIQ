@@ -99,7 +99,6 @@ async def analyze_document(
                 "upload_date": datetime.now().isoformat(),
                 "text": extracted_text,
                 "ai_structured_summary": ai_structured_summary,
-                # Include full clause data including new risk_reasoning, key_terms, relationships
                 "clauses": [clause.dict() for clause in clauses],
                 "risk_summary": risk_summary,
                 "contract_type": contract_type.value if contract_type else None,

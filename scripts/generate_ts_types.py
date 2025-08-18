@@ -61,56 +61,38 @@ def process_type_annotation(annotation: Any) -> str:
     type_str = str(annotation)
     type_str = re.sub(r"<class '([^']+)'>", r"\1", type_str)
     
-    # Handle specific model references
-    if 'clauseiq_types.common.' in type_str:
-        # Extract just the class name
-        class_name = type_str.split('.')[-1]
-        return class_name
-    
     # Handle Enum types
     if hasattr(annotation, '__members__'):
         # It's an Enum, return the enum name
         return annotation.__name__
     
-    # Handle forward references and typing constructs
-    if hasattr(annotation, '__name__'):
-        return annotation.__name__
-    
     # Use mapping or the type name as is
     return TYPE_MAPPING.get(type_str, type_str)
 
-def analyze_pydantic_model(model_class: Any) -> Dict[str, Dict[str, Any]]:
-    """Analyze a Pydantic model and return field information."""
+def generate_ts_interface(model_class: Any) -> str:
+    """Generate TypeScript interface from a Pydantic model."""
+    class_name = model_class.__name__
     fields = {}
-    
-    # Get field types from model annotations
-    for field_name, field_annotation in getattr(model_class, '__annotations__', {}).items():
+
+    # Get field types from model
+    for field_name, field_info in model_class.__annotations__.items():
         is_optional = False
+        field_type = field_info
         
-        # Check if field has a default value or is Optional in model_fields
+        # Check if field has a default value or is Optional
         if hasattr(model_class, 'model_fields') and field_name in model_class.model_fields:
             field_def = model_class.model_fields[field_name]
-            # Check if field is optional based on default value or type annotation
-            is_optional = (field_def.default is not None or 
-                          field_def.default_factory is not None or
-                          'Optional' in str(field_annotation) or
-                          'None' in str(field_annotation))
+            if field_def.default is not None or field_def.default_factory is not None:
+                is_optional = True
         
         # Process type annotation
-        ts_type = process_type_annotation(field_annotation)
+        ts_type = process_type_annotation(field_type)
         
         # Add to fields dict
         fields[field_name] = {
             'type': ts_type,
             'optional': is_optional
         }
-    
-    return fields
-
-def generate_ts_interface(model_class: Any) -> str:
-    """Generate TypeScript interface from a Pydantic model."""
-    class_name = model_class.__name__
-    fields = analyze_pydantic_model(model_class)
     
     # Generate TypeScript interface
     lines = [f"export interface {class_name} {{"]
@@ -165,14 +147,13 @@ def generate_ts_types_from_module(module_path: str, output_path: str):
         ""
     ]
     
-    # Add imports for enums from common.ts (since we're generating interfaces only)
-    if any(field_info['type'] in ['ClauseType', 'RiskLevel', 'ContractType'] 
-           for model_class in models 
-           for field_info in analyze_pydantic_model(model_class).values()):
-        ts_code.append('import { ClauseType, RiskLevel, ContractType } from "./common";')
+    # Add enums first
+    for enum_class in enums:
+        ts_enum = generate_ts_enum(enum_class)
+        ts_code.append(ts_enum)
         ts_code.append("")
     
-    # Add interfaces (no enums in generated file, those come from common.ts)
+    # Add interfaces
     for model_class in models:
         ts_interface = generate_ts_interface(model_class)
         ts_code.append(ts_interface)
@@ -183,7 +164,7 @@ def generate_ts_types_from_module(module_path: str, output_path: str):
         f.write("\n".join(ts_code))
     
     print(f"Generated TypeScript interfaces in {output_path}")
-    print(f"- 0 enums")  # Enums are in common.ts
+    print(f"- {len(enums)} enums")
     print(f"- {len(models)} interfaces")
 
 if __name__ == "__main__":

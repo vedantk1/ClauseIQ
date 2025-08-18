@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import TextInputModal from "@/components/TextInputModal";
@@ -112,6 +112,66 @@ export default function ClauseDetailsPanel({
     setEditingNote(null);
   };
 
+  // --- UI Enhancement State ---
+  const [activeTerms, setActiveTerms] = useState<Set<string>>(new Set());
+
+  const toggleTerm = (term: string) => {
+    setActiveTerms((prev) => {
+      const next = new Set(prev);
+      if (next.has(term)) next.delete(term);
+      else next.add(term);
+      return next;
+    });
+  };
+
+  const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  const highlightedFullText = useMemo(() => {
+    if (!selectedClause?.text) return null;
+    if (!activeTerms.size) return selectedClause.text;
+    const terms = Array.from(activeTerms)
+      .sort((a, b) => b.length - a.length)
+      .map(escapeRegex);
+    try {
+      const r = new RegExp(`(${terms.join("|")})`, "gi");
+      const parts = selectedClause.text.split(r);
+      return parts.map((part, idx) => {
+        if (part === "") return null;
+        if (r.test(part)) {
+          // reset lastIndex for subsequent tests
+          r.lastIndex = 0;
+          return (
+            <mark
+              key={idx}
+              className="bg-accent-purple/30 text-text-primary px-0.5 rounded-sm"
+            >
+              {part}
+            </mark>
+          );
+        }
+        return <span key={idx}>{part}</span>;
+      });
+    } catch {
+      return selectedClause.text;
+    }
+  }, [activeTerms, selectedClause]);
+
+  const getRiskBorderClass = (risk?: string) => {
+    switch (risk) {
+      case "high":
+        return "border-l-4 border-accent-rose";
+      case "medium":
+        return "border-l-4 border-accent-amber";
+      case "low":
+        return "border-l-4 border-accent-green";
+      default:
+        return "border-l-4 border-border-muted";
+    }
+  };
+
+  const cardSection =
+    "rounded-lg border border-border-muted bg-bg-elevated p-4";
+
   // Clause Insights (fairness, negotiability, etc.) removed as they were hardcoded placeholders.
 
   if (!selectedClause) {
@@ -176,45 +236,12 @@ export default function ClauseDetailsPanel({
         </h2>
       )}
 
-      <div className="space-y-6">
-        {/* Quick Action Bar */}
-        <div className="flex items-center gap-2 p-3 bg-bg-elevated rounded-lg border border-border-muted">
-          <span className="text-sm font-medium text-text-primary">
-            Quick Actions:
-          </span>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={handleAddNote}
-            title="Add a personal note to this clause"
-          >
-            Add Note
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={(event) => onFlagForReview(selectedClause, event)}
-            title={
-              flaggedClauses.has(selectedClause.id || "")
-                ? "Remove flag from this clause"
-                : "Flag this clause for legal review"
-            }
-          >
-            {flaggedClauses.has(selectedClause.id || "") ? "Unflag" : "Flag"}
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => onCopyClause(selectedClause)}
-            title="Copy analysis to clipboard"
-          >
-            Copy
-          </Button>
-        </div>
+      <div className="space-y-5 pb-24">
+        {/* bottom padding to not hide content behind sticky bar */}
 
         {/* Clause Header */}
         <div>
-          <div className="flex items-start justify-between mb-3">
+          <div className="flex items-start justify-between mb-2">
             <div className="flex-1">
               <h3 className="font-medium text-text-primary">
                 {selectedClause.heading ||
@@ -233,11 +260,26 @@ export default function ClauseDetailsPanel({
               Risk
             </div>
           </div>
-          {/* Single horizontal metadata bar */}
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <span className="text-sm text-text-secondary bg-bg-elevated px-2 py-1 rounded">
-              {getClauseTypeLabel(selectedClause.clause_type)}
-            </span>
+          {/* Meta chips */}
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-text-secondary bg-bg-elevated px-2 py-1 rounded">
+                {getClauseTypeLabel(selectedClause.clause_type)}
+              </span>
+              {typeof selectedClause.position_start === "number" && (
+                <span
+                  title="Clause position in document"
+                  className="text-xs text-text-secondary bg-bg-elevated px-2 py-1 rounded border border-border-muted"
+                >
+                  Pos {selectedClause.position_start}
+                  {typeof selectedClause.position_end === "number" &&
+                    selectedClause.position_end !==
+                      selectedClause.position_start && (
+                      <>–{selectedClause.position_end}</>
+                    )}
+                </span>
+              )}
+            </div>
             {/* Status indicators moved to the right */}
             <div className="flex items-center gap-2">
               {selectedClause.id && flaggedClauses.has(selectedClause.id) && (
@@ -385,8 +427,8 @@ export default function ClauseDetailsPanel({
 
         {/* Risk Assessment */}
         {selectedClause.risk_assessment && (
-          <div>
-            <h4 className="font-medium text-text-primary mb-2">
+          <div className={cardSection}>
+            <h4 className="font-medium text-text-primary mb-2 text-sm tracking-wide uppercase">
               Risk Assessment
             </h4>
             <p className="text-text-secondary text-sm leading-relaxed">
@@ -397,8 +439,8 @@ export default function ClauseDetailsPanel({
 
         {/* LLM Risk Reasoning */}
         {selectedClause.risk_reasoning && (
-          <div>
-            <h4 className="font-medium text-text-primary mb-2">
+          <div className={cardSection}>
+            <h4 className="font-medium text-text-primary mb-2 text-sm tracking-wide uppercase">
               Risk Reasoning
             </h4>
             <p className="text-text-secondary text-sm leading-relaxed whitespace-pre-line">
@@ -409,26 +451,48 @@ export default function ClauseDetailsPanel({
 
         {/* Key Terms */}
         {selectedClause.key_terms && selectedClause.key_terms.length > 0 && (
-          <div>
-            <h4 className="font-medium text-text-primary mb-2">Key Terms</h4>
-            <ul className="flex flex-wrap gap-2">
-              {selectedClause.key_terms.map((term: string, idx: number) => (
-                <li
-                  key={idx}
-                  className="text-xs bg-accent-purple/10 text-accent-purple px-2 py-1 rounded-full border border-accent-purple/20"
-                >
-                  {term}
-                </li>
-              ))}
-            </ul>
+          <div className={cardSection}>
+            <h4 className="font-medium text-text-primary mb-2 text-sm tracking-wide uppercase">
+              Key Terms
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {selectedClause.key_terms.map((term: string) => {
+                const active = activeTerms.has(term);
+                return (
+                  <button
+                    key={term}
+                    onClick={() => toggleTerm(term)}
+                    className={`text-xs px-2 py-1 rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple/50 cursor-pointer select-none ${
+                      active
+                        ? "bg-accent-purple/30 text-accent-purple border-accent-purple"
+                        : "bg-accent-purple/10 text-accent-purple border-accent-purple/30 hover:bg-accent-purple/20"
+                    }`}
+                    aria-pressed={active}
+                    title={
+                      active
+                        ? "Click to remove highlight"
+                        : "Click to highlight in text"
+                    }
+                  >
+                    {term}
+                  </button>
+                );
+              })}
+            </div>
+            {activeTerms.size > 0 && (
+              <p className="mt-3 text-xs text-text-secondary">
+                Highlighting {activeTerms.size} term
+                {activeTerms.size > 1 && "s"} in the full text below.
+              </p>
+            )}
           </div>
         )}
 
         {/* Relationships */}
         {selectedClause.relationships &&
           selectedClause.relationships.length > 0 && (
-            <div>
-              <h4 className="font-medium text-text-primary mb-2">
+            <div className={cardSection}>
+              <h4 className="font-medium text-text-primary mb-2 text-sm tracking-wide uppercase">
                 Clause Relationships
               </h4>
               <ul className="space-y-1">
@@ -449,8 +513,10 @@ export default function ClauseDetailsPanel({
 
         {/* Key Points */}
         {selectedClause.key_points && selectedClause.key_points.length > 0 && (
-          <div>
-            <h4 className="font-medium text-text-primary mb-2">Key Points</h4>
+          <div className={cardSection}>
+            <h4 className="font-medium text-text-primary mb-2 text-sm tracking-wide uppercase">
+              Key Points
+            </h4>
             <ul className="space-y-1">
               {selectedClause.key_points.map((point: string, index: number) => (
                 <li
@@ -468,8 +534,8 @@ export default function ClauseDetailsPanel({
         {/* Recommendations */}
         {selectedClause.recommendations &&
           selectedClause.recommendations.length > 0 && (
-            <div>
-              <h4 className="font-medium text-text-primary mb-2">
+            <div className={cardSection}>
+              <h4 className="font-medium text-text-primary mb-2 text-sm tracking-wide uppercase">
                 Recommendations
               </h4>
               <ul className="space-y-2">
@@ -492,12 +558,59 @@ export default function ClauseDetailsPanel({
         {/* Clause Insights removed */}
 
         {/* Full Clause Text */}
-        <div>
-          <h4 className="font-medium text-text-primary mb-2">Full Text</h4>
-          <div className="bg-bg-elevated rounded-lg p-4 max-h-48 overflow-y-auto">
-            <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
-              {selectedClause.text}
-            </p>
+        <div
+          className={`${cardSection} ${getRiskBorderClass(
+            selectedClause.risk_level
+          )}`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-medium text-text-primary text-sm tracking-wide uppercase mb-0">
+              Full Text
+            </h4>
+            {activeTerms.size > 0 && (
+              <button
+                onClick={() => setActiveTerms(new Set())}
+                className="text-xs text-accent-purple hover:underline"
+              >
+                Clear highlights
+              </button>
+            )}
+          </div>
+          <div className="rounded p-3 bg-bg-primary/40 max-h-56 overflow-y-auto text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
+            {highlightedFullText}
+          </div>
+        </div>
+      </div>
+
+      {/* Sticky Action Bar */}
+      <div className="fixed left-0 right-0 bottom-0 z-10 px-4 pb-4 pointer-events-none">
+        <div className="max-w-screen-md mx-auto pointer-events-auto">
+          <div className="bg-bg-elevated/95 backdrop-blur border border-border-muted rounded-xl shadow-lg px-4 py-3 flex flex-wrap gap-2 items-center">
+            <span className="text-xs font-medium text-text-secondary mr-2">
+              Actions
+            </span>
+            <Button size="sm" variant="secondary" onClick={handleAddNote}>
+              Add Note
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={(event) => onFlagForReview(selectedClause, event)}
+              title={
+                flaggedClauses.has(selectedClause.id || "")
+                  ? "Remove flag from this clause"
+                  : "Flag this clause for legal review"
+              }
+            >
+              {flaggedClauses.has(selectedClause.id || "") ? "Unflag" : "Flag"}
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => onCopyClause(selectedClause)}
+            >
+              Copy
+            </Button>
           </div>
         </div>
       </div>
