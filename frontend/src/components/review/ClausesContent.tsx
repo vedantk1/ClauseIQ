@@ -45,7 +45,6 @@ interface ClausesContentProps {
     clause: { id?: string },
     event?: React.MouseEvent
   ) => Promise<void>;
-  onCopyClause: (clause: Clause) => Promise<void>;
 }
 
 /**
@@ -81,7 +80,6 @@ export default function ClausesContent({
   onEditNote,
   onDeleteNote,
   onFlagForReview,
-  onCopyClause,
 }: ClausesContentProps) {
   // If a clause is selected, show the details view
   if (selectedClause) {
@@ -97,7 +95,6 @@ export default function ClausesContent({
           onEditNote={onEditNote}
           onDeleteNote={onDeleteNote}
           onFlagForReview={onFlagForReview}
-          onCopyClause={onCopyClause}
           onBack={() => onClauseSelect(null)}
         />
       </div>

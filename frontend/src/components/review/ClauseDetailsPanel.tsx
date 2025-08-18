@@ -23,7 +23,6 @@ interface ClauseDetailsPanelProps {
   onEditNote: (clause: Clause, noteId?: string, editedText?: string) => void;
   onDeleteNote: (clause: Clause, noteId?: string) => void;
   onFlagForReview: (clause: Clause, event?: React.MouseEvent) => void;
-  onCopyClause: (clause: Clause) => void;
   onBack?: () => void; // Optional back navigation function
 }
 
@@ -37,7 +36,6 @@ export default function ClauseDetailsPanel({
   onEditNote,
   onDeleteNote,
   onFlagForReview,
-  onCopyClause,
   onBack,
 }: ClauseDetailsPanelProps) {
   // New state for notes drawer - keyed by clause ID to preserve context
@@ -502,13 +500,7 @@ export default function ClauseDetailsPanel({
             >
               {flaggedClauses.has(selectedClause.id || "") ? "Unflag" : "Flag"}
             </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => onCopyClause(selectedClause)}
-            >
-              Copy
-            </Button>
+            {/* Copy action removed */}
           </div>
         </div>
       </div>
