@@ -122,6 +122,14 @@ export default function ClauseDetailsPanel({
   const fullTextCardSection =
     "rounded-lg border border-border-muted bg-bg-primary/20 p-4";
 
+  // Determine if relationships can be rendered inline (single & short)
+  const inlineRelationship =
+    selectedClause?.relationships &&
+    selectedClause.relationships.length === 1 &&
+    (selectedClause.relationships[0] || "").length <= 120
+      ? selectedClause.relationships[0]
+      : null;
+
   // Clause Insights (fairness, negotiability, etc.) removed as they were hardcoded placeholders.
 
   if (!selectedClause) {
@@ -405,6 +413,16 @@ export default function ClauseDetailsPanel({
           </div>
         )}
 
+        {/* Inline single relationship (placed above Risk Reasoning) */}
+        {inlineRelationship && (
+          <div className="mt-3 mb-2 text-sm text-text-secondary">
+            <span className="uppercase tracking-wide text-[11px] font-medium text-accent-blue mr-1">
+              Relationship:
+            </span>
+            {inlineRelationship}
+          </div>
+        )}
+
         {/* LLM Risk Reasoning */}
         {selectedClause.risk_reasoning && (
           <div className={riskCardSection}>
@@ -419,8 +437,9 @@ export default function ClauseDetailsPanel({
 
         {/* Key Terms section removed */}
 
-        {/* Relationships */}
-        {selectedClause.relationships &&
+        {/* Relationships - adaptive: card for multiple/long; inline moved to bottom */}
+        {!inlineRelationship &&
+          selectedClause.relationships &&
           selectedClause.relationships.length > 0 && (
             <div className={relationshipCardSection}>
               <h4 className="font-medium text-accent-blue text-sm tracking-wide uppercase mb-2">
@@ -499,6 +518,8 @@ export default function ClauseDetailsPanel({
             {selectedClause.text}
           </div>
         </div>
+
+        {/* Inline relationship moved above Risk Reasoning */}
       </div>
 
       {/* Former sticky action bar removed; actions now inline under header */}
