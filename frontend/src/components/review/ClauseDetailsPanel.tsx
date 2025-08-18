@@ -114,18 +114,7 @@ export default function ClauseDetailsPanel({
 
   // Key terms + highlighting removed per design decision (UI-only removal).
 
-  const getRiskBorderClass = (risk?: string) => {
-    switch (risk) {
-      case "high":
-        return "border-l-4 border-accent-rose";
-      case "medium":
-        return "border-l-4 border-accent-amber";
-      case "low":
-        return "border-l-4 border-accent-green";
-      default:
-        return "border-l-4 border-border-muted";
-    }
-  };
+  // Risk-based left border removed for cleaner look.
 
   const cardSection =
     "rounded-lg border border-border-muted bg-bg-elevated p-4";
@@ -479,11 +468,7 @@ export default function ClauseDetailsPanel({
         {/* Clause Insights removed */}
 
         {/* Full Clause Text */}
-        <div
-          className={`${cardSection} ${getRiskBorderClass(
-            selectedClause.risk_level
-          )}`}
-        >
+        <div className={cardSection}>
           <div className="mb-2">
             <h4 className="font-medium text-text-primary text-sm tracking-wide uppercase mb-0">
               Full Text
