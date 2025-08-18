@@ -399,7 +399,7 @@ export default function ClauseDetailsPanel({
             <h4 className="font-semibold text-accent-rose text-base tracking-wide uppercase mb-2">
               Risk Assessment
             </h4>
-            <p className="text-text-secondary text-sm leading-loose">
+            <p className="text-text-secondary text-sm leading-relaxed">
               {selectedClause.risk_assessment}
             </p>
           </div>
@@ -411,7 +411,7 @@ export default function ClauseDetailsPanel({
             <h4 className="font-semibold text-accent-rose text-base tracking-wide uppercase mb-2">
               Risk Reasoning
             </h4>
-            <p className="text-text-secondary text-base leading-loose whitespace-pre-line">
+            <p className="text-text-secondary text-sm leading-relaxed whitespace-pre-line">
               {selectedClause.risk_reasoning}
             </p>
           </div>
