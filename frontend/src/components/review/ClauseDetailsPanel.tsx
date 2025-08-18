@@ -181,7 +181,7 @@ export default function ClauseDetailsPanel({
         </h2>
       )}
 
-      <div className="space-y-5 pb-24">
+      <div className="space-y-5 pb-6">
         {/* bottom padding to not hide content behind sticky bar */}
 
         {/* Clause Header */}
@@ -248,6 +248,24 @@ export default function ClauseDetailsPanel({
                 </button>
               )}
             </div>
+          </div>
+          {/* Inline Actions (moved from sticky bar) */}
+          <div className="flex items-center gap-2 mt-2">
+            <Button size="sm" variant="secondary" onClick={handleAddNote}>
+              Add Note
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={(event) => onFlagForReview(selectedClause, event)}
+              title={
+                flaggedClauses.has(selectedClause.id || "")
+                  ? "Remove flag from this clause"
+                  : "Flag this clause for legal review"
+              }
+            >
+              {flaggedClauses.has(selectedClause.id || "") ? "Unflag" : "Flag"}
+            </Button>
           </div>
         </div>
 
@@ -478,32 +496,7 @@ export default function ClauseDetailsPanel({
         </div>
       </div>
 
-      {/* Sticky Action Bar */}
-      <div className="fixed left-0 right-0 bottom-0 z-10 px-4 pb-4 pointer-events-none">
-        <div className="max-w-screen-md mx-auto pointer-events-auto">
-          <div className="bg-bg-elevated/95 backdrop-blur border border-border-muted rounded-xl shadow-lg px-4 py-3 flex flex-wrap gap-2 items-center">
-            <span className="text-xs font-medium text-text-secondary mr-2">
-              Actions
-            </span>
-            <Button size="sm" variant="secondary" onClick={handleAddNote}>
-              Add Note
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={(event) => onFlagForReview(selectedClause, event)}
-              title={
-                flaggedClauses.has(selectedClause.id || "")
-                  ? "Remove flag from this clause"
-                  : "Flag this clause for legal review"
-              }
-            >
-              {flaggedClauses.has(selectedClause.id || "") ? "Unflag" : "Flag"}
-            </Button>
-            {/* Copy action removed */}
-          </div>
-        </div>
-      </div>
+      {/* Former sticky action bar removed; actions now inline under header */}
 
       {/* Custom Note Input Modal */}
       <TextInputModal
