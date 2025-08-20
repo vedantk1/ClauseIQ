@@ -2,7 +2,8 @@
 RAG (Retrieval Augmented Generation) Service for ClauseIQ.
 
 This service provides document chunking, embedding generation, vector storage,
-and chat functionality using OpenAI's Vector Stores and embeddings API.
+and chat functionality using Pinecone for vector storage and OpenAI's
+embeddings/chat APIs.
 
 DESIGN PRINCIPLES:
 - Zero disruption to existing functionality
@@ -13,7 +14,7 @@ DESIGN PRINCIPLES:
 ARCHITECTURE:
 - Document Chunking: Smart legal document segmentation
 - Embeddings: OpenAI text-embedding-3-large for maximum accuracy
-- Vector Storage: OpenAI Vector Stores (1GB free tier)
+- Vector Storage: Pinecone serverless index with per-user namespaces
 - RAG Pipeline: Retrieval + Generation with source attribution
 """
 import asyncio
@@ -286,7 +287,7 @@ class RAGService:
     
     async def process_document_for_rag(self, document_id: str, text: str, filename: str, user_id: str) -> Dict[str, Any]:
         """
-        Process a document for RAG by creating chunks and storing them in OpenAI Vector Store.
+        Process a document for RAG by creating chunks and storing them in a Pinecone index.
         Returns data to be stored in MongoDB alongside existing document data.
         """
         try:
@@ -655,7 +656,11 @@ RESPONSE:"""
             }
     
     async def _get_or_create_vector_store(self, user_id: str) -> str:
-        """Get or create a vector store for the user."""
+        """
+        LEGACY (OpenAI Vector Store) – not used in current architecture.
+        Pinecone is the active vector storage via `PineconeVectorService`.
+        Kept for potential future migrations; safe to ignore.
+        """
         try:
             client = _get_openai_client()
             
@@ -687,7 +692,10 @@ RESPONSE:"""
             raise e
     
     async def _upload_to_vector_store(self, vector_store_id: str, text: str, filename: str) -> str:
-        """Upload document text to vector store."""
+        """
+        LEGACY (OpenAI Vector Store) – not used in current architecture.
+        Pinecone ingestion is handled by `PineconeVectorService.store_document_chunks`.
+        """
         try:
             import tempfile
             import os
