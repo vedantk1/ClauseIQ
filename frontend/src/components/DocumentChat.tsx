@@ -462,31 +462,14 @@ export default function DocumentChat({
                   <p className="text-sm whitespace-pre-wrap leading-relaxed">
                     {message.content}
                   </p>
-                  {message.role === "assistant" &&
-                    message.sources &&
-                    message.sources.length > 0 && (
-                      <div className="mt-2.5 pt-2 border-t border-border-muted flex items-center justify-between">
-                        <p className="text-xs text-text-tertiary">
-                          Sources: {message.sources.length} document section
-                          {message.sources.length > 1 ? "s" : ""}
-                        </p>
-                        <p className="text-xs text-text-tertiary opacity-70 ml-3">
-                          {new Date(message.timestamp).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
-                      </div>
-                    )}
-                  {message.role === "assistant" &&
-                    (!message.sources || message.sources.length === 0) && (
-                      <p className="text-xs text-text-tertiary opacity-70 mt-1.5 text-right">
-                        {new Date(message.timestamp).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    )}
+                  {message.role === "assistant" && (
+                    <p className="text-xs text-text-tertiary opacity-70 mt-1.5 text-right">
+                      {new Date(message.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  )}
                 </div>
               </div>
             ))
