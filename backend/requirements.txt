@@ -73,7 +73,8 @@ dnspython==2.7.0
 # Utilities and misc
 click==8.2.1
 tqdm==4.67.1
-fpdf==1.7.2
+# PDF generation - Professional quality
+reportlab==4.2.5
 jiter==0.10.0
 typing-inspection==0.4.1
 typing_extensions==4.14.0
