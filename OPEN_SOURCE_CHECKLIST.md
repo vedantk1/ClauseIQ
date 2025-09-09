@@ -1,6 +1,6 @@
 # 🚀 ClauseIQ Open Source Checklist
 
-**Repository**: https://github.com/vedantk1/legal-ai  
+**Repository**: https://github.com/vedantk1/ClauseIQ  
 **Status**: 95% Ready for Open Source | **Last Updated**: September 2025
 
 ---

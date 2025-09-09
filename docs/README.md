@@ -46,7 +46,7 @@ Follow the [Quick Start Guide](../README.md#quick-start) to run locally.
 
 ```bash
 # 1. Clone and setup
-git clone https://github.com/vedantk1/legal-ai.git && cd legal-ai
+git clone https://github.com/vedantk1/ClauseIQ.git && cd ClauseIQ
 ```
 
 # 2. Backend setup

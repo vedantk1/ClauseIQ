@@ -39,8 +39,8 @@ Our advanced setup script automatically handles everything from system prerequis
 
 ```bash
 # Clone the repository
-git clone https://github.com/vedantk1/legal-ai.git
-cd legal-ai
+git clone https://github.com/vedantk1/ClauseIQ.git
+cd ClauseIQ
 
 # Run the Level 3 automated setup script
 ./scripts/setup-for-development.sh

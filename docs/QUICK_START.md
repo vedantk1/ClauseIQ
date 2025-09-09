@@ -19,8 +19,8 @@
 ### **1. Clone & Navigate**
 
 ```bash
-git clone https://github.com/vedantk1/legal-ai.git
-cd legal-ai
+git clone https://github.com/vedantk1/ClauseIQ.git
+cd ClauseIQ
 ```
 
 ### **2. Run Level 3 Setup Script**

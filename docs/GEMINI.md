@@ -1,6 +1,6 @@
 # Gemini Code Assistant Report: ClauseIQ Project
 
-**Repository**: https://github.com/vedantk1/legal-ai  
+**Repository**: https://github.com/vedantk1/ClauseIQ  
 **Version**: 1.0.0  
 **Status**: Production Ready  
 **Last Updated**: September 2025
