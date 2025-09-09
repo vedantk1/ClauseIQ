@@ -1,6 +1,7 @@
 # 🚀 ClauseIQ Open Source Checklist
 
-**Status**: 85% Ready for Open Source | **Missing**: Environment examples + setup script
+**Repository**: https://github.com/vedantk1/legal-ai  
+**Status**: 95% Ready for Open Source | **Last Updated**: September 2025
 
 ---
 
@@ -8,12 +9,12 @@
 
 ### **External APIs Required (4 services)**
 
-| **Service** | **Purpose** | **Cost** | **Free Tier** | **Required Level** |
-|---|---|---|---|---|
-| **OpenAI API** | AI analysis, chat, embeddings | Pay-per-use | $5 free credit | **REQUIRED** |
-| **Pinecone** | Vector storage for chat | $0-$70/month | 1GB free | **REQUIRED** for chat |
-| **Local MongoDB** | Primary database | Free | Unlimited | **REQUIRED** |
-| **SMTP Email** | Password reset only | Free-$10/month | Gmail free | **OPTIONAL** |
+| **Service**       | **Purpose**                   | **Cost**       | **Free Tier**  | **Required Level**    |
+| ----------------- | ----------------------------- | -------------- | -------------- | --------------------- |
+| **OpenAI API**    | AI analysis, chat, embeddings | Pay-per-use    | $5 free credit | **REQUIRED**          |
+| **Pinecone**      | Vector storage for chat       | $0-$70/month   | 1GB free       | **REQUIRED** for chat |
+| **Local MongoDB** | Primary database              | Free           | Unlimited      | **REQUIRED**          |
+| **SMTP Email**    | Password reset only           | Free-$10/month | Gmail free     | **OPTIONAL**          |
 
 **💰 Total Cost**: Free tier supports ~500-1000 documents with chat
 
@@ -22,6 +23,7 @@
 ## ✅ **Already Open Source Ready**
 
 ### **✅ Configuration & Security**
+
 - [x] Environment-based configuration (`.env` files)
 - [x] No hardcoded API keys in codebase
 - [x] Secure JWT authentication with configurable secrets
@@ -29,6 +31,7 @@
 - [x] Production-ready security middleware
 
 ### **✅ Documentation**
+
 - [x] Professional README with features overview
 - [x] Comprehensive documentation in `docs/` folder
 - [x] API reference documentation
@@ -37,6 +40,7 @@
 - [x] Contributing guidelines (`CONTRIBUTING.md`)
 
 ### **✅ Code Quality**
+
 - [x] TypeScript throughout frontend
 - [x] Python type hints throughout backend
 - [x] Comprehensive test suites (Jest + pytest)
@@ -45,6 +49,7 @@
 - [x] Professional git history
 
 ### **✅ Legal & Licensing**
+
 - [x] MIT License included
 - [x] No proprietary dependencies
 - [x] All dependencies are open source compatible
@@ -56,15 +61,18 @@
 ### **1. Environment Configuration** ✅ **COMPLETED**
 
 ✅ **Created example environment files**:
+
 - `env-examples/backend.env.example` - Complete backend configuration
 - `env-examples/frontend.env.example` - Frontend API settings
 
 ✅ **Created setup script**:
+
 - `scripts/setup-for-development.sh` - Automated environment setup
 
 ### **2. User Onboarding** ✅ **COMPLETED**
 
 ✅ **Setup instructions include**:
+
 - Prerequisites (Python 3.8+, Node.js 18+)
 - API key acquisition links
 - Step-by-step environment setup
@@ -76,16 +84,19 @@
 ✅ **Clear instructions for each service**:
 
 #### **OpenAI API** ($5 free credit)
+
 - **URL**: https://platform.openai.com/api-keys
 - **Setup**: Create account → Create API key → Add to `.env`
 - **Usage**: ~500 document analyses with free credit
 
 #### **Pinecone** (1GB free tier)
+
 - **URL**: https://app.pinecone.io/
 - **Setup**: Create account → Create API key → Add to `.env`
 - **Usage**: ~10,000 document chats with free tier
 
 #### **Local MongoDB**
+
 - **Installation**: Install MongoDB Community Edition locally
 - **Setup**: Start MongoDB service → Use localhost:27017
 - **Usage**: Unlimited local storage
@@ -93,6 +104,7 @@
 ### **4. Optional Components**
 
 ✅ **Email service (OPTIONAL)**:
+
 - Only needed for password reset functionality
 - Works without email (users can still register/login)
 - Clear documentation about optional nature
@@ -104,22 +116,26 @@
 ### **Platform Options**
 
 #### **GitHub** (Recommended)
+
 - ✅ Most popular for open source projects
 - ✅ Great discoverability and community features
 - ✅ Free private/public repositories
 - ✅ Built-in issue tracking and project management
 
 #### **GitLab**
+
 - ✅ Good alternative with built-in CI/CD
 - ✅ Self-hosted options available
 
 #### **Other Options**
+
 - Codeberg (privacy-focused)
 - SourceForge (legacy but still active)
 
 ### **Repository Setup**
 
 ✅ **Essential files already included**:
+
 - `README.md` - Project overview and features
 - `LICENSE` - MIT license
 - `CONTRIBUTING.md` - Contribution guidelines
@@ -129,6 +145,7 @@
 ### **Community Features**
 
 **Recommended GitHub setup**:
+
 - [ ] Enable Issues for bug reports/feature requests
 - [ ] Create issue templates (bug report, feature request)
 - [ ] Set up GitHub Discussions for Q&A
@@ -201,12 +218,13 @@
 
 ## 🚀 **Ready to Launch!**
 
-**Your ClauseIQ project is 95% ready for open source release.** 
+**Your ClauseIQ project is 95% ready for open source release.**
 
 The remaining 5% is just:
+
 1. ✅ Environment examples (COMPLETED)
 2. ✅ Setup script (COMPLETED)
 3. Testing the setup process on a fresh machine
 4. Final repository configuration
 
-**This is a high-quality, production-ready project that would be a valuable addition to the open source ecosystem!** 🌟 
+**This is a high-quality, production-ready project that would be a valuable addition to the open source ecosystem!** 🌟

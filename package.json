@@ -16,12 +16,12 @@
     "concurrently": "^8.2.2"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "python3": ">=3.9.0"
+    "node": ">=24.0.0",
+    "python3": ">=3.13.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/vedantk1/ClauseIQ.git"
+    "url": "https://github.com/vedantk1/legal-ai.git"
   },
   "keywords": [
     "ai",

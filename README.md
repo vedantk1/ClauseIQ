@@ -4,10 +4,11 @@
 **Status**: Production Ready | **Chat Feature**: ✅ Live | **Contract Types**: 10+ Supported
 
 ![ClauseIQ Demo](https://img.shields.io/badge/Status-Production%20Ready-green)
-![Python](https://img.shields.io/badge/Python-3.13-blue)
+![Python](https://img.shields.io/badge/Python-3.13+-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-15.3.3-black)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.12-009688)
 ![OpenAI](https://img.shields.io/badge/OpenAI-Powered-412991)
+![Node.js](https://img.shields.io/badge/Node.js-24+-green)
 
 ## 🎯 **What is ClauseIQ?**
 
@@ -23,7 +24,7 @@ ClauseIQ transforms complex legal documents into clear, understandable insights 
 
 ## **✨ Features**
 
-- **📄 PDF Analysis**: Upload contracts and get AI-powered insights 
+- **📄 PDF Analysis**: Upload contracts and get AI-powered insights
 - **🎯 Risk Assessment**: Identify problematic clauses and legal risks
 - **💬 Interactive Chat**: Ask questions about your documents
 - **📊 Analytics Dashboard**: Track document processing and insights
@@ -38,8 +39,8 @@ Our advanced setup script automatically handles everything from system prerequis
 
 ```bash
 # Clone the repository
-git clone https://github.com/vedantk1/ClauseIQ.git
-cd ClauseIQ
+git clone https://github.com/vedantk1/legal-ai.git
+cd legal-ai
 
 # Run the Level 3 automated setup script
 ./scripts/setup-for-development.sh
@@ -48,7 +49,7 @@ cd ClauseIQ
 **🎯 What it does automatically:**
 
 - **🔍 System Detection** - Detects your OS (macOS, Ubuntu, RHEL, Windows WSL)
-- **📦 Package Manager** - Installs/uses brew, apt, dnf, yum, or chocolatey  
+- **📦 Package Manager** - Installs/uses brew, apt, dnf, yum, or chocolatey
 - **🐍 Python 3.8+** - Version check, automatic installation if needed
 - **📗 Node.js 18+** - Version check, automatic installation if needed
 - **🍃 MongoDB** - Community Edition installation and service management
@@ -60,13 +61,15 @@ cd ClauseIQ
 ### **📝 Manual Setup**
 
 #### Prerequisites
-- Python 3.8+
-- Node.js 18+
+
+- Python 3.13+
+- Node.js 24+
 - OpenAI API key
 - Local MongoDB
 - Pinecone API key (for chat feature)
 
 #### Backend Setup
+
 ```bash
 cd backend
 python -m venv venv
@@ -79,8 +82,9 @@ cp ../env-examples/backend.env.example .env
 ```
 
 #### Frontend Setup
+
 ```bash
-cd frontend  
+cd frontend
 npm install
 
 # Copy and configure environment
@@ -88,15 +92,17 @@ cp ../env-examples/frontend.env.example .env.local
 ```
 
 #### Start Development Servers
+
 ```bash
 # Backend (Terminal 1)
 cd backend && source venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
-# Frontend (Terminal 2)  
+# Frontend (Terminal 2)
 cd frontend && npm run dev
 ```
 
 ### **🌐 Access the Application**
+
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
@@ -124,7 +130,6 @@ cd frontend && npm run dev
 - **[🤖 AI Agent Guide](docs/README.md#ai-agent-guide)** - Essential knowledge for automated development
 - **[🏗️ Architecture](docs/README.md#architecture)** - System design and components
 - **[🚨 Troubleshooting](docs/README.md#troubleshooting)** - Common issues and solutions
-
 
 ### **For Different Audiences**
 
@@ -155,6 +160,7 @@ Each contract type receives specialized AI analysis with relevant clause extract
 ## 🎯 **Project Goals**
 
 This project demonstrates:
+
 - **AI Integration**: Advanced LLM-powered document analysis
 - **Full-Stack Development**: Modern React/Next.js frontend with FastAPI backend
 - **Vector Search**: RAG implementation with Pinecone vector storage

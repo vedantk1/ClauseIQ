@@ -7,7 +7,7 @@
 ## 📋 **Prerequisites**
 
 - Python 3.13+
-- Node.js 18+
+- Node.js 24+
 - OpenAI API Key
 - MongoDB (local installation)
 - Pinecone API Key (for chat feature)
@@ -17,21 +17,24 @@
 ## ⚡ **One-Command Setup (Level 3 Automation)**
 
 ### **1. Clone & Navigate**
+
 ```bash
-git clone https://github.com/vedantk1/ClauseIQ.git
-cd ClauseIQ
+git clone https://github.com/vedantk1/legal-ai.git
+cd legal-ai
 ```
 
 ### **2. Run Level 3 Setup Script**
+
 ```bash
 ./scripts/setup-for-development.sh
 ```
 
 **🎯 Level 3 Automation Features:**
+
 - **🔍 System Detection** - Auto-detects OS and architecture
 - **📦 Package Manager** - Installs brew/apt/dnf/yum if needed
-- **🐍 Python 3.8+** - Version check and automatic installation
-- **📗 Node.js 18+** - Version check and automatic installation  
+- **🐍 Python 3.13+** - Version check and automatic installation
+- **📗 Node.js 24+** - Version check and automatic installation
 - **🍃 MongoDB** - Community Edition installation and service start
 - **🔧 Project Setup** - Virtual environment, dependencies, environment files
 - **✅ Verification** - Connection testing and health checks
@@ -44,6 +47,7 @@ cd ClauseIQ
 ## 📋 **Manual Setup (Advanced Users)**
 
 ### **1.5. Install MongoDB (Required)**
+
 ```bash
 # macOS (using Homebrew)
 brew tap mongodb/brew
@@ -60,6 +64,7 @@ sudo systemctl start mongodb
 ```
 
 ### **2. Backend Setup**
+
 ```bash
 cd backend
 python3 -m venv venv
@@ -69,6 +74,7 @@ pip install -r requirements.txt
 ```
 
 ### **3. Frontend Setup**
+
 ```bash
 cd ../frontend
 npm install
@@ -77,6 +83,7 @@ npm install
 ### **4. Environment Configuration**
 
 **Backend** (`backend/.env`):
+
 ```env
 # AI Services
 OPENAI_API_KEY=sk-your-openai-api-key
@@ -100,6 +107,7 @@ SMTP_PASSWORD=your-app-password
 ```
 
 **Frontend** (`frontend/.env.local`):
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_ENVIRONMENT=development
@@ -108,11 +116,13 @@ NEXT_PUBLIC_ENVIRONMENT=development
 ### **5. Start Services**
 
 **Terminal 1 - Backend:**
+
 ```bash
 cd backend && source venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 **Terminal 2 - Frontend:**
+
 ```bash
 cd frontend && npm run dev
 ```
@@ -126,6 +136,7 @@ cd frontend && npm run dev
 - **API Docs**: http://localhost:8000/docs
 
 **Test the system:**
+
 1. Open http://localhost:3000
 2. Register a new account
 3. Upload a PDF contract
@@ -136,6 +147,7 @@ cd frontend && npm run dev
 ## 🛠️ **Development Commands**
 
 ### **Backend**
+
 ```bash
 # Run with auto-reload
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
@@ -148,6 +160,7 @@ curl http://localhost:8000/health
 ```
 
 ### **Frontend**
+
 ```bash
 # Development server
 npm run dev
@@ -190,18 +203,21 @@ npm run dev:frontend   # Frontend only
 ### **Backend Issues**
 
 **MongoDB Connection Error:**
+
 ```bash
 # Check your MONGODB_URI in .env
 # Ensure IP whitelist includes your IP in MongoDB Atlas
 ```
 
 **OpenAI API Error:**
+
 ```bash
 # Verify OPENAI_API_KEY in .env
 # Check API key has sufficient credits
 ```
 
 **Port Already in Use:**
+
 ```bash
 # Kill process on port 8000
 lsof -ti:8000 | xargs kill -9
@@ -210,12 +226,14 @@ lsof -ti:8000 | xargs kill -9
 ### **Frontend Issues**
 
 **API Connection Error:**
+
 ```bash
 # Verify NEXT_PUBLIC_API_URL in .env.local
 # Ensure backend is running on correct port
 ```
 
 **Build Errors:**
+
 ```bash
 # Clear cache and reinstall
 rm -rf node_modules package-lock.json
@@ -242,4 +260,4 @@ npm install
 
 ---
 
-**🎉 You're ready to develop with ClauseIQ!** 
+**🎉 You're ready to develop with ClauseIQ!**

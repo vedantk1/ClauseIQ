@@ -1,8 +1,8 @@
 # 🎯 Cursor AI Context - ClauseIQ Project
 
 **Purpose**: Essential project context for Cursor AI assistance  
-**Status**: Production Ready | **Last Updated**: January 2025  
-**Version**: 3.0
+**Status**: Production Ready | **Last Updated**: September 2025  
+**Version**: 1.0.0
 
 ---
 
@@ -11,12 +11,14 @@
 ClauseIQ is a **production-ready AI-powered legal document analysis platform** that transforms complex contracts into understandable insights through advanced AI analysis and interactive chat functionality.
 
 ### **Live Deployment**
+
 - **Frontend**: http://localhost:3000
 - **Backend**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
 
 ### **Core Technology Stack**
-- **Backend**: FastAPI + Python 3.13 + MongoDB + OpenAI API + Pinecone
+
+- **Backend**: FastAPI + Python 3.13+ + MongoDB + OpenAI API + Pinecone
 - **Frontend**: Next.js 15 + React 19 + TypeScript + Tailwind CSS
 - **AI System**: RAG with OpenAI GPT models (GPT-4o, GPT-4o-mini, GPT-3.5-turbo)
 - **Authentication**: JWT-based with secure password reset
@@ -27,6 +29,7 @@ ClauseIQ is a **production-ready AI-powered legal document analysis platform** t
 ## 🏗️ **Architecture Quick Reference**
 
 ### **Backend Structure** (`/backend`)
+
 ```
 main.py                    # FastAPI app entry point
 routers/                   # API endpoints
@@ -48,6 +51,7 @@ database/                  # Async database layer
 ```
 
 ### **Frontend Structure** (`/frontend/src`)
+
 ```
 app/                       # Next.js App Router
 ├── review/               # Main contract review workspace
@@ -68,6 +72,7 @@ context/                   # React Context providers
 ## 🎯 **Key Features**
 
 ### **Document Analysis Pipeline**
+
 1. **Upload** → PDF text extraction
 2. **Classification** → AI determines contract type (10+ types)
 3. **Clause Extraction** → AI identifies relevant clauses
@@ -76,9 +81,11 @@ context/                   # React Context providers
 6. **Chat Ready** → Interactive Q&A available
 
 ### **Supported Contract Types**
+
 Employment • NDAs • Service Agreements • Leases • Purchase Agreements • Partnership • License • Consulting • Contractor • Generic
 
 ### **AI Models Available**
+
 - **GPT-4o**: Most advanced, highest accuracy
 - **GPT-4o-mini**: Optimized for speed and efficiency
 - **GPT-4.1-mini**: Balanced performance
@@ -89,13 +96,14 @@ Employment • NDAs • Service Agreements • Leases • Purchase Agreements �
 ## 🔧 **Development Essentials**
 
 ### **Environment Setup**
+
 ```bash
 # Backend
 cd backend && python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
-# Frontend  
+# Frontend
 cd frontend && npm install && npm run dev
 
 # Or use convenience scripts from root:
@@ -104,6 +112,7 @@ npm run setup  # Sets up both environments
 ```
 
 ### **Key Environment Variables**
+
 ```env
 # Backend (.env)
 OPENAI_API_KEY=sk-your-key
@@ -116,6 +125,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
 ### **Database Architecture**
+
 - **Modern Async System**: Single `DocumentService` with `MongoDBAdapter`
 - **User-Centric**: All operations scoped to user IDs
 - **RAG Integration**: Native Pinecone vector storage support
@@ -126,11 +136,13 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ## 🚨 **Critical Development Guidelines**
 
 ### **Authentication**
+
 - All protected endpoints require `Authorization: Bearer <token>`
 - JWT tokens with refresh mechanism
 - User isolation: All operations scoped to `current_user["id"]`
 
 ### **API Patterns**
+
 ```python
 # Standard API response format
 return APIResponse(
@@ -147,6 +159,7 @@ return create_error_response(
 ```
 
 ### **Frontend State Management**
+
 ```typescript
 // Use context for global state
 const { currentDocument, analyzeDocument } = useAnalysis();
@@ -156,6 +169,7 @@ const { documents, loading, error } = useDocumentsData();
 ```
 
 ### **Database Operations**
+
 ```python
 # Always use async/await
 service = get_document_service()
@@ -167,12 +181,14 @@ document = await service.get_document_for_user(doc_id, user_id)
 ## 🎨 **UI/UX Design System**
 
 ### **Professional Legal Aesthetic**
+
 - **Colors**: Deep blues, grays, whites with strategic color coding
 - **Typography**: Sans-serif for UI, generous whitespace
 - **Risk Communication**: Red (high), Yellow (medium), Green (low)
 - **Layout**: Dual-pane (document + analysis), progressive disclosure
 
 ### **Key Components**
+
 - **ReviewSidebar**: Canva-inspired collapsible sidebar
 - **PDFViewer**: Advanced PDF viewer with highlighting
 - **DocumentCard**: Professional document display
@@ -183,18 +199,21 @@ document = await service.get_document_for_user(doc_id, user_id)
 ## 🔍 **Common Development Tasks**
 
 ### **Adding New API Endpoint**
+
 1. Create route in appropriate `/routers/` file
 2. Add business logic in `/services/`
 3. Update API documentation
 4. Add authentication with `Depends(get_current_user)`
 
 ### **Frontend Component Development**
+
 1. Create component in `/components/`
 2. Add to appropriate page in `/app/`
 3. Use existing hooks for data fetching
 4. Follow Tailwind CSS patterns
 
 ### **Database Schema Changes**
+
 1. Update models in `/models/`
 2. Add migration in `/database/migrations.py`
 3. Update service methods in `/database/service.py`
@@ -204,6 +223,7 @@ document = await service.get_document_for_user(doc_id, user_id)
 ## 🔧 **Common Setup Issues & Solutions**
 
 ### **Backend Issues**
+
 ```bash
 # Missing psutil (monitoring dependency)
 pip install psutil
@@ -219,6 +239,7 @@ pip install --upgrade pip && pip install -r requirements.txt
 ```
 
 ### **Frontend Issues**
+
 ```bash
 # Node modules conflicts
 rm -rf node_modules package-lock.json && npm install
@@ -228,6 +249,7 @@ rm -rf node_modules package-lock.json && npm install
 ```
 
 ### **Root Dependencies**
+
 - **Keep**: `package.json` (convenience scripts)
 - **Removed**: `node_modules/`, `package-lock.json` (cleaned up)
 - **Frontend**: Uses Node.js (no Python venv needed)
@@ -256,4 +278,4 @@ rm -rf node_modules package-lock.json && npm install
 
 ---
 
-**💡 Pro Tip**: This project is production-ready with sophisticated architecture. Focus on maintaining code quality, security, and the professional legal aesthetic when making changes. 
+**💡 Pro Tip**: This project is production-ready with sophisticated architecture. Focus on maintaining code quality, security, and the professional legal aesthetic when making changes.

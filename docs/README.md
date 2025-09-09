@@ -1,7 +1,7 @@
 # 📚 ClauseIQ - Documentation Hub
 
 **AI-Powered Legal Document Analysis Platform**  
-**Version**: 3.0 | **Status**: Production Ready | **Last Updated**: January 2025
+**Version**: 1.0.0 | **Status**: Production Ready | **Last Updated**: September 2025
 
 ---
 
@@ -26,16 +26,18 @@ Follow the [Quick Start Guide](../README.md#quick-start) to run locally.
 ## 📖 **Documentation Navigation**
 
 ### **🚀 Getting Started**
+
 - **[CURSOR_CONTEXT.md](CURSOR_CONTEXT.md)** - Essential AI context for development
 - **[QUICK_START.md](QUICK_START.md)** - 5-minute setup guide
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Development guidelines
 
 ### **🏗️ Technical Documentation**
+
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Comprehensive system architecture
 - **[API_REFERENCE.md](API_REFERENCE.md)** - Complete API endpoint documentation
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide
 
 ### **🎨 Design & UX**
+
 - **[DESIGN_PHILOSOPHY.md](DESIGN_PHILOSOPHY.md)** - Legal-specific UI/UX principles
 
 ---
@@ -44,22 +46,27 @@ Follow the [Quick Start Guide](../README.md#quick-start) to run locally.
 
 ```bash
 # 1. Clone and setup
-git clone https://github.com/vedantk1/ClauseIQ.git && cd ClauseIQ
+git clone https://github.com/vedantk1/legal-ai.git && cd legal-ai
 ```
 
 # 2. Backend setup
+
 cd backend && python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 
 # 3. Frontend setup
+
 cd ../frontend && npm install
 
 # 4. Configure environment (.env files)
+
 # See QUICK_START.md for details
 
 # 5. Start services
-cd backend && python main.py  # Terminal 1
-cd frontend && npm run dev     # Terminal 2
+
+cd backend && python main.py # Terminal 1
+cd frontend && npm run dev # Terminal 2
+
 ```
 
 **✅ Verify**: Backend http://localhost:8000/health | Frontend http://localhost:3000
@@ -68,10 +75,10 @@ cd frontend && npm run dev     # Terminal 2
 
 ## 🏗️ **Architecture Overview**
 
-**Frontend**: Next.js 15 + React 19 + TypeScript + Tailwind CSS  
-**Backend**: FastAPI + Python 3.13 + MongoDB + OpenAI API  
-**AI System**: RAG with Pinecone vector storage + OpenAI embeddings  
-**Authentication**: JWT-based with secure password reset  
+**Frontend**: Next.js 15 + React 19 + TypeScript + Tailwind CSS
+**Backend**: FastAPI + Python 3.13 + MongoDB + OpenAI API
+**AI System**: RAG with Pinecone vector storage + OpenAI embeddings
+**Authentication**: JWT-based with secure password reset
 **Database**: Local MongoDB
 
 ---
@@ -122,3 +129,4 @@ This project is licensed under the MIT License - see the [LICENSE](../LICENSE) f
 ---
 
 **🎯 For comprehensive technical details, API references, and deployment guides, explore the focused documentation above.**
+```

@@ -1,6 +1,7 @@
 # 🏗️ ClauseIQ - System Architecture
 
-**Comprehensive technical architecture guide for ClauseIQ**
+**Comprehensive technical architecture guide for ClauseIQ**  
+**Version**: 1.0.0 | **Last Updated**: September 9, 2025
 
 ---
 
@@ -88,6 +89,7 @@ backend/
 ### **Key Architectural Patterns**
 
 #### **1. Modern Async Database Layer**
+
 ```python
 # Single async system with connection pooling
 service = get_document_service()
@@ -95,6 +97,7 @@ document = await service.get_document_for_user(doc_id, user_id)
 ```
 
 #### **2. Standardized API Responses**
+
 ```python
 return APIResponse(
     success=True,
@@ -104,6 +107,7 @@ return APIResponse(
 ```
 
 #### **3. Comprehensive Middleware Stack**
+
 - **Security**: Request validation, rate limiting
 - **Monitoring**: Performance metrics, error tracking
 - **Logging**: Structured request/response logging
@@ -169,6 +173,7 @@ frontend/src/
 ### **State Management Architecture**
 
 #### **1. Context-Based Global State**
+
 ```typescript
 // Authentication context
 const { user, isAuthenticated, login, logout } = useAuth();
@@ -178,6 +183,7 @@ const { currentDocument, analyzeDocument, isLoading } = useAnalysis();
 ```
 
 #### **2. Custom Hooks for Features**
+
 ```typescript
 // Document management
 const { documents, loading, error, retryFetch } = useDocumentsData();
@@ -187,6 +193,7 @@ const { filteredClauses, searchQuery, setSearchQuery } = useClauseFiltering();
 ```
 
 #### **3. Component-Level State**
+
 ```typescript
 // Local UI state
 const [isModalOpen, setIsModalOpen] = useState(false);
@@ -211,12 +218,14 @@ const [selectedClause, setSelectedClause] = useState<Clause | null>(null);
 ### **RAG (Retrieval Augmented Generation) System**
 
 #### **1. Document Chunking**
+
 ```python
 # Smart chunking preserving legal document structure
 chunks = chunk_document(text, chunk_size=1000, overlap=200)
 ```
 
 #### **2. Vector Storage**
+
 ```python
 # Pinecone integration for semantic search
 embeddings = openai.embeddings.create(
@@ -227,6 +236,7 @@ vector_store.upsert(embeddings)
 ```
 
 #### **3. Query Processing**
+
 ```python
 # Semantic search + GPT response generation
 relevant_chunks = vector_store.query(user_question)
@@ -242,8 +252,9 @@ response = openai.chat.completions.create(
 ### **AI Model Selection**
 
 Users can choose from 4 OpenAI models:
+
 - **GPT-4o**: Most advanced, highest accuracy
-- **GPT-4o-mini**: Optimized for speed and efficiency  
+- **GPT-4o-mini**: Optimized for speed and efficiency
 - **GPT-4.1-mini**: Balanced performance
 - **GPT-3.5-turbo**: Fast and cost-effective
 
@@ -254,6 +265,7 @@ Users can choose from 4 OpenAI models:
 ### **MongoDB Schema Design**
 
 #### **Users Collection**
+
 ```javascript
 {
   _id: ObjectId,
@@ -271,6 +283,7 @@ Users can choose from 4 OpenAI models:
 ```
 
 #### **Documents Collection**
+
 ```javascript
 {
   _id: ObjectId,
@@ -302,6 +315,7 @@ Users can choose from 4 OpenAI models:
 ```
 
 #### **Chat Sessions Collection**
+
 ```javascript
 {
   _id: ObjectId,
@@ -332,16 +346,17 @@ Users can choose from 4 OpenAI models:
 ### **Database Connection Management**
 
 #### **Modern Async Pattern**
+
 ```python
 class DatabaseFactory:
     _instance = None
-    
+
     @classmethod
     async def get_database(cls) -> DatabaseInterface:
         if cls._instance is None:
             cls._instance = await cls.create_database()
         return cls._instance
-    
+
     @classmethod
     async def create_database(cls) -> DatabaseInterface:
         config = ConnectionConfig(
@@ -362,6 +377,7 @@ class DatabaseFactory:
 ### **Authentication System**
 
 #### **JWT Token Management**
+
 ```python
 # Token creation
 access_token = create_access_token(
@@ -376,6 +392,7 @@ refresh_token = create_refresh_token(
 ```
 
 #### **Password Security**
+
 ```python
 # bcrypt hashing
 hashed_password = get_password_hash(plain_password)
@@ -397,6 +414,7 @@ is_valid = verify_password(plain_password, hashed_password)
 ### **Backend Performance**
 
 #### **Async Operations**
+
 ```python
 # All database operations are async
 async def get_document_for_user(doc_id: str, user_id: str):
@@ -407,6 +425,7 @@ async def get_document_for_user(doc_id: str, user_id: str):
 ```
 
 #### **Connection Pooling**
+
 ```python
 # MongoDB connection pool
 config = ConnectionConfig(
@@ -419,18 +438,20 @@ config = ConnectionConfig(
 ### **Frontend Performance**
 
 #### **Code Splitting**
+
 ```typescript
 // Dynamic imports for large components
-const PDFViewer = dynamic(() => import('./PDFViewer'), {
-  loading: () => <LoadingSpinner />
+const PDFViewer = dynamic(() => import("./PDFViewer"), {
+  loading: () => <LoadingSpinner />,
 });
 ```
 
 #### **State Optimization**
+
 ```typescript
 // Memoized selectors
-const filteredDocuments = useMemo(() => 
-  documents.filter(doc => doc.title.includes(searchQuery)),
+const filteredDocuments = useMemo(
+  () => documents.filter((doc) => doc.title.includes(searchQuery)),
   [documents, searchQuery]
 );
 ```
@@ -440,18 +461,21 @@ const filteredDocuments = useMemo(() =>
 ## 📊 **Monitoring & Observability**
 
 ### **Performance Metrics**
+
 - Request/response times
 - Database query performance
 - AI API response times
 - Error rates and types
 
 ### **Health Checks**
+
 - Database connectivity
 - AI service availability
 - System resource usage
 - Migration status
 
 ### **Logging Architecture**
+
 ```python
 # Structured logging
 logger = get_foundational_logger(__name__)
@@ -467,6 +491,7 @@ logger.info("Document processed", extra={
 ## 🔄 **Deployment Architecture**
 
 ### **Production Environment**
+
 - **Frontend**: Next.js development server
 - **Backend**: FastAPI with uvicorn
 - **Database**: Local MongoDB
@@ -474,6 +499,7 @@ logger.info("Document processed", extra={
 - **AI Services**: OpenAI API
 
 ### **Development Environment**
+
 - **Frontend**: Next.js dev server
 - **Backend**: FastAPI with uvicorn
 - **Database**: Local MongoDB
@@ -481,4 +507,4 @@ logger.info("Document processed", extra={
 
 ---
 
-**This architecture supports enterprise-scale legal document processing with modern async patterns, comprehensive security, and professional-grade performance.** 
+**This architecture supports enterprise-scale legal document processing with modern async patterns, comprehensive security, and professional-grade performance.**

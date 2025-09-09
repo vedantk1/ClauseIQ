@@ -1,6 +1,6 @@
 # 🔌 ClauseIQ API Reference
 
-**Version**: 3.1 | **Last Updated**: July 5, 2025  
+**Version**: 1.0.0 | **Last Updated**: September 9, 2025  
 **Base URL**: `http://localhost:8000`
 
 ## 📋 **Quick Reference**
