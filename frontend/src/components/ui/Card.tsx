@@ -4,7 +4,9 @@
 
 import React from "react";
 import { HTMLAttributes } from "react";
-import { cn } from "../../lib/utils";
+import { VariantProps, cva } from "class-variance-authority";
+
+import { cn } from "@/lib/utils";
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: "default" | "outlined" | "elevated";

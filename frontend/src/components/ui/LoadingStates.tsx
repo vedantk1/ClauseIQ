@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { cn } from "../../lib/utils";
+import { cn } from "@/lib/utils";
 
 // Loading Spinner Component
 export interface LoadingSpinnerProps {

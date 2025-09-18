@@ -37,4 +37,4 @@ export type {
 export { ErrorBoundary, useErrorHandler } from "./ErrorBoundary";
 
 // Utils
-export { cn } from "../../lib/utils";
+export { cn } from "@/lib/utils";
