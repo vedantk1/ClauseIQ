@@ -175,37 +175,41 @@ async def login(user_data: UserLogin, request: Request):
 async def refresh_access_token(request: RefreshTokenRequest):
     """Refresh access token using refresh token."""
     try:
-        # Verify refresh token
+        # Step 1: Verify the provided refresh token
         payload = verify_token(request.refresh_token)
         if not payload:
+            # If verification fails, return an error response
             return create_error_response(
                 code="INVALID_REFRESH_TOKEN",
                 message="Invalid refresh token"
             )
         
+        # Step 2: Extract user ID from the token payload
         user_id = payload.get("sub")
         if not user_id:
+            # If user ID is missing, return an error response
             return create_error_response(
                 code="INVALID_REFRESH_TOKEN",
                 message="Invalid refresh token"
             )
         
-        # Create new tokens
+        # Step 3: Create new access and refresh tokens for the user
         access_token = create_access_token(data={"sub": user_id})
         refresh_token = create_refresh_token(data={"sub": user_id})
         
+        # Step 4: Prepare the token data for the response
         token_data = Token(
             access_token=access_token,
             refresh_token=refresh_token,
             token_type="bearer"
         )
         
+        # Step 5: Return a successful API response with the new tokens
         return APIResponse(
             success=True,
             data=token_data,
             message="Token refreshed successfully"
         )
-        
     except Exception as e:
         return create_error_response(
             code="TOKEN_REFRESH_FAILED",
