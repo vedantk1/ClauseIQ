@@ -639,6 +639,12 @@ class DocumentService:
     # Note: Document-based PDF methods are above in the "PDF File Operations" section
     # The methods below provide direct file storage access if needed
 
+# Global singleton instance
+_document_service = None
+
 def get_document_service() -> DocumentService:
-    """Get async document service instance."""
-    return DocumentService()
+    """Get async document service instance (singleton)."""
+    global _document_service
+    if _document_service is None:
+        _document_service = DocumentService()
+    return _document_service

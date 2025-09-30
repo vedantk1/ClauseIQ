@@ -17,7 +17,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 from database.service import get_document_service
-from services.rag_service import RAGService, ChatMessage, ChatSession
+from services.rag_service import get_rag_service, ChatMessage, ChatSession
 
 # 🤖 AI DEBUG INTEGRATION
 from utils.ai_debug_helper import ai_debug, DebugLevel
@@ -30,7 +30,7 @@ class ChatService:
     def __init__(self):
         print("🚨 [INIT DEBUG] ChatService initializing...")
         self.doc_service = get_document_service()
-        self.rag_service = RAGService()
+        self.rag_service = get_rag_service()
         print("🚨 [INIT DEBUG] ChatService initialized successfully")
     
     async def is_available(self) -> bool:
@@ -542,6 +542,12 @@ Please provide a clear, helpful answer based on the document content. If the con
                 "error": "Failed to clear chat history"
             }
 
+# Global singleton instance
+_chat_service = None
+
 def get_chat_service() -> ChatService:
-    """Get global chat service instance."""
-    return ChatService()
+    """Get global chat service instance (singleton)."""
+    global _chat_service
+    if _chat_service is None:
+        _chat_service = ChatService()
+    return _chat_service
