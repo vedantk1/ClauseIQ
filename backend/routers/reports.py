@@ -1,6 +1,7 @@
 """
 Report generation routes.
 """
+import logging
 from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import Response
 from auth import get_current_user
@@ -10,6 +11,7 @@ from middleware.versioning import versioned_response
 from services.pdf_service import generate_pdf_report, create_simple_pdf_report
 
 router = APIRouter(prefix="/reports", tags=["reports"])
+logger = logging.getLogger(__name__)
 
 @router.get("/documents/{document_id}/pdf")
 @versioned_response
@@ -35,13 +37,16 @@ async def generate_document_pdf_report(
         
         # Generate PDF report
         try:
+            logger.info(f"Generating enhanced PDF report for document {document_id}")
             pdf_content = await generate_pdf_report(document)
+            logger.info(f"Enhanced PDF generated successfully: {len(pdf_content)} bytes")
         except Exception as e:
-            print(f"Error generating full PDF report: {str(e)}")
+            logger.error(f"Error generating full PDF report, falling back to simple version: {str(e)}", exc_info=True)
             # Fallback to simple PDF if full generation fails
             filename = document.get('filename', 'Document')
             summary = document.get('ai_full_summary', '') or document.get('summary', '')
             pdf_content = create_simple_pdf_report(filename, summary)
+            logger.info(f"Simple PDF generated as fallback: {len(pdf_content)} bytes")
         
         # Return PDF as response
         filename = document.get('filename', 'document').replace('.pdf', '') + '_analysis_report.pdf'
