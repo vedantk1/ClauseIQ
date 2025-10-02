@@ -1,20 +1,18 @@
 """
 Document management routes.
 """
-import os
-import tempfile
 import uuid
 from datetime import datetime
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Response, Query
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
-import pdfplumber
 from auth import get_current_user, verify_token
 from database.service import get_document_service
 from middleware.api_standardization import APIResponse, ErrorResponse
 from middleware.versioning import versioned_response
 from services.document_service import validate_file
+from services.ai.text_extractor import get_text_extractor
 from models.document import (
     DocumentListResponse,
     DocumentDetailResponse
@@ -82,30 +80,13 @@ async def extract_text(file: UploadFile = File(...), current_user: dict = Depend
     try:
         validate_file(file)
         
-        # Create a temporary file to save the uploaded content
-        temp_file_path = None
+        # Read file content
+        content = await file.read()
         
+        # Use TextExtractor service for extraction
+        text_extractor = get_text_extractor()
         try:
-            # Create temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
-                temp_file_path = temp_file.name
-                
-                # Read and write file content
-                content = await file.read()
-                temp_file.write(content)
-            
-            # Extract text from PDF
-            extracted_text = ""
-            with pdfplumber.open(temp_file_path) as pdf:
-                for page in pdf.pages:
-                    extracted_text += page.extract_text() or ""
-            
-            if not extracted_text.strip():
-                return ErrorResponse(
-                    error="NO_TEXT_EXTRACTED",
-                    message="No text could be extracted from the PDF",
-                    status_code=400
-                )
+            extracted_text = await text_extractor.extract_text(content, file.filename)
             
             return APIResponse(
                 success=True,
@@ -113,19 +94,18 @@ async def extract_text(file: UploadFile = File(...), current_user: dict = Depend
                 message="Text extracted successfully"
             )
             
+        except ValueError as e:
+            return ErrorResponse(
+                error="TEXT_EXTRACTION_FAILED",
+                message=str(e),
+                status_code=400
+            )
         except Exception as e:
             return ErrorResponse(
                 error="TEXT_EXTRACTION_FAILED",
                 message=f"An error occurred while extracting text: {str(e)}",
                 status_code=500
             )
-        finally:
-            # Clean up temporary file
-            if temp_file_path and os.path.exists(temp_file_path):
-                try:
-                    os.remove(temp_file_path)
-                except Exception as e:
-                    print(f"Warning: Could not remove temporary file {temp_file_path}: {e}")
     
     except Exception as e:
         return ErrorResponse(

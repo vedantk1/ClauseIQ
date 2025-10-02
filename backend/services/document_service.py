@@ -2,7 +2,6 @@
 Document processing utilities.
 """
 import os
-import pdfplumber
 from typing import List, Tuple
 from fastapi import UploadFile, HTTPException
 from config.environments import get_environment_config
