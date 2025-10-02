@@ -46,7 +46,7 @@ async def get_current_user_for_pdf(
         )
     
     # Verify token
-    payload = verify_token(auth_token)
+    payload = await verify_token(auth_token)
     if payload is None:
         raise HTTPException(
             status_code=401,
