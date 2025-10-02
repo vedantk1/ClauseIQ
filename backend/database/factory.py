@@ -43,7 +43,7 @@ class DatabaseFactory:
             backend=DatabaseBackend.MONGODB,
             uri=settings.database.uri,
             database=settings.database.database,
-            collection_prefix=getattr(settings.database, 'collection_prefix', ''),
+            collection_prefix=settings.database.collection_prefix,
             timeout=30,
             max_pool_size=settings.database.max_pool_size,
             min_pool_size=settings.database.min_pool_size,

@@ -22,6 +22,7 @@ class DatabaseConfig(BaseModel):
     uri: str = Field(..., description="MongoDB connection URI")
     database: str = Field(..., description="Database name")
     collection: str = Field(default="documents", description="Default collection name")
+    collection_prefix: str = Field(default="", description="Collection prefix for multi-tenancy")
     
     # Connection pool settings
     max_pool_size: int = Field(default=20, ge=1, le=100, description="Maximum connection pool size")
@@ -139,6 +140,7 @@ class EnvironmentConfig(BaseSettings):
     mongodb_uri: str = Field(default="mongodb://localhost:27017/", description="MongoDB local connection URI")
     mongodb_database: str = Field(default="legal_ai", description="MongoDB database name")
     mongodb_collection: str = Field(default="documents", description="MongoDB collection name")
+    mongodb_collection_prefix: str = Field(default="", description="MongoDB collection prefix for multi-tenancy")
     
     # Database connection pool settings
     mongodb_max_pool_size: int = Field(default=20, description="MongoDB maximum connection pool size")
@@ -199,6 +201,7 @@ class EnvironmentConfig(BaseSettings):
             uri=self.mongodb_uri,
             database=self.mongodb_database,
             collection=self.mongodb_collection,
+            collection_prefix=self.mongodb_collection_prefix,
             max_pool_size=self.mongodb_max_pool_size,
             min_pool_size=self.mongodb_min_pool_size,
             max_idle_time_ms=self.mongodb_max_idle_time_ms,
