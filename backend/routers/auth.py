@@ -2,17 +2,16 @@
 Authentication and user management routes.
 """
 import uuid
+import logging
 from fastapi import APIRouter, HTTPException, Depends, Request
 from database.service import get_document_service
+from services.auth_service import get_auth_service
 from middleware.api_standardization import APIResponse, ErrorResponse, create_error_response
 from middleware.versioning import versioned_response
-from email_service import send_password_reset_email
 from auth import (
     create_access_token,
     create_refresh_token,
     verify_token,
-    get_password_hash,
-    verify_password,
     get_current_user,
     UserCreate,
     UserLogin,
@@ -20,10 +19,7 @@ from auth import (
     UserProfileUpdate,
     Token,
     ForgotPasswordRequest,
-    ResetPasswordRequest,
-    create_password_reset_token,
-    verify_password_reset_token,
-    validate_password
+    ResetPasswordRequest
 )
 from models.auth import (
     RefreshTokenRequest,
@@ -32,6 +28,8 @@ from models.auth import (
     AvailableModelsResponse
 )
 
+logger = logging.getLogger(__name__)
+
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -39,136 +37,50 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 @router.post("/register", response_model=APIResponse[Token])
 async def register(user_data: UserCreate):
     """Register a new user and return authentication tokens."""
-    try:
-        service = get_document_service()
-        
-        # Check if user already exists
-        existing_user = await service.get_user_by_email(user_data.email)
-        if existing_user:
-            return create_error_response(
-                code="USER_EXISTS",
-                message="User with this email already exists"
-            )
-        
-        # Hash password
-        hashed_password = get_password_hash(user_data.password)
-        
-        # Create user data
-        user_id = str(uuid.uuid4())
-        user_dict = {
-            "id": user_id,
-            "email": user_data.email,
-            "hashed_password": hashed_password,
-            "full_name": user_data.full_name
-        }
-        
-        # Save user to database
-        await service.create_user(user_dict)
-        
-        # Create tokens for immediate login after registration
-        access_token = create_access_token(data={"sub": user_id})
-        refresh_token = create_refresh_token(data={"sub": user_id})
-        
-        token_data = Token(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            token_type="bearer"
-        )
-        
-        return APIResponse(
-            success=True,
-            data=token_data,
-            message="User registered successfully"
-        )
-        
-    except Exception as e:
+    auth_service = get_auth_service()
+    
+    success, token_data, error = await auth_service.register_user(
+        full_name=user_data.full_name,
+        email=user_data.email,
+        password=user_data.password
+    )
+    
+    if not success:
         return create_error_response(
             code="REGISTRATION_FAILED",
-            message=f"Registration failed: {str(e)}"
+            message=error or "Registration failed"
         )
+    
+    return APIResponse(
+        success=True,
+        data=token_data,
+        message="User registered successfully"
+    )
 
 
 @router.post("/login", response_model=APIResponse[Token])
 async def login(user_data: UserLogin, request: Request):
     """Authenticate user and return tokens."""
-    from middleware.security import security_monitor
-    import logging
-    import time
-    import uuid
-    
-    # Generate a unique ID for this login attempt
-    login_id = str(uuid.uuid4())[:8]
-    start_time = time.time()
-    logger = logging.getLogger("auth")
-    
-    logger.info(f"[AUTH-{login_id}] 🔑 Login attempt started for email: {user_data.email}")
+    auth_service = get_auth_service()
     client_ip = request.client.host if request.client else "unknown"
-    logger.info(f"[AUTH-{login_id}] 🌐 Client IP: {client_ip}")
     
-    try:
-        logger.info(f"[AUTH-{login_id}] 🔄 Getting document service")
-        service = get_document_service()
-        
-        # Get user by email
-        logger.info(f"[AUTH-{login_id}] 🔍 Looking up user by email: {user_data.email}")
-        user = await service.get_user_by_email(user_data.email)
-        if not user:
-            logger.warning(f"[AUTH-{login_id}] ❌ User not found: {user_data.email}")
-            # Record failed authentication attempt
-            security_monitor.record_auth_failure(client_ip, user_data.email)
-            logger.info(f"[AUTH-{login_id}] ⏱️ Login failed in {time.time() - start_time:.2f}s - user not found")
-            return create_error_response(
-                code="INVALID_CREDENTIALS",
-                message="Invalid email or password"
-            )
-        
-        # Verify password
-        logger.info(f"[AUTH-{login_id}] 🔐 Verifying password for user: {user_data.email}")
-        if not verify_password(user_data.password, user["hashed_password"]):
-            logger.warning(f"[AUTH-{login_id}] ❌ Password verification failed for: {user_data.email}")
-            # Record failed authentication attempt
-            security_monitor.record_auth_failure(client_ip, user_data.email)
-            logger.info(f"[AUTH-{login_id}] ⏱️ Login failed in {time.time() - start_time:.2f}s - invalid password")
-            return create_error_response(
-                code="INVALID_CREDENTIALS",
-                message="Invalid email or password"
-            )
-        
-        logger.info(f"[AUTH-{login_id}] ✅ Password verified successfully")
-        
-        # Create tokens
-        logger.info(f"[AUTH-{login_id}] 🔄 Creating access and refresh tokens")
-        access_token = create_access_token(data={"sub": user["id"]})
-        refresh_token = create_refresh_token(data={"sub": user["id"]})
-        
-        logger.info(f"[AUTH-{login_id}] 🎟️ Tokens created successfully")
-        
-        # Create user info object
-        user_info = {k: v for k, v in user.items() if k not in ["hashed_password"]}
-        
-        token_data = Token(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            token_type="bearer",
-            user=user_info  # Include user data in response
-        )
-        
-        logger.info(f"[AUTH-{login_id}] 🎉 Login successful for {user_data.email}")
-        logger.info(f"[AUTH-{login_id}] ⏱️ Login completed in {time.time() - start_time:.2f}s")
-        
-        return APIResponse(
-            success=True,
-            data=token_data,
-            message="Login successful"
-        )
-        
-    except Exception as e:
-        logger.error(f"[AUTH-{login_id}] 💥 Login error: {str(e)}", exc_info=True)
-        logger.info(f"[AUTH-{login_id}] ⏱️ Login failed in {time.time() - start_time:.2f}s - exception")
+    success, token_data, error = await auth_service.authenticate_user(
+        email=user_data.email,
+        password=user_data.password,
+        client_ip=client_ip
+    )
+    
+    if not success:
         return create_error_response(
-            code="LOGIN_FAILED",
-            message=f"Login failed: {str(e)}"
+            code="INVALID_CREDENTIALS",
+            message=error or "Invalid email or password"
         )
+    
+    return APIResponse(
+        success=True,
+        data=token_data,
+        message="Login successful"
+    )
 
 
 @router.post("/refresh", response_model=APIResponse[Token])
@@ -236,88 +148,36 @@ async def get_current_user_info(current_user: dict = Depends(get_current_user)):
 @router.post("/forgot-password", response_model=APIResponse[dict])
 async def forgot_password(request: ForgotPasswordRequest):
     """Send password reset email to user."""
-    try:
-        service = get_document_service()
-        
-        # Check if user exists
-        user = await service.get_user_by_email(request.email)
-        if not user:
-            # Don't reveal if email exists or not for security
-            return APIResponse(
-                success=True,
-                data={"message": "If the email exists, a password reset link has been sent"},
-                message="Password reset email sent"
-            )
-        
-        # Create password reset token
-        reset_token = create_password_reset_token(request.email)
-        
-        # Send password reset email
-        await send_password_reset_email(request.email, reset_token)
-        
-        return APIResponse(
-            success=True,
-            data={"message": "If the email exists, a password reset link has been sent"},
-            message="Password reset email sent"
-        )
-        
-    except Exception as e:
-        return create_error_response(
-            code="PASSWORD_RESET_FAILED",
-            message=f"Password reset failed: {str(e)}"
-        )
+    auth_service = get_auth_service()
+    
+    success, error = await auth_service.initiate_password_reset(request.email)
+    
+    # Always return success for security (don't reveal if email exists)
+    return APIResponse(
+        success=True,
+        data={"message": "If the email exists, a password reset link has been sent"},
+        message="Password reset email sent"
+    )
 
 
 @router.post("/reset-password", response_model=APIResponse[dict])
 async def reset_password(request: ResetPasswordRequest):
     """Reset user password using reset token."""
-    try:
-        # Verify reset token
-        email = verify_password_reset_token(request.token)
-        if not email:
-            return create_error_response(
-                code="INVALID_RESET_TOKEN",
-                message="Invalid or expired reset token"
-            )
-        
-        # Validate new password
-        if not validate_password(request.new_password):
-            return create_error_response(
-                code="INVALID_PASSWORD",
-                message="Password does not meet requirements"
-            )
-        
-        service = get_document_service()
-        
-        # Get user by email
-        user = await service.get_user_by_email(email)
-        if not user:
-            return create_error_response(
-                code="USER_NOT_FOUND",
-                message="User not found"
-            )
-        
-        # Hash new password and update user
-        hashed_password = get_password_hash(request.new_password)
-        success = await service.update_user_password(user["id"], hashed_password)
-        
-        if not success:
-            return create_error_response(
-                code="PASSWORD_UPDATE_FAILED",
-                message="Failed to update password"
-            )
-        
-        return APIResponse(
-            success=True,
-            data={"message": "Password reset successfully"},
-            message="Password reset successfully"
-        )
-        
-    except Exception as e:
+    auth_service = get_auth_service()
+    
+    success, error = await auth_service.reset_password(request.token, request.new_password)
+    
+    if not success:
         return create_error_response(
             code="PASSWORD_RESET_FAILED",
-            message=f"Password reset failed: {str(e)}"
+            message=error or "Password reset failed"
         )
+    
+    return APIResponse(
+        success=True,
+        data={"message": "Password reset successfully"},
+        message="Password reset successfully"
+    )
 
 
 @router.get("/preferences", response_model=APIResponse[UserPreferencesResponse])
@@ -457,7 +317,6 @@ async def logout(current_user: dict = Depends(get_current_user)):
         # In a production system, you'd want to add the token to a blacklist
         # or use shorter-lived tokens with server-side session management
         
-        logger = logging.getLogger("auth")
         logger.info(f"User {current_user['email']} logged out successfully")
         
         return APIResponse(

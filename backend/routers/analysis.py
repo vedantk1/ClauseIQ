@@ -3,19 +3,22 @@ Document analysis routes.
 """
 import uuid
 import logging
-from datetime import datetime
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Request
 from pydantic import BaseModel
 from auth import get_current_user
 from database.service import get_document_service
 from middleware.api_standardization import APIResponse, create_success_response, create_error_response
 from middleware.versioning import versioned_response
-from services.document_service import validate_file, process_document_with_llm, is_llm_processing_available
+from services.document_service import (
+    validate_file, 
+    process_document_with_llm, 
+    is_llm_processing_available,
+    calculate_risk_summary,
+    process_and_save_analyzed_document
+)
 from services.ai.text_extractor import get_text_extractor
 # PHASE 3 MIGRATION: Main AI functions still from ai_service for stability
 from services.ai_service import generate_structured_document_summary, generate_clause_rewrite
-# RAG integration for chat functionality
-from services.rag_service import get_rag_service
 from models.document import AnalyzeDocumentResponse
 from models.interaction import UserInteractionRequest, NoteRequest
 from clauseiq_types.common import RiskLevel, Clause, RiskSummary, ContractType
@@ -80,90 +83,31 @@ async def analyze_document(
             extracted_text, file.filename, user_model, contract_type
         )
         
-        # Calculate risk summary from clauses
-        risk_summary = {
-            "high": sum(1 for clause in clauses if clause.risk_level == RiskLevel.HIGH),
-            "medium": sum(1 for clause in clauses if clause.risk_level == RiskLevel.MEDIUM),
-            "low": sum(1 for clause in clauses if clause.risk_level == RiskLevel.LOW)
-        }
-        
-        # Create document entry with clauses and contract type
+        # Generate document ID
         doc_id = str(uuid.uuid4())
-        document_data = {
-            "id": doc_id,
-            "filename": file.filename,
-            "upload_date": datetime.now().isoformat(),
-            "text": extracted_text,
-            "ai_structured_summary": ai_structured_summary,
-            "clauses": [clause.dict() for clause in clauses],
-            "risk_summary": risk_summary,
-            "contract_type": contract_type.value if contract_type else None,
-            "user_id": current_user["id"]
-        }
         
-        # Process RAG before saving document to ensure it happens before PDF cleanup
-        try:
-            rag_service = get_rag_service()
-            logger.info(f"Starting RAG processing for document {doc_id}")
-            
-            rag_data = await rag_service.process_document_for_rag(
-                document_id=doc_id,
-                text=extracted_text,
-                filename=file.filename,
-                user_id=current_user["id"]
+        # Process RAG and save document (consolidated business logic)
+        success, error = await process_and_save_analyzed_document(
+            doc_id=doc_id,
+            filename=file.filename,
+            extracted_text=extracted_text,
+            clauses=clauses,
+            contract_type=contract_type,
+            user_id=current_user["id"],
+            ai_structured_summary=ai_structured_summary,
+            file_content=content,
+            content_type=file.content_type or "application/pdf"
+        )
+        
+        if not success:
+            return create_error_response(
+                code="DOCUMENT_SAVE_FAILED",
+                message=error or "Failed to save document",
+                correlation_id=correlation_id
             )
-            
-            # Update document with RAG metadata
-            if rag_data:
-                document_data["rag_processed"] = True
-                document_data["pinecone_stored"] = rag_data.get("pinecone_stored", False)
-                document_data["chunk_count"] = rag_data.get("chunk_count", 0)
-                document_data["chunk_ids"] = rag_data.get("chunk_ids", [])
-                document_data["embedding_model"] = rag_data.get("embedding_model")
-                document_data["rag_processed_at"] = rag_data.get("processed_at")
-                document_data["storage_service"] = rag_data.get("storage_service")
-                logger.info(f"Document {doc_id} processed for RAG successfully with {rag_data.get('chunk_count', 0)} chunks")
-            else:
-                logger.warning(f"RAG processing returned no data for document {doc_id}")
-                
-        except Exception as rag_error:
-            # RAG processing failure should not break document analysis
-            logger.warning(f"RAG processing failed for document {doc_id}: {rag_error}")
-            document_data["rag_processed"] = False
-            # Continue without RAG for now
         
-        # Save to storage with RAG metadata included
-        logger.info(f"Saving document {doc_id} to database...")
-        try:
-            # First save document metadata
-            await service.save_document_for_user(document_data, current_user["id"])
-            logger.info(f"Document {doc_id} saved successfully to database")
-            
-            # Then store the PDF file (atomic operation)
-            try:
-                logger.info(f"Storing PDF file for document {doc_id}")
-                pdf_stored = await service.store_pdf_file(
-                    document_id=doc_id,
-                    user_id=current_user["id"],
-                    file_data=content,  # Use the content we read earlier
-                    filename=file.filename,
-                    content_type=file.content_type or "application/pdf"
-                )
-                
-                if pdf_stored:
-                    logger.info(f"PDF file stored successfully for document {doc_id}")
-                else:
-                    logger.warning(f"Failed to store PDF file for document {doc_id}")
-                    # Don't fail the entire upload if PDF storage fails
-                    
-            except Exception as pdf_error:
-                logger.error(f"PDF storage failed for document {doc_id}: {pdf_error}")
-                # Don't fail the entire upload if PDF storage fails
-                # The document analysis was successful, PDF storage is supplementary
-            
-        except Exception as save_error:
-            logger.error(f"Failed to save document {doc_id}: {save_error}")
-            raise save_error
+        # Calculate risk summary for response
+        risk_summary = calculate_risk_summary(clauses)
         
         # Return response with ALL required fields for frontend
         response_data = {
@@ -241,12 +185,8 @@ async def get_document_clauses(
         
         analyzed_clauses = await extract_clauses_with_llm(document.get("text", ""), contract_type, user_model)
         
-        # Calculate risk summary
-        risk_summary = {
-            "high": sum(1 for clause in analyzed_clauses if clause.risk_level == RiskLevel.HIGH),
-            "medium": sum(1 for clause in analyzed_clauses if clause.risk_level == RiskLevel.MEDIUM),
-            "low": sum(1 for clause in analyzed_clauses if clause.risk_level == RiskLevel.LOW)
-        }
+        # Calculate risk summary using service method
+        risk_summary = calculate_risk_summary(analyzed_clauses)
         
         response_data = {
             "clauses": analyzed_clauses,
