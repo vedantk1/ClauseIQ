@@ -39,7 +39,7 @@ Our advanced setup script automatically handles everything from system prerequis
 
 ```bash
 # Clone the repository
-git clone https://github.com/vedantk1/ClauseIQ.git
+git clone https://github.com/vedantk1/ClauseIQ-Legal-AI-Assitant.git
 cd ClauseIQ
 
 # Run the Level 3 automated setup script

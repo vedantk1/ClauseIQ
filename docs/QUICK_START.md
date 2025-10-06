@@ -19,7 +19,7 @@
 ### **1. Clone & Navigate**
 
 ```bash
-git clone https://github.com/vedantk1/ClauseIQ.git
+git clone https://github.com/vedantk1/ClauseIQ-Legal-AI-Assitant.git
 cd ClauseIQ
 ```
 

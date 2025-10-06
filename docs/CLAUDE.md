@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ClauseIQ is a full-stack AI-powered legal document analysis platform with a Next.js frontend, FastAPI backend, and shared type system. The application uses MongoDB for data storage, Pinecone for vector embeddings, and OpenAI for AI features.
 
-**Repository**: https://github.com/vedantk1/ClauseIQ  
+**Repository**: https://github.com/vedantk1/ClauseIQ-Legal-AI-Assitant  
 **Version**: 1.0.0  
 **Status**: Production Ready  
 **Last Updated**: September 2025
