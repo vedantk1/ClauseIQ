@@ -10,30 +10,30 @@
 ![OpenAI](https://img.shields.io/badge/OpenAI-Powered-412991)
 ![Node.js](https://img.shields.io/badge/Node.js-24+-green)
 
-## 🎯 **What is ClauseIQ?**
+## What is ClauseIQ?
 
 ClauseIQ transforms complex legal documents into clear, understandable insights through advanced AI analysis and interactive chat functionality.
 
-### **✨ Key Features**
+### Key Features
 
-🧠 **Smart Analysis**: Automatically detects contract types and extracts key clauses  
-💬 **Document Chat**: Ask questions about your contracts in natural language  
-📊 **Multi-Contract Support**: Handles 10+ contract types with specialized analysis  
-⚡ **Fast & Accurate**: Powered by OpenAI GPT models with 99%+ uptime  
-🔐 **Secure**: Enterprise-grade authentication and data protection
+**Smart Analysis**: Automatically detects contract types and extracts key clauses  
+**Document Chat**: Ask questions about your contracts in natural language  
+**Multi-Contract Support**: Handles 10+ contract types with specialized analysis  
+**Fast & Accurate**: Powered by OpenAI GPT models with 99%+ uptime  
+**Secure**: Enterprise-grade authentication and data protection
 
-## **✨ Features**
+## Features
 
-- **📄 PDF Analysis**: Upload contracts and get AI-powered insights
-- **🎯 Risk Assessment**: Identify problematic clauses and legal risks
-- **💬 Interactive Chat**: Ask questions about your documents
-- **📊 Analytics Dashboard**: Track document processing and insights
-- **🔍 Advanced Search**: Find specific clauses and terms
-- **📈 Visual Reports**: Charts and summaries for quick understanding
+- **PDF Analysis**: Upload contracts and get AI-powered insights
+- **Risk Assessment**: Identify problematic clauses and legal risks
+- **Interactive Chat**: Ask questions about your documents
+- **Analytics Dashboard**: Track document processing and insights
+- **Advanced Search**: Find specific clauses and terms
+- **Visual Reports**: Charts and summaries for quick understanding
 
-## **🚀 Quick Start**
+## Quick Start
 
-### **⚡ One-Command Setup (Level 3 Automation)**
+### One-Command Setup (Level 3 Automation)
 
 Our advanced setup script automatically handles everything from system prerequisites to project dependencies:
 
@@ -46,19 +46,19 @@ cd ClauseIQ
 ./scripts/setup-for-development.sh
 ```
 
-**🎯 What it does automatically:**
+**What it does automatically:**
 
-- **🔍 System Detection** - Detects your OS (macOS, Ubuntu, RHEL, Windows WSL)
-- **📦 Package Manager** - Installs/uses brew, apt, dnf, yum, or chocolatey
-- **🐍 Python 3.8+** - Version check, automatic installation if needed
-- **📗 Node.js 18+** - Version check, automatic installation if needed
-- **🍃 MongoDB** - Community Edition installation and service management
-- **🔧 Project Setup** - Virtual environment, dependencies, environment files
-- **✅ Verification** - Connection testing and health checks
+- **System Detection** - Detects your OS (macOS, Ubuntu, RHEL, Windows WSL)
+- **Package Manager** - Installs/uses brew, apt, dnf, yum, or chocolatey
+- **Python 3.8+** - Version check, automatic installation if needed
+- **Node.js 18+** - Version check, automatic installation if needed
+- **MongoDB** - Community Edition installation and service management
+- **Project Setup** - Virtual environment, dependencies, environment files
+- **Verification** - Connection testing and health checks
 
 **Supports:** macOS (Intel/M1), Ubuntu/Debian, RHEL/CentOS, Windows WSL
 
-### **📝 Manual Setup**
+### Manual Setup
 
 #### Prerequisites
 
@@ -101,7 +101,7 @@ cd backend && source venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port
 cd frontend && npm run dev
 ```
 
-### **🌐 Access the Application**
+### Access the Application
 
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8000
@@ -109,7 +109,7 @@ cd frontend && npm run dev
 
 ---
 
-## 🏗️ **Architecture**
+## Architecture
 
 **Frontend**: Next.js 15 + React 19 + TypeScript + Tailwind CSS  
 **Backend**: FastAPI + Python 3.13 + MongoDB + OpenAI API  
@@ -119,19 +119,19 @@ cd frontend && npm run dev
 
 ---
 
-## 📚 **Documentation**
+## Documentation
 
-**📖 Complete Documentation**: **[docs/README.md](docs/README.md)** - Comprehensive guide for all users
+**Complete Documentation**: **[docs/README.md](docs/README.md)** - Comprehensive guide for all users
 
-### **Quick Links**
+### Quick Links
 
-- **[🚀 Getting Started](docs/QUICK_START.md)** - 5-minute setup guide
-- **[🔌 API Reference](docs/API_REFERENCE.md)** - Complete endpoint documentation
-- **[🤖 AI Agent Guide](docs/README.md#ai-agent-guide)** - Essential knowledge for automated development
-- **[🏗️ Architecture](docs/README.md#architecture)** - System design and components
-- **[🚨 Troubleshooting](docs/README.md#troubleshooting)** - Common issues and solutions
+- **[Getting Started](docs/QUICK_START.md)** - 5-minute setup guide
+- **[API Reference](docs/API_REFERENCE.md)** - Complete endpoint documentation
+- **[AI Agent Guide](docs/README.md#ai-agent-guide)** - Essential knowledge for automated development
+- **[Architecture](docs/README.md#architecture)** - System design and components
+- **[Troubleshooting](docs/README.md#troubleshooting)** - Common issues and solutions
 
-### **For Different Audiences**
+### For Different Audiences
 
 - **New Users**: [Platform overview](docs/README.md#what-is-clauseiq) → [How to use](docs/README.md#using-clauseiq)
 - **Developers**: [Development setup](docs/README.md#development-setup) → [Workflow](docs/README.md#development-workflow)
@@ -140,7 +140,7 @@ cd frontend && npm run dev
 
 ---
 
-## 💼 **Supported Contract Types**
+## Supported Contract Types
 
 Employment • NDAs • Service Agreements • Leases • Purchase Agreements • Partnership • License • Consulting • Contractor • Generic
 
@@ -148,7 +148,7 @@ Each contract type receives specialized AI analysis with relevant clause extract
 
 ---
 
-## 🤝 **Contributing**
+## Contributing
 
 1. **Read Documentation**: [docs/README.md](docs/README.md) and [CONTRIBUTING.md](docs/CONTRIBUTING.md)
 2. **Development Setup**: Follow [development guide](docs/README.md#development-setup)
@@ -157,7 +157,7 @@ Each contract type receives specialized AI analysis with relevant clause extract
 
 ---
 
-## 🎯 **Project Goals**
+## Project Goals
 
 This project demonstrates:
 
@@ -168,10 +168,10 @@ This project demonstrates:
 
 ---
 
-## 📄 **License**
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-**🔗 For complete documentation, setup guides, API reference, and troubleshooting, visit [docs/README.md](docs/README.md)**
+**For complete documentation, setup guides, API reference, and troubleshooting, visit [docs/README.md](docs/README.md)**
