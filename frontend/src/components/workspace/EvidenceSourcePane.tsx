@@ -64,14 +64,16 @@ export function EvidenceSourcePane({ finding, source, onOpen, selectedEvidence, 
   return <section className="cw-evidence-pane" aria-label={heading}>
     <h2 className="cw-evidence-heading">{heading}</h2>
     {selected && presentation ? <article className="cw-evidence-detail">
-      <h3 ref={detailHeading} tabIndex={-1} className="cw-evidence-detail-heading">{selected.label}</h3>
+      <div className="cw-evidence-detail-topline">
+        <h3 ref={detailHeading} tabIndex={-1} className="cw-evidence-detail-heading">{selected.label}</h3>
+        <Action className="cw-evidence-open" disabled={!presentation.matched}
+          title={presentation.matchLabel} onClick={() => { if (presentation.matched) onOpen(selected); }}>
+          View page {selected.page_number}
+        </Action>
+      </div>
       <p className="cw-evidence-scope">{presentation.scope} · may begin or end mid-clause</p>
       <blockquote className="cw-evidence-quote whitespace-pre-wrap break-words">{selected.quote}</blockquote>
       {!presentation.matched && <p className="cw-evidence-match cw-evidence-match-warning" role="status">{presentation.matchLabel}</p>}
-      <Action className="cw-evidence-open" disabled={!presentation.matched}
-        title={presentation.matchLabel} onClick={() => { if (presentation.matched) onOpen(selected); }}>
-        View page {selected.page_number}
-      </Action>
       <SourceContext key={`${finding.id}-${finding.evidence.indexOf(selected)}-${evidenceContextKey(selected)}`} presentation={presentation} />
     </article> : <p className="cw-evidence-empty">No source quotation accompanies this finding. Any not-found claim is limited to its stated reviewed scope, not proof that a term is absent.</p>}
     {finding.evidence.length > 1 && <h3 className="cw-evidence-references-heading">References ({finding.evidence.length})</h3>}

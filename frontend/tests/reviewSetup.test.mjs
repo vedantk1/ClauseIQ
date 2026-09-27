@@ -198,6 +198,22 @@ test("setup rendering is side-effect free and permits original access without a 
   assert.equal(render(ReviewSetup, { ...props, state: state({ workspace: null }) }), "");
 });
 
+test("setup groups unpaid source access separately from the explicit paid action", () => {
+  const { props, calls } = setup();
+  const tree = ReviewSetup(props);
+  const all = nodes(tree);
+  const sourceRail = all.find(node => node.type === "aside" && node.props["aria-labelledby"] === "setup-agreement-heading");
+  assert.ok(sourceRail);
+  assert.ok(button(sourceRail, "View original"));
+  assert.equal(nodes(sourceRail).some(node => node.type === "button" && text(node) === "Start review"), false);
+  const html = render(ReviewSetup, props);
+  assert.equal((html.match(/Return to Library/g) || []).length, 1);
+  assert.ok(html.indexOf("Return to Library") < html.indexOf("Your agreement"));
+  assert.match(html, /Sends document text and your instructions to OpenAI\. API charges apply/);
+  assert.ok(button(tree, "Start review"));
+  assert.deepEqual(calls, []);
+});
+
 test("setup brief is neutral by default and field edits or saving never trigger generation", () => {
   const { props, calls } = setup({ state: state({ briefDraft: { ...neutral, priorities: "Local priority" } }) });
   const tree = ReviewSetup(props);

@@ -3,12 +3,31 @@
 import { useCallback, useEffect, useState } from "react";
 import Modal from "@/components/ui/Modal";
 import { indexAgreement, previewIndex, removeIndex, semanticStatus, type IndexPlan, type SemanticDocument, type SemanticStatus } from "@/lib/librarySemantic";
-import styles from "./LibrarySearch.module.css";
+import styles from "./LibrarySemanticPanel.module.css";
 
 const labels: Record<SemanticDocument["status"], string> = {
   not_indexed: "Not indexed", ready: "Ready", processing: "Indexing", interrupted: "Interrupted · outcome unknown",
   failed: "Attempt failed", stale: "Index outdated · rebuild needed", missing_vectors: "Index incomplete · reindex needed", unavailable: "No usable source text",
 };
+
+/** Coverage concerns stay visible even when index management is collapsed. */
+function coverageNotes(status: SemanticStatus): string[] {
+  const counts: Partial<Record<SemanticDocument["status"], number>> = {};
+  for (const document of status.documents) counts[document.status] = (counts[document.status] ?? 0) + 1;
+  const notes: string[] = [];
+  const summaries: Partial<Record<SemanticDocument["status"], string>> = {
+    not_indexed: "not indexed", processing: "indexing", interrupted: "interrupted · outcome unknown",
+    failed: "failed", stale: "outdated", missing_vectors: "incomplete", unavailable: "without usable text",
+  };
+  for (const [state, label] of Object.entries(summaries)) {
+    const count = counts[state as SemanticDocument["status"]];
+    if (count) notes.push(`${count} ${label}`);
+  }
+  const partial = status.documents.filter(document => document.partial).length;
+  if (partial) notes.push(`${partial} with partial text`);
+  if (status.documents_not_examined) notes.push(`${status.documents_not_examined} not examined`);
+  return notes;
+}
 
 /** Mount/status/preview are unpaid. Only the confirmation dispatches embeddings. */
 export function LibrarySemanticPanel() {
@@ -49,14 +68,19 @@ export function LibrarySemanticPanel() {
     finally { setRemoving(null); await refresh(); setBusy(false); }
   }
 
+  const coverage = status ? coverageNotes(status) : [];
+
   return <div className={styles.semanticPanel}>
-    <div className={styles.indexHeading}>
-      <p>{status ? `${status.indexed_documents} of ${status.documents_in_library} agreements indexed` : "Loading index status…"}</p>
-      <button type="button" disabled={busy} onClick={() => { setError(null); void refresh(); }}>Refresh status</button>
-    </div>
-    <details><summary>Manage semantic index</summary>
-      <p className={styles.feedback}>Indexing sends eligible agreement text to OpenAI; rebuilding is another paid action. Semantic searches send your query. Both use your Settings key; Keyword stays free.</p>
-      {status?.documents_not_examined ? <p className={styles.feedback}>{status.documents_not_examined} additional agreements were not examined in this bounded view.</p> : null}
+    <details className={styles.management}>
+      <summary className={styles.summary}>
+        <span className={styles.indexCount}>{status ? `${status.indexed_documents} of ${status.documents_in_library} indexed` : error ? "Index status unavailable" : "Loading index status…"}</span>
+        <span className={styles.manageLabel}>Manage index <span aria-hidden="true" className={styles.chevron}>⌄</span></span>
+      </summary>
+      <div className={styles.managementBody}>
+        <div className={styles.indexHeading}>
+          <p>Indexing or rebuilding sends extracted text to OpenAI using your Settings key. Each is a paid action.</p>
+          <button type="button" disabled={busy} onClick={() => { setError(null); void refresh(); }}>Refresh status</button>
+        </div>
       <ul className={styles.indexList} aria-label="Semantic index status">
         {status?.documents.map(document => <li key={document.document_id}>
           <div><strong>{document.filename}{status.documents.filter(item => item.filename === document.filename).length > 1 ? ` · ${document.document_id.slice(-6)}` : ""}</strong><p>{labels[document.status]}{document.partial ? " · Partial extracted text" : ""}</p>
@@ -69,17 +93,22 @@ export function LibrarySemanticPanel() {
           </div>
         </li>)}
       </ul>
+      </div>
     </details>
+    {coverage.length > 0 && <p className={styles.coverage} aria-label="Index coverage limits">{coverage.join(" · ")}</p>}
     {notice && <p role="status" className={styles.feedback}>{notice}</p>}
     {error && <p role="alert" className={styles.error}>{error}</p>}
     <Modal isOpen={plan !== null} onClose={() => { if (!busy) { setPlan(null); setRequestId(null); } }} title="Index agreement for semantic search" size="md">
       {plan && <div className={styles.indexConfirmation}>
-        <p>{plan.filename}</p>
-        <p>{plan.passages} passages · {plan.input_tokens.toLocaleString()} input tokens · {plan.model}</p>
-        <p>Estimated ${plan.estimated_usd}; request ceiling ${plan.maximum_usd}. This sends extracted text to OpenAI using your key.</p>
-        {plan.excluded_headers > 0 && <p>{plan.excluded_headers} repeated headers excluded from retrieval; original text stays intact.</p>}
-        {plan.partial && <p>Only available extracted text will be indexed. Missing pages are not covered.</p>}
-        <p>No automatic retry. An interrupted attempt may still incur a charge. This creates search vectors, not a review or answer.</p>
+        <p className={styles.filename}>{plan.filename}</p>
+        <p>This sends extracted text to OpenAI using your Settings key to create a search index, not a review or answer.</p>
+        <p className={styles.cost}>Estimated ${plan.estimated_usd} <span>· Request ceiling ${plan.maximum_usd}</span></p>
+        {plan.partial && <p className={styles.coverage}>Only available extracted text will be indexed. Missing pages are not covered.</p>}
+        <p>No automatic retry. An interrupted attempt may still incur a charge.</p>
+        <details className={styles.planDetails}><summary>Index details</summary>
+          <p>{plan.passages} passages · {plan.input_tokens.toLocaleString()} input tokens · {plan.model}</p>
+          {plan.excluded_headers > 0 && <p>{plan.excluded_headers} repeated headers excluded from retrieval; original text stays intact.</p>}
+        </details>
         <div className={styles.indexActions}><button type="button" disabled={busy} onClick={() => setPlan(null)}>Cancel</button>
           <button type="button" disabled={busy} onClick={() => void confirmIndex()}>{busy ? "Indexing…" : "Index agreement · paid"}</button></div>
       </div>}

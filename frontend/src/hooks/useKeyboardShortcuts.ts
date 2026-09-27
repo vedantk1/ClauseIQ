@@ -6,6 +6,7 @@
 import { useEffect } from "react";
 
 interface UseKeyboardShortcutsProps {
+  enabled?: boolean;
   searchInputRef: React.RefObject<HTMLInputElement | null>;
   isSelectMode: boolean;
   searchQuery: string;
@@ -22,6 +23,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 export const useKeyboardShortcuts = ({
+  enabled = true,
   searchInputRef,
   isSelectMode,
   searchQuery,
@@ -33,6 +35,7 @@ export const useKeyboardShortcuts = ({
   // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (!enabled) return;
       // Preserve native text/field shortcuts, including contenteditable descendants.
       const editing = isEditableTarget(event.target) || isEditableTarget(document.activeElement);
       // Focus search when pressing '/'
@@ -74,6 +77,7 @@ export const useKeyboardShortcuts = ({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [
+    enabled,
     isSelectMode,
     searchQuery,
     selectAllDocuments,

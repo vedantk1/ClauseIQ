@@ -57,6 +57,8 @@ export function AgreementInspector({ document, onDelete, deleting }: {
 
 export interface LibraryContentProps {
   searchPanel?: React.ReactNode;
+  view?: "browse" | "search";
+  onViewChange?: (view: "browse" | "search") => void;
   documents: DocumentItem[];
   filteredDocuments: DocumentItem[];
   loading: boolean;
@@ -86,6 +88,8 @@ export interface LibraryContentProps {
 
 export function LibraryContent(props: LibraryContentProps) {
   const { documents, filteredDocuments, loading, error, selectedId, onSelect, searchQuery, isSelectMode, selectedDocuments } = props;
+  const hasSearch = props.searchPanel != null;
+  const searching = hasSearch && props.view === "search";
   const selected = selectedLibraryDocument(filteredDocuments, selectedId);
   const recent = continuingDocument(documents);
   return <div className="cl-content">
@@ -97,15 +101,23 @@ export function LibraryContent(props: LibraryContentProps) {
       : error ? <section className="cl-state" role="alert"><h2>Couldn’t load your library</h2><p>{error}</p><button type="button" className="cl-button" onClick={props.onRetry}>Retry</button></section>
       : documents.length === 0 ? <section className="cl-state"><FileText size={32} aria-hidden="true" /><h2>Your first agreement</h2><p>Import a PDF to start reading. No API key needed.</p></section>
       : <>
+        {hasSearch && <div className="cl-view-toolbar">
+          <div className="cl-view-switch" role="group" aria-label="Library view">
+            <button type="button" aria-pressed={!searching} aria-controls="library-browse" onClick={() => props.onViewChange?.("browse")}>Browse</button>
+            <button type="button" aria-pressed={searching} aria-controls="library-search" onClick={() => props.onViewChange?.("search")}>Search contract text</button>
+          </div>
+          <span className="cl-inventory-count">{documents.length} {documents.length === 1 ? "agreement" : "agreements"}</span>
+        </div>}
+        {hasSearch && <div id="library-search" hidden={!searching}>{props.searchPanel}</div>}
+        <div id="library-browse" hidden={searching}>
         <ContinueReviewing document={recent} />
-        {props.searchPanel}
         <div className="cl-library-grid">
           <section className="cl-agreements" aria-labelledby="agreements-heading">
-            <div className="cl-list-heading"><div><h2 id="agreements-heading">All agreements</h2><p aria-live="polite">{filteredDocuments.length !== documents.length ? `${filteredDocuments.length} of ` : ""}{documents.length} {documents.length === 1 ? "agreement" : "agreements"}</p></div>
+            <div className="cl-list-heading"><div><h2 id="agreements-heading">All agreements</h2>{(!hasSearch || filteredDocuments.length !== documents.length) && <p aria-live="polite">{filteredDocuments.length !== documents.length ? `${filteredDocuments.length} of ` : ""}{documents.length} {documents.length === 1 ? "agreement" : "agreements"}</p>}</div>
               <button type="button" onClick={props.onRetry} className="cl-icon-button" aria-label="Refresh library" title="Refresh library"><RefreshCw size={18} aria-hidden="true" /></button>
             </div>
             <div className="cl-toolbar">
-            <div className="cl-search"><Search size={17} aria-hidden="true" /><input ref={props.searchInputRef} aria-label="Search agreements" placeholder="Search agreements" value={searchQuery} onChange={event => props.onSearch(event.target.value)} /></div>
+            <div className="cl-search"><Search size={17} aria-hidden="true" /><input ref={props.searchInputRef} aria-label="Filter by filename" placeholder="Filter by filename" value={searchQuery} onChange={event => props.onSearch(event.target.value)} /></div>
             <div className="cl-list-tools">
               <label>Sort <select value={props.sortBy} onChange={event => props.onSort(event.target.value as SortOption)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="name">Name</option></select></label>
               {props.contractTypes.length > 0 && <label>Type <select value={props.contractType} onChange={event => props.onContractType(event.target.value)}><option value="">All types</option>{props.contractTypes.map(type => <option key={type} value={type}>{formatContractType(type)}</option>)}</select></label>}
@@ -138,10 +150,11 @@ export function LibraryContent(props: LibraryContentProps) {
                 </li>)}</ul>
               </>}
           </section>
+        </div>
+        </div>
           <Modal isOpen={!!selected} placement="right" size="md" title="Agreement details" onClose={() => onSelect("")}>
             <div className={`${styles.library} ${styles.detailsPanel}`}><AgreementInspector document={selected} onDelete={document => { onSelect(""); props.onDelete(document); }} deleting={props.busy} /></div>
           </Modal>
-        </div>
       </>}
   </div>;
 }

@@ -37,11 +37,11 @@ export function FindingAsk({ run, finding, state, controller, source, sourceRead
       {turns.length ? turns.map(turn => <AskTurn key={turn.id} turn={turn} source={source} onEvidence={onEvidence}
         onRefresh={() => void controller.reloadSaved()} onInterrupt={() => setInterruptId(turn.id)}
         controlsDisabled={paidActionBusy(state) || blocked || state.pending > 0} />)
-        : <p className="cw-ask-empty">Explore a qualification, exception or uncertainty. Sources stay alongside the conversation.</p>}
+        : <p className="cw-ask-empty">Ask about a qualification, exception or uncertainty. Preview answer sources alongside this conversation.</p>}
     </div>
     </div>
     <div className="cw-ask-composer">
-    <div className="cw-composer-heading"><label htmlFor="ask-draft" className="text-sm font-medium">Your question</label>
+    <div className="cw-composer-heading"><label htmlFor="ask-draft">Your question</label>
       {reviewQuestion.trim() && <Action disabled={blocked || paidActionBusy(state)} onClick={() => {
         if (blocked || paidActionBusy(state)) return;
         if (draft.trim() && draft !== reviewQuestion) setReplacement(reviewQuestion);
@@ -64,29 +64,29 @@ export function FindingAsk({ run, finding, state, controller, source, sourceRead
       {ownAction && action.status === "preparing" ? "Saving…" : ownAction && action.status === "generating" ? "Waiting for answer…" : "Send"}
     </Action>
     </div>
-    <details className="cw-ask-options"><summary>Context & options · {includeHistory ? `${history.count} recent answers` : "fresh question"}</summary>
+    <details className="cw-ask-options"><summary>Context & options · {includeHistory ? `${history.count} recent ${history.count === 1 ? "answer" : "answers"}` : "fresh question"}</summary>
     <label className="mt-3 flex items-start gap-2 text-sm"><input type="checkbox" checked={includeHistory} disabled={paidActionBusy(state)}
       onChange={event => setIncludeHistory(event.target.checked)} />Include recent answers for this finding</label>
     <p className="mt-1 text-xs text-text-secondary">{includeHistory
       ? `Up to the last 6 usable question-and-answer turns from this finding since the latest successful fresh question are included (${history.count} currently available). Earlier AI answers can be wrong and are not source evidence.`
       : "Fresh question: no earlier Ask turns are included. The finding, original perspective and extracted source are still included."}</p>
     {history.truncated && includeHistory && <p className="mt-1 text-xs text-text-secondary">Older turns stay visible but are omitted from this request. Restate older details when needed.</p>}
-    <p className="mt-2 text-xs text-text-secondary">Separate Ask draft: drafts save locally and stay separate from confirmed questions in My review. Nothing is sent until you choose Send. Sent wording remains until you edit it.</p>
-    <p className="mt-3">Sends this finding, its original review perspective and extracted document text to OpenAI using your key.</p>
-    {run.kind === "fixture" && <p className="mt-2">This finding is a synthetic example. Ask produces a real paid AI answer, not a prewritten response.</p>}
-    <p className="mt-2">Reviewing for: {run.context.role || run.context.perspective}</p>
-    <p className="whitespace-pre-wrap">Priorities: {run.context.priorities || "No extra priorities supplied."}</p>
-    <p className="mt-2">Editing the review brief does not change this conversation&apos;s original context. Saved questions, markers and unsent drafts are not included.</p>
+    <p className="mt-2">Separate Ask draft: saved locally, not added to My review. Nothing is sent until you choose Send; sent wording remains until edited.</p>
+    <p className="mt-2">Sends this finding, its original perspective and extracted document text to OpenAI. Saved questions, markers and unsent drafts are not included.</p>
+    {run.kind === "fixture" && <p className="mt-2">Synthetic finding; Ask returns a real paid AI answer.</p>}
+    <dl className="cw-ask-context-fields"><div><dt>Reviewing for</dt><dd>{run.context.role || run.context.perspective}</dd></div>
+      <div><dt>Priorities</dt><dd>{run.context.priorities || "No extra priorities supplied."}</dd></div></dl>
+    <p>Changing the review brief does not change this conversation&apos;s original context.</p>
     <div className="mt-2 flex gap-2"><Action disabled={working} onClick={onSettings}>Open Settings</Action>
       <Action disabled={working || isLoading} onClick={() => void refresh()}>Refresh model and key status</Action></div>
     </details>
     {(isLoading || !settings?.has_api_key || settings.api_key_needs_reentry) && <p className="mt-1 text-xs text-text-secondary">{isLoading ? "Loading model and key status…" : <>Add or re-enter your API key in <button type="button" className="underline" onClick={onSettings}>Settings</button>. Saved answers remain available.</>}</p>}
-    {error && <p role="alert" className="mt-2 text-sm">Settings could not be confirmed. {error}</p>}
-    {!sourceReady && <p className="mt-2 text-sm">The matching extracted source must be loaded before sending.</p>}
-    {blocked && <p className="mt-2 text-sm">Resolve pending save errors or compare local changes before sending.</p>}
+    {error && <p role="alert" className="cw-ask-warning">Settings could not be confirmed. {error}</p>}
+    {!sourceReady && <p className="cw-ask-warning">The matching extracted source must be loaded before sending.</p>}
+    {blocked && <p className="cw-ask-warning">Resolve pending save errors or compare local changes before sending.</p>}
     {ownAction && working && <p className="mt-3 text-sm" role="status">{action.status === "preparing" ? "Waiting for pending local changes to be confirmed. No AI request has been sent yet." : action.status === "interrupting" ? "Marking the saved answer interrupted…" : "One bounded request is running. No automatic retry or model switch will occur. Your draft is retained."}</p>}
-    {ownAction && action.error && <p role="alert" className="mt-3 text-sm">{action.error}</p>}
-    {ownAction && action.status === "uncertain" && <div className="mt-3 space-y-3 text-sm">
+    {ownAction && action.error && <p role="alert" className="cw-ask-warning">{action.error}</p>}
+    {ownAction && action.status === "uncertain" && <div className="cw-ask-warning space-y-3">
       <p>{action.requestRejected ? "This request was rejected before provider dispatch." : "The provider may have received the question and charges may apply."} Refreshing only reads saved state; it never sends another question.</p>
       <Action disabled={state.status === "loading"} onClick={() => void controller.reloadSaved()}>Check saved Ask state</Action>
       {action.canRetryRequest && <div><p className="mb-2">No turn with this request ID was found. Resending is an explicit paid action using the original question, model, history choice and revision. If already accepted, the server returns that turn without another provider call.</p><Action disabled={state.status === "loading"} onClick={() => void controller.retryAskRequest()}>Resend same Ask request (API charges may apply)</Action></div>}
@@ -112,7 +112,7 @@ export function AskTurn({ turn, source, onEvidence, onRefresh, onInterrupt, cont
 }) {
   return <article className="cw-ask-turn">
     <div className="cw-ask-question"><h3>You</h3><p className="whitespace-pre-wrap">{turn.question}</p></div>
-    <p className="cw-ask-answer-label">ClauseIQ{turn.status !== "ready" ? ` · ${turn.status}` : ""}</p>
+    <p className="cw-ask-answer-label">ClauseIQ{turn.status !== "ready" && <span className="cw-answer-status" data-status={turn.status}>{turn.status}</span>}</p>
     {turn.answer.map((item, index) => {
       const parts = presentAskAnswer(item.text, item.evidence, item.inline_citations);
       const unlinked = parts.filter(part => part.kind === "unlinked-reference");
@@ -129,10 +129,10 @@ export function AskTurn({ turn, source, onEvidence, onRefresh, onInterrupt, cont
       </div>;
     })}
     {turn.status === "processing" && <div className="mt-3 space-y-2 text-sm"><p>No final answer is recorded yet. Reopening does not retry it.</p><div className="flex flex-wrap gap-2"><Action disabled={controlsDisabled} onClick={onRefresh}>Refresh saved answer status</Action><Action disabled={controlsDisabled} onClick={onInterrupt}>Mark this answer interrupted</Action></div></div>}
-    {turn.status === "incomplete" && <p className="mt-3 text-sm font-medium">This answer is incomplete. Consider the source and output limitations below; missing material has not been checked.</p>}
-    {turn.status === "failed" && <p className="mt-3 text-sm">No usable answer was completed. Your question and earlier answers remain saved.</p>}
-    {turn.status === "interrupted" && <p className="mt-3 text-sm">This answer was abandoned. Late output will not be attached; provider charges may still apply.</p>}
-    {turn.failure && <p className="mt-2 text-sm">{turn.failure.message}</p>}
+    {turn.status === "incomplete" && <p className="cw-ask-warning">This answer is incomplete. Consider the source and output limitations below; missing material has not been checked.</p>}
+    {turn.status === "failed" && <p className="cw-ask-warning">No usable answer was completed. Your question and earlier answers remain saved.</p>}
+    {turn.status === "interrupted" && <p className="cw-ask-warning">This answer was abandoned. Late output will not be attached; provider charges may still apply.</p>}
+    {turn.failure && <p className="cw-ask-warning">{turn.failure.message}</p>}
     {!!turn.limitations.length && <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">{turn.limitations.map((text, index) => <li key={index}>{text}</li>)}</ul>}
     <details className="cw-ask-answer-details"><summary>Answer details</summary>
       <div className="mt-2 space-y-2 break-words">

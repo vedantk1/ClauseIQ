@@ -109,6 +109,11 @@ export const test = base.extend({
     const providerDispatches = [];
     const operations = [];
     const errors = [];
+    // Mutable, test-owned status only. Never load or persist a real credential.
+    const settings = {
+      has_api_key: false, api_key_needs_reentry: false, model_id: "gpt-6-sol", reasoning_effort: "medium",
+      query_gate_model_id: "gpt-6-luna", available_models: [], retention_days: 0, toast_notifications_enabled: false,
+    };
     const libraryRequests = { searches: [], previews: [], sends: [], reads: [], history: 0 };
     const savedAnswers = new Map();
     // Use distinct physical pages so the journey catches incorrectly binding a
@@ -148,10 +153,7 @@ export const test = base.extend({
         return route.abort();
       }
       assert.equal(request.headers()["x-clauseiq-local"], "1", "The local-request marker must survive browser flows");
-      if (method === "GET" && path === "/workspace") return respond(route, {
-        has_api_key: false, api_key_needs_reentry: false, model_id: "gpt-6-sol", reasoning_effort: "medium",
-        query_gate_model_id: "gpt-6-luna", available_models: [], retention_days: 0, toast_notifications_enabled: false,
-      });
+      if (method === "GET" && path === "/workspace") return respond(route, settings);
       if (method === "GET" && path === "/app-config") return respond(route, { toast_notifications_enabled: false });
       if (method === "GET" && path === "/library/answers") {
         libraryRequests.history += 1;
@@ -226,7 +228,7 @@ export const test = base.extend({
       unexpected.push(`${method} ${path}`);
       return route.abort();
     });
-    await use({ fixture, imported, operations, libraryRequests, answerPlan, savedAnswers });
+    await use({ fixture, imported, operations, libraryRequests, answerPlan, savedAnswers, settings });
     expect(providerDispatches, "Unpaid journeys must never dispatch a review or Ask request").toEqual([]);
     expect(unexpected, "Unexpected requests must be intercepted, never sent to the real backend or internet").toEqual([]);
     expect(errors, "Browser journeys must not hide runtime exceptions").toEqual([]);

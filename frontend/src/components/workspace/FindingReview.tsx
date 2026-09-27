@@ -56,15 +56,17 @@ export function FindingReview({ run, finding, personal, state, controller, sourc
 
   return <div className="cw-findings-layout">
     <aside className="cw-findings-rail" aria-label="Finding navigation">
-      <h2>Findings</h2>
-      <p className="cw-muted cw-small">{run.findings.length} {run.kind === "fixture" ? "example " : ""}findings · not exhaustive</p>
+      <div className="cw-rail-heading"><h2>Findings</h2><span aria-label={`${run.findings.length} findings`}>{run.findings.length}</span></div>
+      <p className="cw-muted cw-small">{run.kind === "fixture" ? "Examples · " : ""}Not exhaustive</p>
       <ol className="cw-finding-list">
         {run.findings.map((item, itemIndex) => <li key={item.id}>
           <button type="button" onClick={() => onFinding(item.id)} aria-current={finding.id === item.id ? "true" : undefined}>
             <span className="cw-finding-number" aria-hidden="true">{String(itemIndex + 1).padStart(2, "0")}</span>
             <span className="cw-finding-label"><span>{item.title}</span>
-              {personal.markers[item.id] && personal.markers[item.id] !== "not_marked" && <span className="cw-finding-meta">{markerLabels[personal.markers[item.id]]}</span>}
-              {personal.saved_questions[item.id] && <span className="cw-finding-meta">Question saved</span>}
+              {(personal.saved_questions[item.id] || (personal.markers[item.id] && personal.markers[item.id] !== "not_marked")) && <span className="cw-finding-meta">
+                {personal.markers[item.id] && personal.markers[item.id] !== "not_marked" ? markerLabels[personal.markers[item.id]] : ""}
+                {personal.saved_questions[item.id] && <>{personal.markers[item.id] && personal.markers[item.id] !== "not_marked" ? " · " : ""}Question saved</>}
+              </span>}
               <span className="sr-only"> · {personal.opened_finding_ids.includes(item.id) ? "Opened" : "Not opened"}</span>
             </span>
             <ChevronRight size={18} aria-hidden="true" />
@@ -101,7 +103,7 @@ export function FindingReview({ run, finding, personal, state, controller, sourc
         <section className="cw-finding-section"><h3>Still unknown</h3><p>{finding.uncertainty}</p></section>
         {finding.basis === "not_found" && <section className="cw-finding-section"><h3>Not found within the reviewed scope</h3><p>{finding.coverage_basis || "No reviewed-scope explanation was supplied."}</p><p className="cw-muted">This is not proof of absence from the original, missing schedules or related documents.</p></section>}
         {finding.basis !== "not_found" && finding.coverage_basis && <section className="cw-finding-section"><h3>Reviewed scope</h3><p>{finding.coverage_basis}</p></section>}
-        <section className="cw-finding-section"><h3>Possible next step</h3><p>{finding.next_step}</p></section>
+        <section className="cw-finding-section cw-next-step"><h3>Possible next step</h3><p>{finding.next_step}</p></section>
         <details className="cw-finding-details"><summary>About your status</summary><p className="cw-muted cw-small">Your marker is not legal acceptance, a resolved issue or an AI judgement. Opening or saving does not set it.</p></details>
       </article>
 

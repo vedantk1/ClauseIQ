@@ -4,6 +4,7 @@ import test from "node:test";
 import vm from "node:vm";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import postcss from "postcss";
 import ts from "typescript";
 
 function loadModule(path, imports = {}) {
@@ -125,6 +126,49 @@ test("overview counts only selected-run activity, deduplicates opened items and 
   assert.doesNotMatch(html, /Question outside the selected run|Recovery draft only|Unsent paid Ask wording/);
   props.personal.position.finding_id = "other-run-finding";
   assert.doesNotMatch(render(AgreementOverview, props), /Saved position: Findings —/);
+});
+
+test("overview keeps unattributed saved summary text without an empty source disclosure", () => {
+  const { props, calls } = fixture();
+  const textWithoutReferences = "An authored summary with no saved quotation.\nIt remains unchanged.";
+  props.run.overview_items = [{ text: textWithoutReferences, evidence: [] }];
+  const before = JSON.stringify(props.run);
+  const tree = AgreementOverview(props);
+  const summary = nodes(tree).find(node => node.props.className === "co-summary-item");
+  assert.equal(nodes(summary).find(node => node.props.className === "co-reading").props.children, textWithoutReferences);
+  assert.equal(nodes(summary).filter(node => node.type === "details").length, 0);
+  assert.match(text(summary), /No source reference saved/);
+  assert.equal(JSON.stringify(props.run), before);
+  assert.deepEqual(calls, []);
+});
+
+test("overview groups its direct navigation separately from immutable summary wording", () => {
+  const { props, calls } = fixture();
+  const tree = AgreementOverview(props);
+  const actions = nodes(tree).find(node => node.props.role === "group" && node.props["aria-label"] === "Review next actions");
+  assert.ok(actions);
+  assert.doesNotMatch(text(actions), /The agreement offers|Continue|Generate|Run review/);
+  button(actions, "Explore findings2").props.onClick();
+  button(actions, "My review1 saved").props.onClick();
+  assert.deepEqual(calls, [["explore"], ["my-review"]]);
+});
+
+test("overview layout keeps readable evidence, separated next actions and visible limitation styling", () => {
+  const sheet = postcss.parse(readFileSync(new URL("../src/components/workspace/WorkspaceSummaries.module.css", import.meta.url), "utf8"));
+  const rules = selector => {
+    const values = {};
+    sheet.walkRules(rule => {
+      if (rule.parent.type !== "atrule" && rule.selectors.includes(selector))
+        rule.walkDecls(decl => { values[decl.prop] = decl.value; });
+    });
+    return values;
+  };
+  assert.equal(rules(".summaries :global(.co-reading)")["font-size"], "16px");
+  assert.equal(rules(".summaries :global(.co-overview-evidence blockquote)")["font-size"], "16px");
+  assert.equal(rules(".summaries :global(.co-overview-evidence > div > article)").border, "0");
+  assert.equal(rules(".summaries :global(.co-findings-next)")["margin-top"], "24px");
+  for (const selector of [".summaries :global(.co-source-coverage .co-limitation)", ".summaries :global(.co-source-coverage > [role=\"alert\"])", ".summaries :global(.co-source-coverage > .co-limitations)"])
+    assert.equal(rules(selector).color, "var(--accent-amber)");
 });
 
 test("overview keeps routine provenance disclosed without hiding unknown source limitations", () => {

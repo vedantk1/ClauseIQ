@@ -1,0 +1,36 @@
+.semanticPanel { color: var(--text-secondary); font-size: 14px; line-height: 1.5; }
+.management { min-width: 0; }
+.summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; cursor: pointer; list-style: none; }
+.summary::-webkit-details-marker { display: none; }
+.indexCount { color: var(--text-muted); }
+.manageLabel { display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); white-space: nowrap; }
+.chevron { display: inline-block; transition: transform .15s ease; }
+.management[open] > .summary .chevron { transform: rotate(180deg); }
+.managementBody { margin-top: 8px; padding: 14px 0 4px; border-top: 1px solid var(--border-muted); }
+.indexHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px 24px; }
+.indexHeading p { max-width: 65ch; color: var(--text-muted); }
+.indexList { max-height: 320px; overflow-y: auto; overscroll-behavior: contain; margin-top: 12px; }
+.indexList li { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 12px 0; border-top: 1px solid var(--border-muted); }
+.indexList li > div:first-child { min-width: 0; }
+.indexList strong { display: block; color: var(--text-primary); font-weight: 550; overflow-wrap: anywhere; }
+.indexList p { margin-top: 3px; color: var(--text-muted); max-width: 65ch; overflow-wrap: anywhere; }
+.indexActions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.semanticPanel button, .indexConfirmation button { min-height: 36px; padding: 7px 12px; border: 1px solid var(--border-muted); border-radius: 5px; background: var(--bg-primary); color: var(--text-secondary); font-size: 14px; line-height: 1.4; white-space: nowrap; }
+.semanticPanel button:hover:not(:disabled), .indexConfirmation button:hover:not(:disabled) { background: var(--bg-elevated); color: var(--text-primary); }
+.semanticPanel button:disabled, .indexConfirmation button:disabled { opacity: .6; }
+.semanticPanel :is(button, summary):focus-visible, .indexConfirmation :is(button, summary):focus-visible { outline: 2px solid var(--accent-subtle); outline-offset: 3px; }
+.feedback, .error, .coverage { margin-top: 6px; font-size: 14px; }
+.feedback { color: var(--text-muted); }
+.error, .coverage { color: var(--accent-amber); }
+.indexConfirmation { display: grid; gap: 14px; color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+.filename { color: var(--text-primary); font-size: 16px; font-weight: 550; overflow-wrap: anywhere; }
+.cost { color: var(--text-primary); }
+.cost span { color: var(--text-muted); }
+.planDetails { color: var(--text-muted); }
+.planDetails summary { width: fit-content; cursor: pointer; }
+.planDetails p { margin-top: 8px; }
+@media (max-width: 700px) {
+  .indexHeading, .indexList li { align-items: flex-start; flex-direction: column; }
+  .indexActions { justify-content: flex-start; }
+  .indexConfirmation .indexActions { justify-content: flex-end; }
+}

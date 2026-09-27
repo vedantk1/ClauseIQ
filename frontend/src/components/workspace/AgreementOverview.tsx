@@ -54,15 +54,15 @@ export function AgreementOverview({ run, personal, source, sourceLoading = false
     </header>
 
       <section className="co-agreement-summary" aria-label="Agreement summary">
-        {hasOutput && run.overview_items?.length ? <div className="co-summary-items">{run.overview_items.map((item, index) => <article key={index}>
+        {hasOutput && run.overview_items?.length ? <div className="co-summary-items">{run.overview_items.map((item, index) => <article className="co-summary-item" key={index}>
           <p className="co-reading">{item.text}</p>
-          <details className="co-overview-evidence"><summary>{item.evidence.length} source {item.evidence.length === 1 ? "reference" : "references"}</summary>
+          {item.evidence.length > 0 ? <details className="co-overview-evidence"><summary>{item.evidence.length} source {item.evidence.length === 1 ? "reference" : "references"}</summary>
             <EvidenceList evidence={item.evidence} source={matchingSource} onOpen={evidence => {
               if (evidence.source_revision_id === run.source_revision_id && evidenceMatches(evidence, matchingSource)) onSource(item.text, evidence);
             }} />
-          </details>
+          </details> : <p className="co-no-reference">No source reference saved.</p>}
         </article>)}</div> : <p className="co-reading">{hasOutput && run.overview ? run.overview : emptyMessage}</p>}
-        <div className="co-findings-next">
+        <div className="co-findings-next" role="group" aria-label="Review next actions">
           {hasOutput ? <>
             <Action className="co-primary-action" onClick={onExplore}>Explore findings<span className="co-action-count">{run.findings.length}</span><ArrowRight size={17} aria-hidden="true" /></Action>
             {onMyReview && <Action className="co-secondary-action" onClick={onMyReview}><BookOpen size={16} aria-hidden="true" />My review{saved.length > 0 && <span className="co-action-count">{saved.length} saved</span>}</Action>}

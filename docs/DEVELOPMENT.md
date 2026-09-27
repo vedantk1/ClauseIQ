@@ -142,8 +142,25 @@ provider-dispatch routes fail the test instead of falling through to live servic
 One opt-in fixture allows the exact Library-answer dispatch route but fulfills it
 entirely in memory. That journey checks search, full-evidence preview, cancel with
 zero sends, one explicit confirmed stubbed generation, its own citation/PDF page,
-and saved-answer reload/history without another send. No request is forwarded to
+and saved-answer reload/history without another send. It also checks Browse/Search
+state preservation, earlier-search answer separation and keyboard activation.
+Library Browse and answer/results captures cover Black/Graphite at 1280×800 and
+720px width. The workspace reading journey seeds explicitly labelled saved Ask
+fixtures (not generated output), checks deliberate draft replacement/separation,
+answer-owned source navigation and return, extraction dismissal/focus, and confirms
+that a filtered My review export still contains every confirmed question but no
+unsaved draft or Ask answer. Findings, Ask, reader and saved-work captures use
+both themes at 1280×800 and 720px. No request is forwarded to
 a provider. The normal fixture still rejects unexpected paid routes.
+
+The entry/settings checkpoint also captures empty/selected Import, unpaid review
+setup, Overview and Settings in both themes at those widths. Its Overview fixture
+checks keyboard disclosure, verbatim source text, exact page and return without
+rewriting the saved summary. Settings uses synthetic status flags, never a key:
+replacement cancellation restores focus; removal and automatic-deletion dialogs
+cancel without a request; unsaved preference changes do not survive reload. No
+settings/key write route is allowed by this browser fixture. Real persistence and
+credential behavior remain covered separately by component and storage checks.
 
 This tests browser interaction with a synthetic API contract, not FastAPI extraction,
 real database durability, credential handling, model quality or a complete
@@ -321,6 +338,11 @@ No automatic review occurs on import, navigation, brief changes or reload.
 ## Findings presentation checks
 
 The workspace keeps provenance in the compact Details disclosure beside its tabs.
+Details and the review-run selector form one right-aligned control group. My review
+status selectors retain finding-specific accessible labels without a repeated
+visible caption; compact-row selectors align with Add question. The focused browser
+alignment check covers multiple runs, disclosure keyboard/focus behavior and
+narrow wrapping without provider calls.
 Overview uses one summary heading and direct Findings/My review actions rather
 than a reserved activity sidebar. Routine source details are disclosed; missing
 pages, source/read failures and unknown model-authored limitations stay visible.
@@ -331,6 +353,9 @@ Settings keeps a saved key collapsed until Change key is selected (or re-entry i
 required). Cancelling clears the replacement draft and returns focus to Change key.
 Save changes is disabled while preferences are unchanged; changing a field clears
 stale success feedback. Key status describes local storage, not provider validation.
+Model reference pricing and earlier-chat controls are secondary disclosures.
+Retention units and permanent-deletion consequences remain visible when enabled;
+enabling it still requires the existing confirmation before settings are saved.
 
 For the shared entry/Settings shell, existing-run Overview, confirmed My review
 and independent source/metadata read recovery, run:
@@ -403,8 +428,10 @@ preferences, not server-stored review work. There is no reader-state migration.
 ## Import and review-setup checks
 
 The /import screen supports one selected or dropped PDF with a configured size
-limit and an explicit, key-free import. A workspace without runs opens review
-setup; existing runs keep their Overview and original context. The setup describes
+limit and an explicit, key-free import. Selecting a file replaces the empty drop
+illustration with its name, size and replacement/removal controls; the local-import
+versus paid-review notice stays beside the submit action. A workspace without runs
+opens review setup; existing runs keep their Overview and original context. The setup describes
 source readiness and missing pages without claiming a completed review. Original
 access and brief saving need no key; Start review keeps the existing paid-action,
 Settings, source and save-conflict gates.
@@ -599,6 +626,14 @@ unsearched agreements, unavailable/partial sources and result truncation. It
 does not read Settings credentials, build embeddings, call an AI provider or
 write an index. The retained per-document Qdrant chat uses a different path.
 
+Library opens in **Browse**, with a filename-only filter. **Search contract text**
+opens the separate search workspace. Both views stay mounted while this page is
+open, preserving search wording/results and answer state. Browse shortcuts are
+disabled in Search so hidden filename and selection controls cannot be activated.
+This is in-page continuity, not a promise to persist an unsent query after reload.
+Returning from a Library source page reopens Search via a `view=search` hint;
+question and source text are never carried in that URL.
+
 The frozen synthetic retrieval set verifies source labels against the checked-in
 PDFs, then scores the current lexical ranker without touching the application
 database. From `backend`:
@@ -618,7 +653,9 @@ cross-contract answers are not exercised by this lexical command.
 
 ### Library semantic index lifecycle
 
-In Library, select **Semantic → Manage semantic index → Preview indexing**.
+In Library, select **Search contract text → Semantic · paid → Manage index →
+Preview indexing**. Index management starts collapsed; coverage concerns remain
+visible beside search, including missing, stale, partial and uncertain indexes.
 Preview is key-free and shows eligible passages, partial-text limits and cost.
 Only **Index agreement · paid** dispatches embeddings using the Settings key.
 **Search semantic · paid** separately embeds the query. Keyword remains default
@@ -674,6 +711,12 @@ Saved Library answers are available from the history disclosure even without a
 current search. Refresh history/readback is unpaid and cannot resend. If a request
 was interrupted, its outcome/charge may be unknown. A fresh attempt is a separate
 paid action, never a background recovery step.
+
+Only an answer with the current search context is shown alongside its results.
+An earlier saved answer is labelled and stacked separately from new results.
+Partial/insufficient outcomes and limitations remain visible; technical generation
+details are expandable. Citation previews preserve full stored wording and bind
+to the statement's own evidence IDs, with physical-page links unchanged.
 
 Contexts expire after 15 minutes, cache eviction or server reload. An expired
 context requires a deliberate new search (and a new embedding charge in Semantic
@@ -750,6 +793,8 @@ failed/unknown output or missing usage; keep reservations and already-recorded
 results. Current-profile plans, ledgers and outputs remain under ignored
 `.local-only/library-rag-evaluations-v2`; the published small-embedding/v1 report
 is historical, not a quality result for this changed profile or prompt.
+The [current-profile result](evaluations/LIBRARY_RAG_RUNTIME_V2.md) records the
+combined live run separately, including the remaining Keyword retrieval miss.
 Recheck pricing before a later run; an old report is not fresh approval.
 
 For debugging, search local logs for `library_stage` and correlate `trace_id`

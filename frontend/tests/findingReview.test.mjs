@@ -129,6 +129,18 @@ test("all findings are visible immediately without a five-item gate", () => {
   assert.match(text(railButtons(h)[6]), /^07Finding title 7/);
 });
 
+test("the compact rail retains the count, non-exhaustive scope and both personal annotations", () => {
+  const h = harness();
+  h.props.personal.markers["finding-1"] = "revisit";
+  h.props.personal.saved_questions["finding-1"] = { text: "Confirmed question" };
+  const html = h.html();
+  assert.match(html, /aria-label="7 findings"/);
+  assert.match(html, /Examples · Not exhaustive/);
+  assert.match(text(railButtons(h)[0]), /Revisit · Question saved/);
+  assert.equal(nodes(railButtons(h)[0]).filter(node => node.props.className === "cw-finding-meta").length, 1);
+  assert.deepEqual(h.calls, []);
+});
+
 test("opening Ask switches the centre panel while evidence stays visible and sends nothing", () => {
   const h = harness();
   assert.deepEqual(h.calls, []);

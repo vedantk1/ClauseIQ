@@ -17,8 +17,9 @@ function text(node) {
   return React.Children.toArray([node.props?.children, node.props?.toolbarLeading, node.props?.toolbarActions]).map(text).join(" ");
 }
 
-function harness(initial = {}) {
+function harness(initial = {}, presentationOverrides = {}) {
   const slots = [];
+  let effects = [];
   let cursor = 0;
   let tree;
   let props = { documentId: "synthetic-document", filename: "synthetic.pdf", source: null, finding: null,
@@ -32,7 +33,16 @@ function harness(initial = {}) {
   vm.runInNewContext(code, {
     exports,
     require(name) {
-      if (name === "react") return { ...React, useState(initialValue) {
+      if (name === "react") return { ...React, useRef(initialValue) {
+        const index = cursor++;
+        slots[index] ??= { current: initialValue };
+        return slots[index];
+      }, useEffect(callback, deps) {
+        const index = cursor++;
+        const previous = slots[index];
+        if (!previous || deps.some((value, offset) => value !== previous.deps[offset])) effects.push(callback);
+        slots[index] = { deps };
+      }, useState(initialValue) {
         const index = cursor++;
         slots[index] ??= { value: initialValue };
         return [slots[index].value, next => { slots[index].value = typeof next === "function" ? next(slots[index].value) : next; }];
@@ -40,7 +50,7 @@ function harness(initial = {}) {
       if (name === "@/components/PDFViewer") return PDFViewer;
       if (name === "./evidencePresentation") return { presentEvidence(evidence, source) {
         evidenceCalls.push({ evidence, source });
-        return { matchLabel: "Quote matched to source", scope: "Saved excerpt" };
+        return { matchLabel: "Quote matched to source", scope: "Saved excerpt", matched: true, ...presentationOverrides };
       } };
       if (name.endsWith(".module.css")) return new Proxy({}, { get: (_, key) => key === "__esModule" ? false : `document-${String(key)}` });
       assert.fail(`Unexpected dependency: ${name}`);
@@ -48,7 +58,8 @@ function harness(initial = {}) {
     fetch() { assert.fail("Document presentation must not request data or AI"); },
   });
   return {
-    render(next = {}) { props = { ...props, ...next }; cursor = 0; tree = exports.DocumentWorkspace(props); return tree; },
+    render(next = {}) { props = { ...props, ...next }; cursor = 0; effects = []; tree = exports.DocumentWorkspace(props); return tree; },
+    flushEffects() { effects.forEach(callback => callback()); effects = []; },
     find(predicate) { return elements(tree, predicate)[0]; },
     all(predicate) { return elements(tree, predicate); },
     viewer() { return elements(tree, node => node.type === PDFViewer)[0].props; },
@@ -117,9 +128,14 @@ test("citation return and context share the PDF toolbar and context dismisses wi
   assert.ok(elements(details[0], node => node.type === "h2").some(node => text(node) === finding.title));
   let focused = false;
   const target = { open: true, querySelector: () => ({ focus() { focused = true; } }) };
-  details[0].props.onKeyDown({ key: "Escape", currentTarget: target });
+  details[0].props.onKeyDown({ key: "Escape", currentTarget: target, stopPropagation() {} });
   assert.equal(target.open, false);
   assert.equal(focused, true);
+  target.open = true;
+  focused = false;
+  h.button("Close review context").props.onClick({ currentTarget: { closest: () => target } });
+  assert.equal(target.open, false);
+  assert.equal(focused, true, "explicit close returns focus to Context");
 });
 
 test("Library return uses the reader toolbar without a placeholder source heading", () => {
@@ -180,6 +196,44 @@ test("missing extraction does not prevent the original PDF and has an honest emp
   assert.ok(h.viewer());
 });
 
+test("extraction focuses its heading on open and Escape restores the reader toggle", () => {
+  const h = harness({ source });
+  h.render();
+  let toggleFocused = 0;
+  let headingFocused = 0;
+  h.button("Extracted text").props.ref.current = { focus() { toggleFocused += 1; } };
+  h.button("Extracted text").props.onClick();
+  h.render();
+  const heading = h.find(node => node.type === "h3");
+  assert.equal(heading.props.tabIndex, -1);
+  heading.props.ref.current = { focus() { headingFocused += 1; } };
+  h.flushEffects();
+  assert.equal(headingFocused, 1);
+  h.viewer().onPageChange(2);
+  h.render();
+  h.flushEffects();
+  assert.equal(headingFocused, 1, "scrolling to another PDF page must not steal focus");
+  let stopped = false;
+  h.find(node => node.type === "aside").props.onKeyDown({ key: "Escape", stopPropagation() { stopped = true; } });
+  h.render();
+  assert.equal(stopped, true);
+  assert.equal(toggleFocused, 1);
+  assert.equal(h.find(node => node.type === "aside"), undefined);
+});
+
+test("source mismatch stays explicit beside unchanged quoted text", () => {
+  const quote = "  Partial wording\nwith exact spacing.  ";
+  const h = harness({ finding, evidence: { ...evidence, quote }, source }, {
+    matched: false, matchLabel: "Quote could not be matched to this source",
+  });
+  h.render();
+  assert.equal(text(h.find(node => node.type === "blockquote")), quote);
+  const warning = h.find(node => node.props?.className === "document-warning");
+  assert.match(text(warning), /Quote could not be matched to this source/);
+  assert.match(text(warning), /may begin or end mid-clause/);
+  assert.equal(h.viewer().highlightedClause, undefined);
+});
+
 test("navigation failures remain visible until a successful physical-page update", () => {
   const h = harness();
   h.render();
@@ -200,9 +254,12 @@ test("long evidence and context are preserved inside bounded disclosures, not si
   h.render();
   assert.equal(text(h.find(node => node.type === "blockquote")), quote);
   const css = readFileSync(new URL("../src/components/workspace/DocumentWorkspace.module.css", import.meta.url), "utf8");
-  assert.match(css, /\.contextBody\s*\{[^}]*max-height:\s*24dvh;[^}]*overflow-y:\s*auto/s);
+  assert.match(css, /\.contextBody\s*\{[^}]*max-height:\s*min\(420px,\s*52dvh\);[^}]*overflow-y:\s*auto/s);
   assert.match(css, /\.workspace\s*\{[^}]*height:\s*100%;[^}]*min-height:\s*0;[^}]*overflow:\s*hidden/s);
   assert.match(css, /\.readingArea\s*\{[^}]*flex:\s*1;[^}]*min-height:\s*0;[^}]*overflow:\s*hidden/s);
   assert.match(css, /\.extraction\s*\{[^}]*overflow-y:\s*auto/s);
-  assert.doesNotMatch(css, /75vh|900px/);
+  assert.match(css, /\.extractionHeading\s*\{[^}]*position:\s*sticky/s);
+  assert.match(css, /\.extractionText\s*\{[^}]*font-size:\s*15px;[^}]*line-height:\s*1\.8/s);
+  assert.doesNotMatch(css, /(?:min-|max-)?height:\s*(?:75vh|900px)/);
+  assert.match(css, /@media\s*\(max-width:\s*900px\)\s*\{[^]*?\.withText\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\);/);
 });

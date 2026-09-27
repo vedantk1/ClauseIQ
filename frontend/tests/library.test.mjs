@@ -262,12 +262,62 @@ test("filtering affects inspector selection, not the latest saved resume shortcu
 test("search, sort, contract type and refresh controls invoke only their explicit callbacks", () => {
   const { props, calls } = contentProps();
   const controls = nodes(LibraryContent(props));
-  controls.find(node => node.type === "input" && node.props["aria-label"] === "Search agreements").props.onChange({ target: { value: "alpha" } });
+  controls.find(node => node.type === "input" && node.props["aria-label"] === "Filter by filename").props.onChange({ target: { value: "alpha" } });
   const selects = controls.filter(node => node.type === "select");
   selects[0].props.onChange({ target: { value: "name" } });
   selects[1].props.onChange({ target: { value: "service_agreement" } });
   controls.find(node => node.type === "button" && node.props["aria-label"] === "Refresh library").props.onClick();
   assert.deepEqual(calls, [["search", "alpha"], ["sort", "name"], ["type", "service_agreement"], ["retry"]]);
+});
+
+test("Browse and contract search stay mounted independently with only the active view exposed", () => {
+  const searchPanel = React.createElement("section", { "aria-label": "Contract search content" }, "Saved answer and query draft");
+  const { props, calls } = contentProps({ searchPanel, selectedId: "" });
+  const browse = LibraryContent(props);
+  const browseNodes = nodes(browse);
+  const browseRegion = browseNodes.find(node => node.props.id === "library-browse");
+  const searchRegion = browseNodes.find(node => node.props.id === "library-search");
+  assert.equal(browseRegion.props.hidden, false);
+  assert.equal(searchRegion.props.hidden, true);
+  assert.equal(searchRegion.props.children, searchPanel);
+  assert.equal(button(browse, "Browse").props["aria-pressed"], true);
+  assert.equal(button(browse, "Search contract text").props["aria-pressed"], false);
+  assert.ok(browseNodes.some(node => node.props.role === "group" && node.props["aria-label"] === "Library view"));
+  assert.equal(button(browse, "Search contract text").props["aria-controls"], "library-search");
+  const search = LibraryContent({ ...props, view: "search" });
+  const searchNodes = nodes(search);
+  assert.equal(searchNodes.find(node => node.props.id === "library-browse").props.hidden, true);
+  assert.equal(searchNodes.find(node => node.props.id === "library-search").props.hidden, false);
+  assert.equal(searchNodes.find(node => node.props.id === "library-search").props.children, searchPanel);
+  assert.ok(searchNodes.some(node => node.type === ContinueReviewing));
+  assert.ok(searchNodes.some(node => node.props["aria-label"] === "Filter by filename"));
+  assert.equal(button(search, "Search contract text").props["aria-pressed"], true);
+  assert.deepEqual(calls, [], "Showing either view must not dispatch data or paid actions");
+});
+
+test("view controls request only view changes without clearing filters, drafts or selection", () => {
+  const viewCalls = [];
+  const { props, calls } = contentProps({
+    searchPanel: React.createElement("section", null, "Search"),
+    onViewChange: view => viewCalls.push(view),
+    searchQuery: "saved filter", isSelectMode: true, selectedDocuments: new Set(["one"]),
+  });
+  const tree = LibraryContent(props);
+  button(tree, "Search contract text").props.onClick();
+  button(tree, "Browse").props.onClick();
+  assert.deepEqual(viewCalls, ["search", "browse"]);
+  assert.deepEqual(calls, []);
+  assert.equal(props.searchQuery, "saved filter");
+  assert.equal(props.selectedDocuments.has("one"), true);
+});
+
+test("without contract search the library remains directly browsable", () => {
+  const { props } = contentProps({ view: "search" });
+  const tree = LibraryContent(props);
+  const controls = nodes(tree);
+  assert.equal(controls.find(node => node.props.id === "library-browse").props.hidden, false);
+  assert.equal(controls.some(node => node.props["aria-label"] === "Library view"), false);
+  assert.equal(controls.some(node => node.props.id === "library-search"), false);
 });
 
 test("legacy analysis and unreadable metadata remain accessible without pretending there is a usable review", () => {

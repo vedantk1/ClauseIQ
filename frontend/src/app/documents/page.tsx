@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { Suspense, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useDocumentsData } from "@/hooks/useDocumentsData";
 import { useDocumentsFiltering } from "@/hooks/useDocumentsFiltering";
 import { useBulkSelection } from "@/hooks/useBulkSelection";
@@ -15,10 +16,16 @@ import { DeleteSelectedModal } from "@/components/documents/DeleteSelectedModal"
 import styles from "@/components/documents/Library.module.css";
 
 export default function Documents() {
+  return <Suspense fallback={<div className={styles.library}><LibraryHeader /><p role="status">Loading Library…</p></div>}><DocumentsContent /></Suspense>;
+}
+
+function DocumentsContent() {
+  const searchParams = useSearchParams();
   const { documents, setDocuments, loading, error, retryFetch } = useDocumentsData();
   const filtering = useDocumentsFiltering({ documents });
   const selection = useBulkSelection({ filteredDocuments: filtering.filteredDocuments });
   const [selectedId, setSelectedId] = useState("");
+  const [view, setView] = useState<"browse" | "search">(searchParams.get("view") === "search" ? "search" : "browse");
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [deleteSelectedOpen, setDeleteSelectedOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<{ id: string; name: string } | null>(null);
@@ -31,6 +38,7 @@ export default function Documents() {
   });
   const busy = operations.deletingAll || operations.deletingSelected || !!operations.deletingDocId;
   useKeyboardShortcuts({
+    enabled: view === "browse",
     searchInputRef, isSelectMode: selection.isSelectMode, searchQuery: filtering.searchQuery,
     setSearchQuery: filtering.setSearchQuery, setIsSelectMode: selection.setIsSelectMode,
     setSelectedDocuments: selection.setSelectedDocuments, selectAllDocuments: selection.selectAllDocuments,
@@ -38,7 +46,7 @@ export default function Documents() {
 
   return <div className={styles.library}>
     <LibraryHeader />
-    <LibraryContent searchPanel={<LibrarySearch />} documents={documents} filteredDocuments={filtering.filteredDocuments}
+    <LibraryContent searchPanel={<LibrarySearch />} view={view} onViewChange={setView} documents={documents} filteredDocuments={filtering.filteredDocuments}
       loading={loading} error={error} onRetry={() => void retryFetch()}
       selectedId={selectedId} onSelect={setSelectedId}
       searchQuery={filtering.searchQuery} onSearch={filtering.setSearchQuery} searchInputRef={searchInputRef}

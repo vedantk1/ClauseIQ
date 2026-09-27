@@ -19,12 +19,15 @@ export function ReviewSetup({ documentId, filename, source, sourceError, state, 
   const blocked = ["loading", "failed", "conflict", "review"].includes(state.status);
   const sourceState = reviewSetupSource(source, documentId, workspace.source_revision_id, sourceError);
   return <section className={styles.setup} aria-labelledby="review-setup-heading">
-    <div className="cs-intro"><h2 id="review-setup-heading">Set up your review</h2>
-      <p>Choose a perspective and the questions that matter to you.</p></div>
+    <div className="cs-heading-row">
+      <div className="cs-intro"><h2 id="review-setup-heading">Set up your review</h2>
+        <p>Choose a perspective and the questions that matter to you.</p></div>
+      <button type="button" className="cs-return" onClick={onLibrary}><ArrowLeft size={16} aria-hidden="true" />Return to Library</button>
+    </div>
     <div className="cs-grid">
       <aside className="cs-source" aria-labelledby="setup-agreement-heading">
         <h3 id="setup-agreement-heading">Your agreement</h3>
-        <div className="cs-file"><FileText size={30} aria-hidden="true" /><div><p>{filename}</p><span>{sourceState.pageCount === null ? "Page count unavailable" : `${sourceState.pageCount} ${sourceState.pageCount === 1 ? "page" : "pages"}`}</span></div></div>
+        <div className="cs-file"><FileText size={25} aria-hidden="true" /><div><p>{filename}</p><span>{sourceState.pageCount === null ? "Page count unavailable" : `${sourceState.pageCount} ${sourceState.pageCount === 1 ? "page" : "pages"}`}</span></div></div>
         <div className="cs-source-status" data-limited={sourceState.limited || undefined} role="status">
           <h4>{sourceState.title}</h4>{(!sourceState.canReview || sourceState.limited) && <p>{sourceState.message}</p>}
           {source?.source_extraction && <p>{sourceState.extracted} of {sourceState.pageCount} pages have extracted text.</p>}
@@ -43,6 +46,5 @@ export function ReviewSetup({ documentId, filename, source, sourceError, state, 
         <ReviewGenerationControls variant="setup" state={state} controller={controller} sourceReady={sourceState.canReview} onSettings={onSettings} />
       </div>
     </div>
-    <button type="button" className="cs-return" onClick={onLibrary}><ArrowLeft size={16} aria-hidden="true" />Return to Library</button>
   </section>;
 }

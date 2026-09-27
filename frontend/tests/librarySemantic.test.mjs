@@ -10,7 +10,7 @@ function load(path, imports) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React, esModuleInterop: true },
   }).outputText;
   const exports = {};
-  vm.runInNewContext(compiled, { exports, React, encodeURIComponent, crypto: { randomUUID: () => "synthetic-request-id" },
+  vm.runInNewContext(compiled, { exports, React, Error, encodeURIComponent, crypto: { randomUUID: () => "synthetic-request-id" },
     require(name) { assert.ok(name in imports, `Unexpected dependency ${name}`); return imports[name]; } });
   return exports;
 }
@@ -72,7 +72,7 @@ test("index panel status and preview are unpaid; confirmation and removal are de
     removeIndex: async () => { calls.push("remove"); ready = false; },
   };
   const { LibrarySemanticPanel } = load("../src/components/documents/LibrarySemanticPanel.tsx", {
-    react: h.react, "@/components/ui/Modal": Modal, "@/lib/librarySemantic": api, "./LibrarySearch.module.css": {},
+    react: h.react, "@/components/ui/Modal": Modal, "@/lib/librarySemantic": api, "./LibrarySemanticPanel.module.css": {},
   });
   let tree = h.render(LibrarySemanticPanel); await settle();
   assert.deepEqual(calls, ["status"]);
@@ -83,6 +83,11 @@ test("index panel status and preview are unpaid; confirmation and removal are de
   const dialog = nodes(tree).find(item => item.type === Modal && item.props.title === "Index agreement for semantic search");
   assert.equal(dialog.props.isOpen, true);
   assert.match(text(dialog), /sends extracted text to OpenAI/);
+  assert.match(text(dialog), /Settings key/);
+  assert.match(text(dialog), /Estimated \$0\.000013/);
+  assert.match(text(dialog), /Request ceiling \$0\.026/);
+  assert.match(text(dialog), /No automatic retry/);
+  assert.match(text(dialog), /interrupted attempt may still incur a charge/);
   button(dialog, "Index agreement · paid").props.onClick(); await settle();
   assert.deepEqual(calls, ["status", "preview", "index", "status"]);
   tree = h.render(LibrarySemanticPanel);
@@ -93,6 +98,72 @@ test("index panel status and preview are unpaid; confirmation and removal are de
   assert.equal(remove.props.isOpen, true);
   button(remove, "Remove index").props.onClick(); await settle();
   assert.equal(calls.filter(call => call === "remove").length, 1);
+});
+
+test("ready index management is compact and keeps unpaid refresh inside the collapsed disclosure", async () => {
+  const h = harness(), calls = [];
+  const Modal = () => null;
+  const { LibrarySemanticPanel } = load("../src/components/documents/LibrarySemanticPanel.tsx", {
+    react: h.react, "@/components/ui/Modal": Modal, "./LibrarySemanticPanel.module.css": {},
+    "@/lib/librarySemantic": {
+      semanticStatus: async () => { calls.push("status"); return { indexed_documents: 1, documents_in_library: 1,
+        documents_not_examined: 0, documents: [{ document_id: "doc", filename: "Synthetic.pdf", status: "ready", partial: false }] }; },
+      previewIndex: () => { throw new Error("No preview from navigation"); },
+      indexAgreement: () => { throw new Error("No paid call from navigation"); },
+      removeIndex: () => { throw new Error("No removal from navigation"); },
+    },
+  });
+  h.render(LibrarySemanticPanel); await settle();
+  const tree = h.render(LibrarySemanticPanel);
+  const management = nodes(tree).find(node => node.type === "details");
+  assert.equal(management.props.open, undefined);
+  const summary = nodes(management).find(node => node.type === "summary");
+  assert.match(text(summary), /1 of 1 indexed/);
+  assert.match(text(summary), /Manage index/);
+  assert.ok(button(management, "Refresh status"));
+  assert.ok(!nodes(tree).some(node => node.props["aria-label"] === "Index coverage limits"));
+  assert.doesNotMatch(text(tree), /Semantic searches send your query|Keyword stays free/);
+  assert.deepEqual(calls, ["status"]);
+  button(management, "Refresh status").props.onClick(); await settle();
+  assert.deepEqual(calls, ["status", "status"]);
+});
+
+test("collapsed index management leaves missing, stale, incomplete and uncertain coverage visible", async () => {
+  const h = harness();
+  const states = ["ready", "not_indexed", "stale", "missing_vectors", "failed", "interrupted", "unavailable", "processing"];
+  const { LibrarySemanticPanel } = load("../src/components/documents/LibrarySemanticPanel.tsx", {
+    react: h.react, "@/components/ui/Modal": () => null, "./LibrarySemanticPanel.module.css": {},
+    "@/lib/librarySemantic": {
+      semanticStatus: async () => ({ indexed_documents: 1, documents_in_library: 10, documents_not_examined: 2,
+        documents: states.map((status, index) => ({ document_id: `document-${index}`, filename: "Synthetic.pdf", status,
+          partial: index === 0, failure: status === "failed" ? "Synthetic storage failure" : null })) }),
+    },
+  });
+  h.render(LibrarySemanticPanel); await settle();
+  const tree = h.render(LibrarySemanticPanel);
+  const management = nodes(tree).find(node => node.type === "details");
+  const limits = nodes(tree).find(node => node.props["aria-label"] === "Index coverage limits");
+  assert.ok(limits);
+  assert.ok(!nodes(management).includes(limits), "coverage must remain outside the collapsed content");
+  for (const expected of ["1 not indexed", "1 outdated", "1 incomplete", "1 failed", "1 interrupted · outcome unknown",
+    "1 without usable text", "1 indexing", "1 with partial text", "2 not examined"]) assert.ok(text(limits).includes(expected));
+  assert.match(text(management), /Synthetic storage failure/);
+  assert.match(text(management), /Synthetic.pdf · ment-0/);
+});
+
+test("an unavailable index status is visible without claiming coverage or triggering a paid action", async () => {
+  const h = harness(), calls = [];
+  const { LibrarySemanticPanel } = load("../src/components/documents/LibrarySemanticPanel.tsx", {
+    react: h.react, "@/components/ui/Modal": () => null, "./LibrarySemanticPanel.module.css": {},
+    "@/lib/librarySemantic": {
+      semanticStatus: async () => { calls.push("status"); throw new Error("Synthetic index status failure"); },
+    },
+  });
+  h.render(LibrarySemanticPanel); await settle();
+  const tree = h.render(LibrarySemanticPanel);
+  assert.match(text(nodes(tree).find(node => node.type === "summary")), /Index status unavailable/);
+  assert.match(text(nodes(tree).find(node => node.props.role === "alert")), /Synthetic index status failure/);
+  assert.deepEqual(calls, ["status"]);
 });
 
 test("mode switches never dispatch; semantic search has a paid submit and ignores stale responses", async () => {

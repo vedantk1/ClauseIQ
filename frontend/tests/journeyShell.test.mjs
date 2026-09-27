@@ -191,6 +191,44 @@ test("Settings groups render locally with no secret value, model changes or nest
   assert.deepEqual(h.calls, []);
 });
 
+test("Settings key status sits with its heading while mutation controls stay separate", () => {
+  const h = settingsHarness();
+  const titleRow = node(h.view(), item => item.type === "div"
+    && React.Children.toArray(item.props.children).some(child => child.props?.id === "ai-access-title"));
+  assert.match(render(titleRow), /OpenAI API key.*Key saved/);
+  assert.doesNotMatch(render(titleRow), /Change key|Remove key/);
+  h.click("Change key");
+  assert.equal(node(h.view(), item => item.props.id === "openai-key").props["aria-describedby"], "key-usage");
+  assert.match(render(node(h.view(), item => item.props.id === "key-usage")), /send document text to OpenAI.*incur charges/);
+  assert.deepEqual(h.calls, []);
+});
+
+test("Settings model reference pricing stays secondary with separately labelled token rates", () => {
+  const h = settingsHarness();
+  const details = nodes(h.view()).filter(item => item.type === "details");
+  assert.ok(details.some(item => render(item).includes("Advanced model behaviour")));
+  const html = h.html();
+  assert.match(html, /<summary>Model details and reference pricing<\/summary>/);
+  assert.match(html, /<dt>Model ID<\/dt><dd><code>review-model/);
+  assert.match(html, /<dt>Input \/ 1M tokens<\/dt><dd>\$1\.00 USD/);
+  assert.match(html, /<dt>Output \/ 1M tokens<\/dt><dd>\$2\.00 USD/);
+  assert.match(html, /not a document estimate/);
+  assert.deepEqual(h.calls, []);
+});
+
+test("Settings retention units and permanent-deletion warning remain linked and visible", () => {
+  const h = settingsHarness();
+  h.toggle(0);
+  const tree = h.view();
+  const input = node(tree, item => item.props.id === "retention-days");
+  assert.equal(input.props["aria-describedby"], "retention-unit retention-warning");
+  const section = node(tree, item => item.props.id === "document-library");
+  const warning = node(section, item => item.props.id === "retention-warning");
+  assert.match(render(warning), /permanently removes.*Existing older documents are included/);
+  assert.equal(nodes(section).some(item => item.type === "details"), false);
+  assert.deepEqual(h.calls, []);
+});
+
 test("Settings save preserves distinct review and query choices and disabled retention", async () => {
   const h = settingsHarness();
   h.change("analysis-model", "other-model");

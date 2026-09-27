@@ -16,6 +16,18 @@ function css(file) {
 }
 
 // Layout intent only. The batched browser checkpoint checks the rendered result.
+test("review status aligns with question actions and run tools share one right-aligned group", () => {
+  const review = css("workspace/MyReview.module.css");
+  assert.equal(review(".review :global(.mr-marker)").display, "block");
+  assert.equal(review(".review :global(.mr-item-compact .mr-item-heading)")["align-items"], "flex-start");
+  assert.equal(review(".review :global(.mr-marker select)")["min-height"], "36px");
+  const workspace = css("workspace/ReviewWorkspace.module.css");
+  assert.equal(workspace(".workspace :global(.cw-run-tools)")["margin-left"], "auto");
+  assert.equal(workspace(".workspace :global(.cw-run-tools)").display, "flex");
+  assert.equal(workspace(".workspace :global(.cw-provenance)")["margin-left"], undefined);
+  assert.equal(workspace(".workspace :global(.cw-run-selector)")["margin-left"], undefined);
+});
+
 test("document canvas keeps the remaining viewport rather than a padded scrolling page", () => {
   const rules = css("workspace/ReviewWorkspace.module.css");
   const document = rules(".workspace :global(.cw-view-document)");
@@ -60,4 +72,24 @@ test("conversation sources wrap and the composer cannot occupy most of its pane"
   const chip = rules(".workspace :global(.cw-ask-evidence-chip)");
   assert.equal(chip["max-width"], "100%");
   assert.equal(chip["overflow-wrap"], "anywhere");
+});
+
+test("source and action hierarchy stays compact without shrinking reading copy", () => {
+  const rules = css("workspace/ReviewWorkspace.module.css");
+  assert.equal(rules(".workspace :global(.cw-evidence-detail-topline)").display, "flex");
+  assert.equal(rules(".workspace :global(.cw-evidence-quote)")["font-size"], "16px");
+  assert.equal(rules(".workspace :global(.cw-evidence-open)")["flex-shrink"], "0");
+  assert.equal(rules(".workspace :global(.cw-finding-tools)")["flex-shrink"], "0");
+  assert.equal(rules(".workspace :global(.cw-conversation-history)")["overflow-y"], "auto");
+  assert.equal(rules(".workspace :global(.cw-ask-warning)")["border-left"], "2px solid var(--accent-amber)");
+  assert.equal(rules(".workspace :global(.cw-evidence-detail-heading:focus-visible)").outline, "2px solid var(--cw-accent)");
+});
+
+test("workspace visibility, question actions and finding sections have one base rule each", () => {
+  const sheet = postcss.parse(readFileSync(new URL("../src/components/workspace/ReviewWorkspace.module.css", import.meta.url), "utf8"));
+  for (const selector of [".workspace :global([hidden])", ".workspace :global(.cw-question-actions)", ".workspace :global(.cw-finding-section)"]) {
+    const rules = [];
+    sheet.walkRules(selector, rule => { if (rule.parent.type === "root") rules.push(rule); });
+    assert.equal(rules.length, 1, selector);
+  }
 });

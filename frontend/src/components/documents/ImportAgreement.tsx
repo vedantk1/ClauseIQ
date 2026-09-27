@@ -113,12 +113,17 @@ export default function ImportAgreement() {
       </div>
 
       <form onSubmit={submit} className={styles.form} aria-label="Import agreement" aria-busy={pending}>
-        <div className={`${styles.dropZone} ${dragActive ? styles.dragActive : ""}`}
+        <div className={`${styles.dropZone} ${dragActive ? styles.dragActive : ""}`} data-selected={!!file || undefined}
           onDragOver={(event) => { event.preventDefault(); if (!importing.current) setDragActive(true); }}
           onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragActive(false); }}
           onDrop={(event) => { event.preventDefault(); setDragActive(false); selectFiles(Array.from(event.dataTransfer.files)); }}>
-          <Upload size={30} aria-hidden="true" />
-          <h2>{file ? "PDF selected" : "Drop a PDF here"}</h2>
+          {file ? <div className={styles.selectedFile}>
+            <FileText size={25} aria-hidden="true" />
+            <div><span className={styles.filename}>{file.name}</span><span className={styles.fileSize}>{importFileSize(file.size)} · PDF</span></div>
+            <button type="button" className={styles.remove} disabled={pending} onClick={removeFile} aria-label={`Remove ${file.name}`}>
+              <X size={17} aria-hidden="true" /><span>Remove</span>
+            </button>
+          </div> : <><Upload size={26} aria-hidden="true" /><h2>Drop a PDF here</h2></>}
           <p id="import-file-guidance">One PDF at a time · Up to {config.maxFileSizeMB} MB</p>
           <input ref={fileInput} id="source-pdf" type="file" accept="application/pdf,.pdf"
             aria-label="Choose a PDF agreement" aria-describedby="import-file-guidance import-extraction-boundary"
@@ -132,13 +137,6 @@ export default function ImportAgreement() {
           </button>
         </div>
 
-        {file && <div className={styles.selectedFile}>
-          <FileText size={23} aria-hidden="true" />
-          <div><span className={styles.filename}>{file.name}</span><span className={styles.fileSize}>{importFileSize(file.size)} · PDF</span></div>
-          <button type="button" className={styles.remove} disabled={pending} onClick={removeFile} aria-label={`Remove ${file.name}`}>
-            <X size={17} aria-hidden="true" /><span>Remove</span>
-          </button>
-        </div>}
         {validation && <p role="alert" className={styles.error}>{validation}</p>}
 
         {failure && <div role="alert" className={styles.recovery}>
@@ -152,19 +150,17 @@ export default function ImportAgreement() {
           </button>
         </div>}
 
-        <div className={styles.boundary} id="import-extraction-boundary">
-          <p>Import is local and needs no API key. AI review is a separate paid action.</p>
-        </div>
-        <details className={styles.extraction}><summary>Scans and text extraction</summary><p>Text extraction does not perform OCR and is not a completed review. Scanned or incomplete text is reported after import; you can still read the original PDF.</p></details>
         <div className={styles.actions}>
           <button type="submit" className="cl-button cl-primary" disabled={!file || pending || !!failure}>
             {pending ? <><LoaderCircle size={18} className={styles.spinner} aria-hidden="true" /> Importing agreement…</>
               : <>Import agreement<ArrowRight size={17} aria-hidden="true" /></>}
           </button>
+          <p className={styles.boundary} id="import-extraction-boundary">Import is local and needs no API key. AI review is a separate paid action.</p>
         </div>
         {pending && <p role="status" className={styles.progress}>Saving the original and extracting text. Keep this page open for confirmation; any saved original remains in your library.</p>}
       </form>
 
+      <details className={styles.extraction}><summary>Scans and text extraction</summary><p>Text extraction does not perform OCR and is not a completed review. Scanned or incomplete text is reported after import; you can still read the original PDF.</p></details>
       <details className={styles.example}>
         <summary>Try the synthetic example</summary>
         <p>Import <code>tests/fixtures/pdfs/managed-services-25p.pdf</code> for a ready-to-explore example review. These are fixed example findings, not a live AI review, and only appear for the exact sample PDF.</p>

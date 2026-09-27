@@ -30,3 +30,9 @@ test("the desktop continue-review card retains its horizontal layout and safely 
   assert.equal(declarations(".library :global(.cl-resume-body)")["min-width"], "0");
   assert.equal(declarations(".library :global(.cl-resume-body h3)")["overflow-wrap"], "anywhere");
 });
+
+test("library view controls wrap at narrow widths without reducing their target size", () => {
+  assert.equal(declarations(".library :global(.cl-view-toolbar)")["flex-wrap"], "wrap");
+  assert.equal(declarations(".library :global(.cl-view-switch)")["flex-wrap"], "wrap");
+  assert.equal(declarations(".library :global(.cl-view-switch button)")["min-height"], "36px");
+});

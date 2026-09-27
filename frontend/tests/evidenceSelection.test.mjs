@@ -113,6 +113,18 @@ test("all evidence references remain available while only the first exact quotat
   assert.match(html, /does not verify the interpretation/);
 });
 
+test("the selected excerpt groups its exact-page action with the heading and keeps the quotation before reference navigation", () => {
+  const h = harness(); const { finding, source } = fixture();
+  const tree = h.render({ finding, source, selectedEvidence: finding.evidence[1] });
+  const topline = elements(tree, node => node.props.className === "cw-evidence-detail-topline")[0];
+  const title = elements(topline, node => node.type === "h3")[0];
+  assert.equal(title.props.children, "Archive exception");
+  assert.equal(elements(topline, node => node.props.className === "cw-evidence-open").length, 1);
+  assert.equal(h.quote(), finding.evidence[1].quote);
+  assert.ok(h.html().indexOf("<blockquote") < h.html().indexOf('aria-label="Evidence references"'));
+  assert.deepEqual(h.opened, [], "presentation and selection do not navigate or send anything");
+});
+
 test("selecting a reference only changes the detail; original navigation requires its own action", () => {
   const h = harness(); const { finding, source } = fixture();
   h.render({ finding, source });

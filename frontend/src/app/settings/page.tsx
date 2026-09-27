@@ -9,17 +9,20 @@ import Card from "@/components/Card";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import styles from "./Settings.module.css";
 
-const inputClass = "w-full bg-bg-elevated border border-border-muted rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-purple disabled:opacity-50";
+const inputClass = styles.input;
 
 function ModelDetails({ model }: { model: AvailableModel }) {
   return <details className={styles.modelDetails}>
     <summary>Model details and reference pricing</summary>
-    <div className="space-y-2 text-sm text-text-secondary">
+    <div className={styles.modelDetailBody}>
     <p>{model.description}</p>
-    <p>Model ID: <code className="break-all text-text-primary">{model.id}</code></p>
-    <p>Base price per 1 million tokens (USD): {formatModelRate(model.input_price_per_million)} input · {formatModelRate(model.output_price_per_million)} output.</p>
-    <p className="text-xs">Reference prices checked {model.pricing_verified_on}, not a quote for a document. {model.pricing_note} <a className="text-accent-purple underline" href="https://developers.openai.com/api/docs/pricing" target="_blank" rel="noopener noreferrer">Check OpenAI pricing</a>.</p>
-    {model.legacy && <p className="text-xs text-accent-amber">Your saved legacy model is preserved. Choose another model explicitly when you are ready to change it.</p>}
+    <dl className={styles.modelFacts}>
+      <div><dt>Model ID</dt><dd><code>{model.id}</code></dd></div>
+      <div><dt>Input / 1M tokens</dt><dd>{formatModelRate(model.input_price_per_million)} USD</dd></div>
+      <div><dt>Output / 1M tokens</dt><dd>{formatModelRate(model.output_price_per_million)} USD</dd></div>
+    </dl>
+    <p className={styles.help}>Base reference prices checked {model.pricing_verified_on}; not a document estimate. {model.pricing_note} <a href="https://developers.openai.com/api/docs/pricing" target="_blank" rel="noopener noreferrer">Check OpenAI pricing</a>.</p>
+    {model.legacy && <p className={styles.warning}>Your saved legacy model is preserved. Choose another model explicitly when you are ready to change it.</p>}
     </div>
   </details>;
 }
@@ -145,22 +148,22 @@ export default function Settings() {
 
     {settings && <>
       <section id="ai-access" aria-labelledby="ai-access-title" className={styles.section}>
-        <div className={styles.sectionHeading}><div><h2 id="ai-access-title">OpenAI API key</h2><p>{settings.has_api_key ? "Stored encrypted in your local workspace." : "Add your own key to review agreements and ask AI."}</p></div>
-          <div ref={keyActions} className={styles.keyActions}><span className={styles.status}>{settings.api_key_needs_reentry ? "Key needs attention" : settings.has_api_key ? "Key saved" : "No key saved"}</span>
+        <div className={styles.sectionHeading}><div><div className={styles.titleRow}><h2 id="ai-access-title">OpenAI API key</h2><span className={`${styles.status} ${settings.api_key_needs_reentry ? styles.statusWarning : ""}`}>{settings.api_key_needs_reentry ? "Key needs attention" : settings.has_api_key ? "Key saved" : "No key saved"}</span></div><p>{settings.api_key_needs_reentry ? "Re-enter your key to enable AI." : settings.has_api_key ? "Stored encrypted in your local workspace." : "Add your own key to review agreements and ask AI."}</p></div>
+          <div ref={keyActions} className={styles.keyActions}>
             {settings.has_api_key && !showKeyForm && <Button type="button" data-key-change variant="secondary" disabled={!!saving} onClick={() => { keyFocusIntent.current = "input"; setEditingKey(true); setMessage(null); }}>Change key</Button>}
             {settings.has_api_key && <Button type="button" variant="ghost" disabled={!!saving} onClick={() => setConfirmRemove(true)}>Remove key</Button>}
           </div></div>
-        {settings.api_key_needs_reentry && <p role="alert" className="text-sm text-accent-amber">The previous key could not be restored. Enter your OpenAI API key again; your saved documents are unchanged.</p>}
-        {showKeyForm && <form onSubmit={(event) => { event.preventDefault(); void saveKey(); }} className="space-y-3" aria-label="API key">
+        {settings.api_key_needs_reentry && <p role="alert" className={styles.warning}>The previous key could not be restored. Enter your OpenAI API key again; your saved documents are unchanged.</p>}
+        {showKeyForm && <form onSubmit={(event) => { event.preventDefault(); void saveKey(); }} className={styles.keyForm} aria-label="API key">
           <label htmlFor="openai-key" className="block text-sm font-medium">{settings.has_api_key ? "Replacement API key" : "API key"}</label>
-          <input ref={keyInput} id="openai-key" type="password" value={apiKey} autoComplete="off" spellCheck={false} className={inputClass} placeholder="Enter your OpenAI API key" disabled={!!saving}
+          <input ref={keyInput} id="openai-key" type="password" value={apiKey} autoComplete="off" spellCheck={false} className={inputClass} aria-describedby="key-usage" placeholder="Enter your OpenAI API key" disabled={!!saving}
             onChange={(event) => setApiKey(event.target.value)} />
-          <div className="flex flex-wrap gap-3">
+          <div className={styles.formActions}>
             <Button type="submit" loading={saving === "key"} disabled={!apiKey.trim() || !!saving}>{settings.has_api_key ? "Replace key" : "Save key"}</Button>
             {settings.has_api_key && !settings.api_key_needs_reentry && <Button type="button" variant="secondary" disabled={!!saving} onClick={() => { keyFocusIntent.current = "change"; setEditingKey(false); setApiKey(""); }}>Cancel</Button>}
           </div>
         </form>}
-        <p className={styles.help}>Reviews and Ask send document text to OpenAI and incur charges on your API account.</p>
+        <p id="key-usage" className={styles.help}>Reviews and Ask send document text to OpenAI and incur charges on your API account.</p>
         <details className={styles.disclosure}><summary>Key storage and privacy</summary><p>The key is encrypted by your local backend, never stored in your browser. Saving a key does not test it or start an AI request. Importing, reading and saving your notes stay local.</p></details>
       </section>
 
@@ -193,17 +196,19 @@ export default function Settings() {
           </div></div>
           <p id="reasoning-help" className={styles.help}>Higher reasoning effort can increase time and cost, without guaranteeing a better answer.</p>
           {reviewModel && <ModelDetails model={reviewModel} />}
-          {selectionError && <p role="alert" className="text-sm text-accent-amber">{selectionError}</p>}
+          {selectionError && <p role="alert" className={styles.warning}>{selectionError}</p>}
           <details className={styles.disclosure}>
             <summary>Advanced model behaviour</summary>
-            <div className="space-y-3 pt-4">
+            <div className={styles.advancedContent}>
               <p className={styles.help}>Your API account must support the selected model. ClauseIQ does not silently switch models. These preferences also apply to retained earlier-analysis tools.</p>
+              <div className={styles.field}>
               <label htmlFor="query-model" className="block text-sm font-medium">Chat query classification model</label>
-              <select id="query-model" value={queryModelId} className={inputClass} aria-invalid={!queryModel} disabled={!!saving} onChange={(event) => { setQueryModelId(event.target.value); setMessage(null); }}>
+              <select id="query-model" value={queryModelId} className={inputClass} aria-invalid={!queryModel} aria-describedby="query-model-help" disabled={!!saving} onChange={(event) => { setQueryModelId(event.target.value); setMessage(null); }}>
                 {!queryModel && <option value={queryModelId} disabled>{queryModelId ? `Unavailable model: ${queryModelId}` : "Choose a classification model"}</option>}
                 {getSelectableModels(models, queryModelId).map((model) => <option key={model.id} value={model.id}>{model.name}{model.legacy ? " (saved legacy model)" : ""}</option>)}
               </select>
-              <p className="text-xs text-text-secondary">This separate model prepares earlier-analysis chat questions at Low reasoning effort. Changing the review model or effort does not change this selection. Finding-scoped Ask uses the review model and effort directly.</p>
+              </div>
+              <p id="query-model-help" className={styles.help}>Only for earlier-analysis chat, at Low effort. Review model changes do not affect this selection. Finding-scoped Ask uses the review model and effort.</p>
               {queryModel && <ModelDetails model={queryModel} />}
             </div>
           </details>
@@ -212,10 +217,10 @@ export default function Settings() {
         <section id="document-library" aria-labelledby="document-library-title" className={styles.section}>
           <div className={styles.preferenceRow}><div><h2 id="document-library-title">Document library</h2><p className={styles.help}>No document limit. Keep files until you delete them.</p></div>
           <label className={styles.checkLabel}><input type="checkbox" checked={retentionEnabled} disabled={!!saving} onChange={(event) => { setRetentionEnabled(event.target.checked); setMessage(null); }} /><span>Automatic deletion</span></label></div>
-          {retentionEnabled && <div className="space-y-2">
-            <label htmlFor="retention-days" className="block text-sm font-medium">Delete documents this many days after upload</label>
-            <input id="retention-days" type="number" min="1" max="36500" step="1" value={retentionDays} disabled={!!saving} className={inputClass} onChange={(event) => { setRetentionDays(event.target.value); setMessage(null); }} />
-            <p className="text-sm text-accent-amber">Deletion permanently removes the original PDF, analysis, notes, chat history, and vector data. Existing older documents are included.</p>
+          {retentionEnabled && <div className={styles.retentionFields}>
+            <label htmlFor="retention-days" className="block text-sm font-medium">Delete after upload</label>
+            <div className={styles.daysInput}><input id="retention-days" type="number" min="1" max="36500" step="1" value={retentionDays} disabled={!!saving} className={inputClass} aria-describedby="retention-unit retention-warning" onChange={(event) => { setRetentionDays(event.target.value); setMessage(null); }} /><span id="retention-unit">days</span></div>
+            <p id="retention-warning" className={styles.warning}>Deletion permanently removes the original PDF, analysis, notes, chat history, and vector data. Existing older documents are included.</p>
           </div>}
         </section>
 

@@ -92,6 +92,7 @@ test("real import → authored finding → durable saved question → original P
   await expect(page.getByRole("heading", { name: "Clarify how service credits are earned", exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Library", exact: true }).click();
+  await page.getByRole("button", { name: "Search contract text", exact: true }).click();
   await page.getByText("Saved Library answers", { exact: true }).click();
   await expect(page.getByText("No saved answer attempts yet.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Refresh saved status", exact: true }).click();

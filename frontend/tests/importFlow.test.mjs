@@ -145,6 +145,23 @@ test("selection and removal show metadata without importing or requiring Setting
   assert.equal(app.imports.length, 0);
 });
 
+test("selected PDF replaces the empty drop illustration and keeps the local-action boundary visible", () => {
+  const app = harness();
+  assert.match(app.html(), /Drop a PDF here/);
+  app.select([pdf({ name: "Selected agreement.pdf" })]);
+  const tree = app.render();
+  const drop = node(tree, element => !!element.props.onDrop);
+  assert.equal(drop.props["data-selected"], true);
+  assert.match(text(drop), /Selected agreement.pdf/);
+  assert.doesNotMatch(text(drop), /Drop a PDF here|PDF selected/);
+  assert.equal(nodes(tree).filter(element => element.type === "span" && text(element) === "Selected agreement.pdf").length, 1);
+  const actionRow = node(tree, element => element.type === "div" && React.Children.toArray(element.props.children)
+    .some(child => React.isValidElement(child) && child.type === "button" && child.props.type === "submit"));
+  assert.match(text(actionRow), /Import is local and needs no API key\. AI review is a separate paid action/);
+  assert.equal(button(tree, "Choose another PDF").props.disabled, false);
+  assert.equal(app.imports.length, 0);
+});
+
 test("invalid replacement and multi-file drop clear the older selection instead of silently importing it", async () => {
   const app = harness();
   app.select([pdf({ name: "original.pdf" })]);

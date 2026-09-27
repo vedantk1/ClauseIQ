@@ -12,7 +12,7 @@ class Element {
   }
 }
 
-function harness({ activeElement = new Element("BODY"), isSelectMode = true, searchQuery = "" } = {}) {
+function harness({ activeElement = new Element("BODY"), isSelectMode = true, searchQuery = "", enabled = true } = {}) {
   let listener;
   let cleanup;
   const calls = { selectAll: 0, focus: 0, blur: 0, search: [], selectMode: [], selection: [] };
@@ -30,6 +30,7 @@ function harness({ activeElement = new Element("BODY"), isSelectMode = true, sea
     require(name) { assert.equal(name, "react"); return { useEffect(effect) { cleanup = effect(); } }; },
   });
   exports.useKeyboardShortcuts({
+    enabled,
     searchInputRef: { current: { focus() { calls.focus++; }, blur() { calls.blur++; } } },
     isSelectMode, searchQuery,
     setSearchQuery: value => calls.search.push(value),
@@ -117,4 +118,18 @@ test("existing Escape selection/search behavior and listener cleanup remain inta
   assert.deepEqual(searching.calls.search, [""]);
   assert.equal(searching.calls.blur, 1);
   searching.cleanup();
+});
+
+test("contract-search view disables browse shortcuts rather than focusing or mutating hidden controls", () => {
+  const app = harness({ enabled: false, isSelectMode: true, searchQuery: "retained filename filter" });
+  assert.equal(app.key("/"), false);
+  assert.equal(app.key("a", { ctrlKey: true }), false);
+  assert.equal(app.key("Escape"), false);
+  assert.equal(app.calls.focus, 0);
+  assert.equal(app.calls.blur, 0);
+  assert.equal(app.calls.selectAll, 0);
+  assert.deepEqual(app.calls.search, []);
+  assert.deepEqual(app.calls.selectMode, []);
+  assert.deepEqual(app.calls.selection, []);
+  app.cleanup();
 });

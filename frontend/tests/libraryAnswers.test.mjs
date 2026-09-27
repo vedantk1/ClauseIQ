@@ -65,7 +65,7 @@ test("answer API separates unpaid reads/preview from explicit paid dispatch; no 
 function component(h, api) {
   const helpers = load("../src/lib/libraryAnswers.ts", { "@/lib/api": {} });
   return load("../src/components/documents/LibraryAnswers.tsx", { react: h.react,
-    "next/link": Link, "@/components/ui/Modal": Modal, "./LibrarySearch.module.css": {},
+    "next/link": Link, "@/components/ui/Modal": Modal, "./LibraryAnswers.module.css": {},
     "@/lib/librarySearch": { librarySearchHitHref: hit => `/workspace?page=${hit.page_number}&sourceRevisionId=${hit.source_revision_id}` },
     "@/lib/libraryAnswers": { ...helpers, ...api },
   }).LibraryAnswers;
@@ -93,6 +93,11 @@ test("preview/cancel/readback never dispatch; double confirmation dispatches onc
   assert.match(html, /Partial answer/); assert.match(html, /Another requested agreement/);
   assert.match(html, /The exact preserved source/); assert.match(html, /View page 2/);
   assert.match(html, /not a complete review/);
+  assert.match(html, /data-status="partial"/);
+  assert.match(html, /Preview excerpt · Synthetic.pdf · page 2/);
+  const summaries = [...html.matchAll(/<summary>(.*?)<\/summary>/gs)].map(match => match[1]);
+  assert.ok(summaries.every(summary => !summary.includes("S1")), "internal IDs are not citation labels");
+  assert.match(html, /Reference S1 · passage p2/);
 });
 
 test("a late preview for earlier search results cannot be confirmed or send", async () => {
@@ -106,6 +111,23 @@ test("a late preview for earlier search results cannot be confirmed or send", as
   contextId = "search-two"; render(); finish(plan); await settle();
   const modal = nodes(render()).find(node => node.type === Modal && node.props.title === "Answer from these results");
   assert.equal(modal.props.isOpen, false); assert.equal(paid, 0);
+});
+
+test("paid preview keeps unexamined-library coverage visible outside technical disclosures", async () => {
+  const h = harness(); let paid = 0;
+  const Component = component(h, {
+    recentLibraryAnswers: async () => [],
+    previewLibraryAnswer: async () => ({ ...plan, coverage: { ...plan.coverage, scan_truncated: true, documents_not_examined: 2 } }),
+    startLibraryAnswer: async () => { paid++; return answer; },
+  });
+  const render = () => h.render(Component, { contextId: "search-one" });
+  render(); await settle();
+  button(render(), "Answer from these results").props.onClick(); await settle();
+  const modal = nodes(render()).find(node => node.type === Modal && node.props.title === "Answer from these results");
+  const warning = React.Children.toArray(modal.props.children.props.children)
+    .find(node => node.type === "p" && text(node).includes("2 agreements not examined"));
+  assert.ok(warning, "incomplete scan must be visible without expanding details");
+  assert.equal(paid, 0);
 });
 
 test("unknown outcome keeps refresh recovery unpaid and reads persisted attempts", async () => {
@@ -123,4 +145,71 @@ test("unknown outcome keeps refresh recovery unpaid and reads persisted attempts
   saved.props.onClick(); await settle();
   button(render(), "Refresh saved status").props.onClick(); await settle();
   assert.equal(paid, 1); assert.equal(reads, 1);
+});
+
+test("current results are full width until a matching saved answer is opened; earlier answers stay clearly separate", async () => {
+  const h = harness(), calls = [];
+  const Component = component(h, {
+    recentLibraryAnswers: async () => { calls.push("list"); return [{ request_id: answer.request_id, question: "Saved question", status: "completed" }]; },
+    readLibraryAnswer: async () => { calls.push("read"); return answer; },
+    previewLibraryAnswer: async () => { calls.push("preview"); return plan; },
+    startLibraryAnswer: async () => { calls.push("paid"); return answer; },
+  });
+  let contextId = "search-one";
+  const render = () => h.render(Component, { contextId, results: React.createElement("section", {}, "Current search passages") });
+  render(); await settle();
+  let html = renderToStaticMarkup(render());
+  assert.match(html, /data-layout="stacked"/);
+  assert.match(html, /Current search passages/);
+  assert.doesNotMatch(html, /data-status="partial"/);
+  nodes(render()).find(node => node.type === "button" && text(node).startsWith("Saved question")).props.onClick();
+  await settle();
+  html = renderToStaticMarkup(render());
+  assert.match(html, /data-layout="answer-and-results"/);
+  assert.match(html, /Saved answer · this search/);
+  assert.match(html, /data-search-context="current"/);
+  contextId = "search-two";
+  html = renderToStaticMarkup(render());
+  assert.match(html, /data-layout="stacked"/);
+  assert.match(html, /Saved answer · earlier search/);
+  assert.match(html, /data-search-context="earlier"/);
+  assert.match(html, /not the results shown below/);
+  button(render(), "Close answer").props.onClick();
+  assert.doesNotMatch(renderToStaticMarkup(render()), /data-status="partial"/);
+  assert.deepEqual(calls, ["list", "read"]);
+});
+
+test("insufficient evidence is an explicit state with missing information before evidence; history readback is unpaid", async () => {
+  const h = harness(); let paid = 0;
+  const Component = component(h, {
+    recentLibraryAnswers: async () => [{ request_id: answer.request_id, question: "Unsupported question", status: "completed" }],
+    readLibraryAnswer: async () => ({ ...answer, outcome: "insufficient_evidence", statements: [], limitations: ["No supplied passage states a Bitcoin address."] }),
+    startLibraryAnswer: async () => { paid++; return answer; },
+  });
+  const render = () => h.render(Component, { contextId: "search-one" });
+  render(); await settle();
+  nodes(render()).find(node => node.type === "button" && text(node).startsWith("Unsupported question")).props.onClick();
+  await settle();
+  const html = renderToStaticMarkup(render());
+  assert.match(html, /data-status="insufficient_evidence"/);
+  assert.match(html, /Insufficient evidence/);
+  assert.match(html, /What is missing/);
+  assert.match(html, /No supplied passage states a Bitcoin address/);
+  assert.doesNotMatch(html, /A supported interpretation/);
+  assert.equal(paid, 0);
+});
+
+test("answer text with an unavailable citation stays withheld after visual changes", async () => {
+  const h = harness();
+  const Component = component(h, {
+    recentLibraryAnswers: async () => [{ request_id: answer.request_id, question: "Invalid reference", status: "completed" }],
+    readLibraryAnswer: async () => ({ ...answer, statements: [{ text: "Do not display this unsupported statement", evidence_ids: ["S99"] }] }),
+  });
+  const render = () => h.render(Component, { contextId: "search-one" });
+  render(); await settle();
+  nodes(render()).find(node => node.type === "button" && text(node).startsWith("Invalid reference")).props.onClick();
+  await settle();
+  const html = renderToStaticMarkup(render());
+  assert.match(html, /This statement has an unavailable reference and was withheld/);
+  assert.doesNotMatch(html, /Do not display this unsupported statement/);
 });

@@ -996,7 +996,7 @@ test("finding render keeps draft and saved question distinct and does not turn o
   assert.match(html, /<option value="not_marked" selected="">Not marked<\/option>/);
   assert.match(html, /Opened/);
   assert.match(html, /Send question to AI/);
-  assert.match(html, /Sources stay alongside the conversation/);
+  assert.match(html, /Preview answer sources alongside this conversation/);
   assert.match(html, /Nothing is sent until you choose Send/);
 });
 

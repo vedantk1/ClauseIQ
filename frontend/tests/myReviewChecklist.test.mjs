@@ -76,6 +76,42 @@ test("checklist filters all findings without filtering confirmed export or mutat
   assert.equal(JSON.stringify(h.props.personal), before); assert.deepEqual(h.calls, []);
 });
 
+test("saved wording occupies the reading column while row controls stay separate and labelled", () => {
+  const h = harness();
+  const rows = nodes(h.tree()).filter(node => node.type === "li" && node.props.className.startsWith("mr-item"));
+  assert.equal(rows.length, 2);
+  for (const row of rows) {
+    const children = React.Children.toArray(row.props.children);
+    const body = children.find(node => node.props.className === "mr-item-body");
+    const controls = children.find(node => node.props.className === "mr-item-controls");
+    assert.ok(body); assert.ok(controls);
+    assert.ok(nodes(body).some(node => node.type === "h3"));
+    assert.ok(nodes(controls).some(node => node.type === "select"));
+    const label = nodes(controls).find(node => node.type === "label" && node.props.className === "mr-marker");
+    assert.ok(nodes(label).some(node => node.props.className === "sr-only" && /^Marker for /.test(text(node))));
+    assert.doesNotMatch(text(controls), /Personal status/);
+    assert.equal(nodes(body).some(node => node.type === "select"), false);
+  }
+  assert.match(text(rows[0]), /Saved question\?/);
+  assert.doesNotMatch(rows[0].props.className, /mr-item-compact/);
+  assert.match(rows[1].props.className, /mr-item-compact/);
+  assert.doesNotMatch(text(rows[1]), /Marker-only draft/);
+  assert.match(text(rows[1]), /No source reference accompanies this finding/);
+  assert.deepEqual(h.calls, []);
+});
+
+test("presentation preserves confirmed multiline wording and never substitutes a recovery draft", () => {
+  const h = harness();
+  const wording = "Confirm the Archive request window.\n\nKeep ‘120 days total’ and the notice condition together.";
+  h.props.personal.saved_questions.f1.text = wording;
+  const question = nodes(h.tree()).find(node => node.props.className === "mr-question");
+  assert.equal(question.props.children, wording);
+  h.click("Saved questions1");
+  assert.equal(h.export().personal.saved_questions.f1.text, wording);
+  assert.doesNotMatch(h.html(), /Recoverable edited wording/);
+  assert.deepEqual(h.calls, []);
+});
+
 test("inline edit resumes recovery draft and cancel preserves confirmed question and draft", () => {
   const h = harness(); h.click("Edit question");
   assert.equal(h.textarea().props.value, "Recoverable edited wording");

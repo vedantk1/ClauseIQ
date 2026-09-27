@@ -50,28 +50,21 @@ export function MyReview({ filename = "Agreement", exportUnavailable, run, perso
       const question = personal.saved_questions[finding.id];
       const isEditing = editing === finding.id;
       const draft = state?.localDrafts[draftKey(run!.id, finding.id)] ?? personal.drafts[finding.id] ?? question?.text ?? "";
+      const editAction = !isEditing && <Action disabled={editBlocked} onClick={() => { if (!editBlocked) { setEditing(finding.id); setFeedback(""); } }}>{question ? "Edit question" : "Add question"}</Action>;
       return <li key={finding.id} className={`mr-item${!question && !isEditing ? " mr-item-compact" : ""}`}>
-        <div className="mr-item-heading"><h3><button type="button" onClick={() => onFinding(finding.id)}>{finding.title}<ArrowRight size={15} aria-hidden="true" /></button></h3>
-          <label className="mr-marker"><span className="sr-only">Marker for {finding.title}</span><select value={personal.markers[finding.id] || "not_marked"} disabled={blocked}
-            onChange={event => { if (!blocked && run && Object.hasOwn(markerLabels, event.target.value)) controller!.enqueue({ type: "set_marker", run_id: run.id, finding_id: finding.id, marker: event.target.value as ReviewMarker }); }}>
-            {Object.entries(markerLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-          </select></label>
-        </div>
+        <div className="mr-item-body">
+        <div className="mr-item-heading"><h3><button type="button" onClick={() => onFinding(finding.id)}>{finding.title}<ArrowRight size={15} aria-hidden="true" /></button></h3>{!question && editAction && <div className="mr-actions">{editAction}</div>}</div>
         {question && !isEditing && <p className="mr-question">{question.text}</p>}
         {isEditing && <div className="mr-editor">
           {blocked && <div className="mr-recovery"><strong>Last confirmed question</strong><p>{question?.text ?? "No saved question."}</p></div>}
-          <label>Question draft for {finding.title}<textarea autoFocus rows={3} maxLength={5000} value={draft} readOnly={editBlocked}
+          <label>Question draft<span className="sr-only"> for {finding.title}</span><textarea autoFocus rows={3} maxLength={5000} value={draft} readOnly={editBlocked}
             onChange={event => { if (!editBlocked && run) controller!.setDraft(run.id, finding.id, event.target.value); }} onBlur={() => controller?.flushDrafts()} /></label>
-          <p className="mr-muted">Save to update your question. Closing keeps the draft.</p>
+          <p className="mr-muted">Only Save updates the confirmed question. Closing keeps your draft.</p>
           {state?.status === "review" && personal.drafts[finding.id] !== undefined && personal.drafts[finding.id] !== draft && <div className="mr-recovery"><strong>Latest saved draft</strong><p>{personal.drafts[finding.id] || "Empty draft"}</p><p>Compare with your local wording before applying pending changes above.</p></div>}
           <div className="mr-actions"><Action disabled={blocked || !draft.trim() || draft === question?.text} onClick={() => {
             if (!blocked && run && draft.trim() && draft !== question?.text) { controller!.saveQuestion(run.id, finding.id, draft); setEditing(null); setFeedback("Question update requested. Wait for saved confirmation."); }
           }}>Save question</Action><Action onClick={() => { controller?.flushDrafts(); setEditing(null); setFeedback("Editing closed. Your saved question is unchanged; the draft remains available."); }}>Cancel editing</Action></div>
         </div>}
-        <div className="mr-actions">
-          {!isEditing && <Action disabled={editBlocked} onClick={() => { if (!editBlocked) { setEditing(finding.id); setFeedback(""); } }}>{question ? "Edit question" : "Add question"}</Action>}
-          {question && <details className="mr-row-menu"><summary aria-label={`More actions for ${finding.title}`}>More</summary><Action disabled={blocked} onClick={() => { if (!blocked) setRemoving(finding.id); }}>Remove saved question</Action></details>}
-        </div>
         {finding.evidence.length > 0 ? <details className="mr-sources"><summary>Finding source · {finding.evidence.length} {finding.evidence.length === 1 ? "reference" : "references"}</summary>
           <p className="mr-muted">These references accompany the finding; they do not verify your question or its interpretation.</p>
           <ul>{finding.evidence.map((evidence, index) => {
@@ -81,6 +74,17 @@ export function MyReview({ filename = "Agreement", exportUnavailable, run, perso
             </button></li>;
           })}</ul>
         </details> : <p className="mr-source-note">No source reference accompanies this finding. A not-found claim is limited to the recorded review scope.</p>}
+        </div>
+        <div className="mr-item-controls">
+          <label className="mr-marker"><span className="sr-only">Marker for {finding.title}</span><select value={personal.markers[finding.id] || "not_marked"} disabled={blocked}
+            onChange={event => { if (!blocked && run && Object.hasOwn(markerLabels, event.target.value)) controller!.enqueue({ type: "set_marker", run_id: run.id, finding_id: finding.id, marker: event.target.value as ReviewMarker }); }}>
+            {Object.entries(markerLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select></label>
+          {question && <div className="mr-actions">
+            {editAction}
+            <details className="mr-row-menu"><summary aria-label={`More actions for ${finding.title}`}>More</summary><Action disabled={blocked} onClick={() => { if (!blocked) setRemoving(finding.id); }}>Remove saved question</Action></details>
+          </div>}
+        </div>
       </li>;
     })}</ol> : <div className="mr-empty"><h3>{!run ? "No review run yet" : filter === "work" ? "No saved work yet" : filter === "revisit" ? "Nothing marked for revisit" : filter === "saved" ? "No saved questions in this run" : "No findings in this run"}</h3><p>{!run ? "Start a review to collect questions and mark findings for later." : filter === "all" ? "This review has no findings. Check its status and source coverage in Overview." : "Save a question or mark a finding to collect it here."}</p>{run && findings.length > 0 && <Action onClick={() => setFilter("all")}>Show all findings</Action>}</div>}
     <details className="mr-summary"><summary>What’s included in export?</summary><p>{saved.length} confirmed {saved.length === 1 ? "question" : "questions"}; {revisits.length} to revisit. Export includes all saved questions and personal markers in this review, regardless of the active filter. Drafts and Ask answers are excluded.</p><p>Markers are personal activity, not legal safety or completeness. Saving never sends a message, accepts a term or resolves a finding.</p></details>

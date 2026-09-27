@@ -223,10 +223,12 @@ export default function ReviewWorkspace({ documentId, resumeOnOpen = false, sour
       {(Object.keys(viewNames) as ReviewPosition["view"][]).map(item => <button type="button" key={item} aria-current={view === item ? "page" : undefined}
         aria-label={item === "my_review" && saved.length > 0 ? `My review (${saved.length} saved ${saved.length === 1 ? "question" : "questions"})` : undefined}
         onClick={() => navigate(item)}>{item === "overview" && !run ? "Review setup" : viewNames[item]}{item === "my_review" && saved.length > 0 && <span className="cw-tab-count" aria-hidden="true">{saved.length}</span>}</button>)}
+      {(run || workspace.runs.length > 1) && <div className="cw-run-tools">
       {run && <ReviewRunDetails run={run} />}
-      {workspace.runs.length > 1 && <label className="cw-run-selector">Review run <select className="ml-2 rounded border border-border-muted bg-bg-surface p-2" value={run?.id || ""} onChange={event => {
+      {workspace.runs.length > 1 && <label className="cw-run-selector">Review run <select className="rounded border border-border-muted bg-bg-surface p-2" value={run?.id || ""} onChange={event => {
         setSelectedRun(event.target.value); setSelectionRunId(event.target.value); setSelectedFinding(null); setSelectedEvidence(null); setOverviewSource(null); setAskSource(null); setReviewSourceRunId(null); setView("overview");
       }}>{workspace.runs.map((item, index) => <option key={item.id} value={item.id}>{index + 1}. {runLabel(item)}{item.generation ? ` · ${item.generation.model_id}` : ""}</option>)}</select></label>}
+      </div>}
     </nav>
 
     <div className={`cw-view cw-view-${view}`}>
@@ -259,7 +261,7 @@ export default function ReviewWorkspace({ documentId, resumeOnOpen = false, sour
       evidence={activeOverviewSource?.evidence || activeAskSource?.evidence || (!librarySourceActive && navigationRequest?.runId === (run?.id || "") ? evidence : null)}
       overviewText={activeOverviewSource?.text} answerText={activeAskSource?.text} navigationRequest={navigationRequest?.runId === (run?.id || "") ? navigationRequest : undefined}
       returnLabel={librarySourceActive ? "Return to Library" : activeAskSource ? "Return to Ask" : reviewSourceRunId === run?.id ? "Return to My review" : undefined}
-      onReturn={() => librarySourceActive ? leave("/documents") : navigate(activeOverviewSource ? "overview" : reviewSourceRunId === run?.id ? "my_review" : "findings")} />}
+      onReturn={() => librarySourceActive ? leave("/documents?view=search") : navigate(activeOverviewSource ? "overview" : reviewSourceRunId === run?.id ? "my_review" : "findings")} />}
 
     {view === "my_review" && <MyReview key={run?.id || "no-run"} filename={filename} run={run} personal={personal} source={sourceError ? null : source} state={state} controller={controller}
       exportUnavailable={blocked || state.pending > 0 || state.status === "saving" || paidActionBusy(state)
