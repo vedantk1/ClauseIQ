@@ -37,7 +37,7 @@ const text = tree => typeof tree === "string" ? tree : React.Children.toArray(tr
 const button = (tree, label) => nodes(tree).find(item => item.type === "button" && text(item) === label);
 const settle = () => new Promise(resolve => setImmediate(resolve));
 const plan = { document_id: "doc", filename: "Synthetic.pdf", fingerprint: "hash", expected_generation: null,
-  model: "text-embedding-3-small", passages: 2, input_tokens: 100, estimated_usd: "0.000002", maximum_usd: "0.004", excluded_headers: 0, partial: false };
+  model: "text-embedding-3-large", dimensions: 3072, passages: 2, input_tokens: 100, estimated_usd: "0.000013", maximum_usd: "0.026", excluded_headers: 0, partial: false };
 
 test("semantic API keeps query out of URL and carries explicit paid/idempotency intent", async () => {
   const calls = [];

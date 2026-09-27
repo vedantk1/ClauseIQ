@@ -16,7 +16,7 @@ from uuid import uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from qdrant_client import AsyncQdrantClient
+from qdrant_client import AsyncQdrantClient, models
 
 from models.library_semantic import IndexRequest, SemanticSearchRequest
 from services.ai.text_extractor import TextExtractor
@@ -33,18 +33,21 @@ async def run():
     name = f"clauseiq_semantic_smoke_{token}"
     adapter = isolated_adapter(name)
     client = AsyncQdrantClient(host="127.0.0.1", port=6333, timeout=10)
-    vectors = LibraryVectors(client, name)
-    owned_database = owned_collection = False
+    previous_name = f"{name}_previous_small"
+    vectors = LibraryVectors(client, name, cleanup_collections=(previous_name,))
+    owned_database = owned_collection = owned_previous_collection = False
     report = {"passed": False, "provider_calls": 0, "checks": [], "leftovers": []}
     try:
         await adapter.connect()
         initial_databases = set(await adapter.client.list_database_names())
         initial_collections = {item.name for item in (await client.get_collections()).collections}
-        assert name not in initial_databases and name not in initial_collections
+        assert name not in initial_databases and name not in initial_collections and previous_name not in initial_collections
         await adapter.database.smoke_owner.insert_one({"token": token, "purpose": "synthetic-semantic-storage"})
         owned_database = True
         await vectors.ensure()
         owned_collection = True
+        owned_previous_collection = True
+        await client.create_collection(previous_name, vectors_config=models.VectorParams(size=1536, distance=models.Distance.COSINE))
         with ExitStack() as stack:
             stack.enter_context(patch("openai.AsyncOpenAI", side_effect=AssertionError("No provider allowed")))
             stack.enter_context(patch("openai.OpenAI", side_effect=AssertionError("No provider allowed")))
@@ -69,6 +72,22 @@ async def run():
                 return [[1.0] + [0.0] * (DIMENSIONS - 1) for _ in texts], len(texts)
 
             engine = LibrarySemanticService(documents, vectors, provider)
+            old_generation = str(uuid4())
+            await documents.update_document_data(first["id"], "smoke-one", {"semantic_index": {
+                "version": "library-semantic-v1", "status": "ready", "generation_id": old_generation,
+                "fingerprint": "0" * 64, "attempts": [old_generation]}})
+            await client.upsert(previous_name, [models.PointStruct(id=str(uuid4()), vector=[1.0] * 1536,
+                payload={"workspace_id": workspace, "document_id": document["id"], "generation_id": old_generation})
+                for workspace, document in (("smoke-one", first), ("smoke-two", second))], wait=True)
+            assert (await engine.status("smoke-one"))["documents"][0]["status"] == "stale"
+            try:
+                await engine.search("smoke-one", SemanticSearchRequest(query="payment", request_id=uuid4(), confirm_paid=True))
+                raise AssertionError("Old embedding profile must never be queried")
+            except SemanticError as error:
+                assert error.code == "NO_CURRENT_INDEX"
+            assert not calls and (await client.count(previous_name, exact=True)).count == 2
+            documents.get_workspace_api_key.assert_not_awaited()
+            report["checks"].append("small profile is stale without spending, vector mutation or key access")
             for workspace, document in (("smoke-one", first), ("smoke-two", second)):
                 preview = await engine.plan(workspace, document["id"])
                 assert not calls if workspace == "smoke-one" else len(calls) == 1
@@ -77,6 +96,9 @@ async def run():
                 results = await asyncio.gather(engine.index(workspace, document["id"], request), engine.index(workspace, document["id"], request))
                 assert all(result["status"] == "ready" for result in results)
             assert len(calls) == 2
+            assert (await client.get_collection(name)).config.params.vectors.size == DIMENSIONS == 3072
+            assert (await client.count(previous_name, exact=True)).count == 1
+            report["checks"].append("explicit rebuild uses large/3072 and cleans only its old small generation")
             report["checks"].append("real conditional publication and duplicate-attempt fencing")
             assert (await documents.get_pdf_file(first["id"], "smoke-one"))["content"] == content
             assert (await documents.get_document_for_workspace(first["id"], "smoke-one"))["source_extraction"] == original_source
@@ -103,7 +125,8 @@ async def run():
             report["checks"].append("stale source excludes index before provider dispatch")
 
             async def isolated_vectors(_documents):
-                return LibraryVectors(AsyncQdrantClient(host="127.0.0.1", port=6333, timeout=10), name)
+                return LibraryVectors(AsyncQdrantClient(host="127.0.0.1", port=6333, timeout=10), name,
+                                      cleanup_collections=(previous_name,))
             stack.enter_context(patch("services.library_semantic.vectors.create_vectors", isolated_vectors))
             # No legacy chat vectors were created in this fixture namespace.
             stack.enter_context(patch("services.rag_service.get_rag_service", return_value=type("UnusedLegacy", (), {
@@ -119,6 +142,11 @@ async def run():
             report["stub_embedding_requests"] = len(calls)
         report["passed"] = True
     finally:
+        if owned_previous_collection:
+            owner = await adapter.database.smoke_owner.find_one({"token": token})
+            assert owner and previous_name == f"clauseiq_semantic_smoke_{token}_previous_small"
+            if await client.collection_exists(previous_name):
+                await client.delete_collection(previous_name)
         if owned_collection:
             owner = await adapter.database.smoke_owner.find_one({"token": token})
             assert owner and name == f"clauseiq_semantic_smoke_{token}"

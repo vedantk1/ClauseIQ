@@ -10,10 +10,11 @@ from services.ai.review_passages import PASSAGE_VERSION
 from services.library_search import _valid_source
 from services.retrieval_policy import POLICY_VERSION, repeated_headers
 
-MODEL = "text-embedding-3-small"
-DIMENSIONS = 1536
-VERSION = "library-semantic-v1"
-PRICE_PER_MILLION = Decimal("0.02")  # Official price reviewed 2026-09-26.
+MODEL = "text-embedding-3-large"
+DIMENSIONS = 3072
+VERSION = "library-semantic-v2"
+PRICE_PER_MILLION = Decimal("0.13")
+PRICE_VERIFIED_ON = "2026-09-27"
 MAX_INPUT_TOKENS = 8192
 MAX_TOTAL_TOKENS = 200_000
 MAX_PASSAGES = 512

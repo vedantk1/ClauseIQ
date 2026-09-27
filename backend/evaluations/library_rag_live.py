@@ -32,7 +32,7 @@ from services.library_search import LibrarySearchService
 from services.library_semantic.provider import embed
 
 PRICE_DATE = "2026-09-27"
-OUTPUT_ROOT = ROOT / ".local-only/library-rag-evaluations"
+OUTPUT_ROOT = ROOT / ".local-only/library-rag-evaluations-v2"
 WORKSPACE = "synthetic-live"
 METHODS = ("keyword", "semantic")
 CRITERIA = ("payment-both", "archive-both", "correction-both", "unsupported-payment")
@@ -60,7 +60,7 @@ async def plan():
              ROOT / "backend/fixtures/library_answer_evaluations/cases.json",
              ROOT / "backend/database/library_answers.py", ROOT / "backend/services/ai/token_utils.py"]
     paths.extend(sorted((ROOT / "backend/services/library_answers").glob("*.py")))
-    manifest = {"version": "library-rag-runtime-v1", "retrieval": retrieval.manifest,
+    manifest = {"version": "library-rag-runtime-v2", "retrieval": retrieval.manifest,
         "model": MODEL, "effort": EFFORT, "methods": METHODS, "limit": 5, "criteria": criteria,
         "price_verified_on": PRICE_DATE, "pricing_source": "https://developers.openai.com/api/docs/pricing",
         "answer_reservation_usd": str(PER_CALL_RESERVATION),
@@ -72,9 +72,9 @@ async def plan():
 
 def approve(manifest, cap, approved_plan):
     cap = Decimal(cap or "NaN")
-    if (not cap.is_finite() or not 0 < cap <= Decimal("1.20")
+    if (not cap.is_finite() or not 0 < cap <= Decimal("1.30")
             or Decimal(manifest["reserved_usd"]) > cap or approved_plan != fingerprint(manifest)):
-        raise ValueError("Require exact plan and sufficient finite cap, at most USD1.20")
+        raise ValueError("Require exact plan and sufficient finite cap, at most USD1.30")
     if not 0 <= (date.today() - date.fromisoformat(PRICE_DATE)).days <= 7:
         raise ValueError("Recheck official pricing")
     if os.environ.get("OPENAI_BASE_URL", ENDPOINT).rstrip("/") != ENDPOINT.rstrip("/"):

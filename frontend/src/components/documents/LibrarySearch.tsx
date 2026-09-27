@@ -80,7 +80,7 @@ export function LibrarySearch() {
       <button type="submit" disabled={searching}>{searching ? "Searching…" : mode === "keyword" ? "Search text" : "Search semantic · paid"}</button>
     </form>
     {searching && <p className={styles.feedback} role="status">{mode === "keyword" ? "Searching saved source text…" : "Embedding query and searching current indexes…"}</p>}
-    {mode === "semantic" && <p className={styles.feedback}>text-embedding-3-small · each submit sends your query using your Settings key. Closest matches can be irrelevant; this is not an exhaustive search.</p>}
+    {mode === "semantic" && <p className={styles.feedback}>Each submit embeds your query using your Settings key. Closest matches can be irrelevant; this is not an exhaustive search.</p>}
     {error && <p className={styles.error} role="alert">{error}</p>}
     <LibraryAnswers contextId={result?.answer_context_id ?? null} />
     {result && coverage && <div className={styles.results} aria-live="polite">

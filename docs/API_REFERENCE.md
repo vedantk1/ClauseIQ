@@ -125,8 +125,10 @@ missing_vectors and unavailable. Only current, complete ready indexes participat
 Status/search consider at most 100 documents; indexing accepts at most 512
 canonical passages, 8,192 tokens per input and 200,000 total tokens per request.
 Oversized inputs are refused, not truncated. The model is fixed to
-text-embedding-3-small / 1,536 dimensions for this index version, independently
-of review/Ask model Settings.
+text-embedding-3-large / 3,072 dimensions for this index version, independently
+of review/Ask model Settings. Index preview includes `model` and `dimensions`.
+Earlier small-model indexes are stale until explicitly rebuilt; no status read
+automatically migrates vectors or dispatches a provider request.
 
 Search returns the same exact source/page result shape as keyword search, plus
 semantic model/usage metadata and per-document index coverage. The UI requests

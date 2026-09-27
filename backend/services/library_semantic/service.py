@@ -13,7 +13,7 @@ from services.library_semantic.lifecycle import RUNTIME_ID, active_attempts, doc
 from services.library_semantic.provider import embed
 from services.library_trace import LibraryTrace
 from services.library_semantic.source import (
-    MAX_TOTAL_TOKENS, MODEL, VERSION, SemanticError, cost, digest, source_plan, token_count,
+    DIMENSIONS, MAX_TOTAL_TOKENS, MODEL, PRICE_VERIFIED_ON, VERSION, SemanticError, cost, digest, source_plan, token_count,
 )
 
 logger = logging.getLogger(__name__)
@@ -73,10 +73,10 @@ class LibrarySemanticService:
         state = document.get("semantic_index") or {}
         return {"document_id": document_id, "filename": document["filename"],
                 "fingerprint": plan.fingerprint, "expected_generation": state.get("generation_id"),
-                "source_revision_id": document["source_revision_id"], "model": MODEL,
+                "source_revision_id": document["source_revision_id"], "model": MODEL, "dimensions": DIMENSIONS,
                 "passages": len(plan.passages), "excluded_headers": plan.excluded_headers,
                 "partial": plan.partial, "input_tokens": tokens, "estimated_usd": cost(tokens),
-                "maximum_usd": cost(MAX_TOTAL_TOKENS), "price_verified_on": "2026-09-26"}
+                "maximum_usd": cost(MAX_TOTAL_TOKENS), "price_verified_on": PRICE_VERIFIED_ON}
 
     async def _save(self, workspace, document, previous, updated, *, source_fence=False):
         expected = {"semantic_index": previous}
@@ -113,7 +113,8 @@ class LibrarySemanticService:
             api_key = await self.documents.get_workspace_api_key(workspace)
             if not api_key:
                 raise SemanticError("API_KEY_REQUIRED", "Add your OpenAI API key in Settings to index agreement text.", 400)
-            claim = {"version": VERSION, "status": "processing", "generation_id": request_id,
+            claim = {"version": VERSION, "model": MODEL, "dimensions": DIMENSIONS,
+                     "status": "processing", "generation_id": request_id,
                      "runtime_id": RUNTIME_ID, "fingerprint": plan.fingerprint,
                      "source_revision_id": document["source_revision_id"], "started_at": now(),
                      "estimated_tokens": tokens, "maximum_usd": cost(MAX_TOTAL_TOKENS),

@@ -39,7 +39,7 @@ async def run():
             client.with_options = lambda **kwargs: client
             yield client
 
-        report = await collect(prepared, manifest, cap="1.20", approved_plan=fingerprint(manifest),
+        report = await collect(prepared, manifest, cap="1.30", approved_plan=fingerprint(manifest),
             key_loader=AsyncMock(return_value="noncredential-stub"), client_factory=client_factory,
             embedding_provider=embedding, directory=ROOT / ".local-only/library-rag-rehearsal" / uuid4().hex)
         assert report["status"] == "completed" and report["cleanup"] == "completed", report.get("error_type")

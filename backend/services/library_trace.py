@@ -23,7 +23,8 @@ class TraceRecord(BaseModel):
     http_request_id: UUID | None = None
     parent_trace_id: UUID | None = None
     operation: Literal["retrieval", "answer"]
-    pipeline_version: Literal["library-keyword-v1", "library-semantic-v1", "library-answer-v1"] | None = None
+    pipeline_version: Literal["library-keyword-v1", "library-semantic-v1", "library-semantic-v2",
+                              "library-answer-v1", "library-answer-v2"] | None = None
     passage_version: Literal["source-passages-v1"] = "source-passages-v1"
     method: Literal["keyword", "semantic"] | None = None
     status: Literal["processing", "completed", "failed", "failed_or_unknown", "interrupted", "source_unavailable"]
@@ -37,7 +38,7 @@ class TraceRecord(BaseModel):
     returned_passages: int | None = Field(default=None, ge=0)
     coverage: LibrarySearchCoverage | None = None
     source_index_fingerprint: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
-    model_id: Literal["gpt-6-luna", "gpt-6-sol", "gpt-6-astra", "text-embedding-3-small"] | None = None
+    model_id: Literal["gpt-6-luna", "gpt-6-sol", "gpt-6-astra", "text-embedding-3-small", "text-embedding-3-large"] | None = None
     reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"] | None = None
     embedding_tokens: int | None = Field(default=None, ge=0)
     prompt_tokens: int | None = Field(default=None, ge=0)
@@ -57,7 +58,7 @@ class LibraryTrace:
         self.started = time.perf_counter()
         self.fields = {"trace_id": str(uuid4()), "http_request_id": current_request_id(),
                        "operation": operation, "method": method,
-                       "pipeline_version": {"keyword": "library-keyword-v1", "semantic": "library-semantic-v1"}.get(method)}
+                       "pipeline_version": {"keyword": "library-keyword-v1", "semantic": "library-semantic-v2"}.get(method)}
 
     @contextmanager
     def stage(self, name):

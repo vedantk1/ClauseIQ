@@ -25,14 +25,14 @@ from models.library_semantic import IndexRequest, SemanticSearchRequest
 from services.library_semantic.provider import embed
 from services.library_semantic.service import LibrarySemanticService
 from services.library_semantic.source import (
-    DIMENSIONS, MAX_TOTAL_TOKENS, MODEL, VERSION, cost, digest, source_plan, token_count,
+    DIMENSIONS, MAX_TOTAL_TOKENS, MODEL, PRICE_PER_MILLION, PRICE_VERIFIED_ON,
+    VERSION, cost, digest, source_plan, token_count,
 )
 
 DOCUMENTS = ("service-terms-conflict", "managed-services-25p")
 CASES = ("exception-01", "exception-04", "multi-03", "none-02")
-OUTPUT_ROOT = ROOT / ".local-only/semantic-runtime"
+OUTPUT_ROOT = ROOT / ".local-only/semantic-runtime-v2"
 ENDPOINT = "https://api.openai.com/v1/"
-PRICE_VERIFIED_ON = "2026-09-27"
 
 
 @dataclass
@@ -62,7 +62,7 @@ async def prepare():
               ROOT / "backend/database/service.py", ROOT / "backend/services/source_service.py",
               ROOT / "backend/services/ai/review_passages.py", ROOT / "backend/services/ai/text_extractor.py",
               ROOT / "backend/services/retrieval_policy.py", ROOT / "backend/services/ai/client_manager.py"]
-    manifest = {"version": "semantic-runtime-smoke-v1", "index_version": VERSION,
+    manifest = {"version": "semantic-runtime-smoke-v2", "index_version": VERSION,
         "model": MODEL, "dimensions": DIMENSIONS, "dataset_sha256": corpus.dataset_sha256,
         "documents": [{"id": d["id"], "sha256": d["source_sha256"],
                        "eligible_passages": len(source_plan(d).passages),
@@ -70,8 +70,8 @@ async def prepare():
         "cases": [case.model_dump() for case in cases], "limit": 5,
         "input_hashes": [digest(batch) for batch in inputs], "estimated_tokens": counts,
         "estimated_usd": cost(sum(counts)), "reserved_usd": cost(MAX_TOTAL_TOKENS * len(inputs)),
-        "price_verified_on": PRICE_VERIFIED_ON, "usd_per_million_input_tokens": "0.02",
-        "pricing_source": "https://developers.openai.com/api/docs/models/text-embedding-3-small",
+        "price_verified_on": PRICE_VERIFIED_ON, "usd_per_million_input_tokens": str(PRICE_PER_MILLION),
+        "pricing_source": f"https://developers.openai.com/api/docs/models/{MODEL}",
         "code_sha256": {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths},
         "limits": "Two known synthetic agreements; four inspected regression questions, not a benchmark. No answers."}
     return Prepared(corpus, documents, cases, inputs, manifest)

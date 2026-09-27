@@ -31,6 +31,23 @@ def test_missing_old_or_corrupt_diagnostics_are_optional(value):
     assert safe_trace(value) is None
 
 
+def test_current_and_historical_profiles_keep_source_correlation():
+    from services.library_answers.prompt import PROMPT_VERSION
+    from services.library_semantic.source import MODEL, VERSION
+    retrieval = LibraryTrace("retrieval", "semantic")
+    retrieval.fields["model_id"] = MODEL
+    current = retrieval.snapshot("completed")
+    assert current["pipeline_version"] == VERSION and current["model_id"] == "text-embedding-3-large"
+    old = {**current, "pipeline_version": "library-semantic-v1", "model_id": "text-embedding-3-small"}
+    assert safe_trace(old) == old
+    answer = LibraryTrace("answer", "semantic")
+    answer.fields["parent_trace_id"] = current["trace_id"]
+    answer.generation({"model_id": "gpt-6-sol", "reasoning_effort": "medium", "prompt_version": PROMPT_VERSION})
+    saved = answer.snapshot("completed")
+    assert saved["parent_trace_id"] == current["trace_id"] and saved["pipeline_version"] == PROMPT_VERSION
+    assert safe_trace({**saved, "pipeline_version": "library-answer-v1"}) is not None
+
+
 def test_usage_allowlist_ignores_prompt_evidence_metadata(caplog):
     trace = LibraryTrace("answer", "keyword")
     trace.generation({"model_id": "gpt-6-sol", "reasoning_effort": "medium", "prompt": "private",

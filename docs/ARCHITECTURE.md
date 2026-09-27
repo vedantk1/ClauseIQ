@@ -85,7 +85,7 @@ being copied into URLs or browser history.
 
 The optional Semantic mode uses services/library_semantic, separate from the
 unchanged keyword baseline. It embeds canonical page passages using
-text-embedding-3-small / 1,536 dimensions, excluding only conservative repeated
+text-embedding-3-large / 3,072 dimensions, excluding only conservative repeated
 header blocks under the versioned retrieval policy. Canonical source text is
 never rewritten. A key-free plan checks tokenizer/input limits and shows the
 source revision, partial coverage and estimated/maximum cost. Only confirmation
@@ -102,8 +102,12 @@ generations cannot be searched. Replaying an attempt never resends it, including
 after index removal. Explicit new attempts can incur another charge; an uncertain
 provider outcome remains uncertain.
 
-The new Qdrant collection name includes a digest of the bound Mongo database and
-collection prefix. It does not reuse/migrate the legacy collection. Payloads hold
+The v2 Qdrant collection name includes a digest of the bound Mongo database and
+collection prefix. Earlier small/1,536 indexes remain stored but are visibly stale;
+no startup/status read automatically rebuilds them. Explicit confirmed rebuilding
+uses the large embedding space, then cleans the matching older Library generation.
+Explicit index/document removal checks both Library namespaces. Legacy chat's
+collection is separate and is not repurposed. Payloads hold
 workspace/document/generation and source/passage identity, not text or filenames.
 Exact cosine search filters current document-generation tuples; every returned
 passage is resolved and hash-checked against current Mongo source. A source
@@ -155,6 +159,12 @@ passage; they establish location, not semantic support. Outcomes distinguish
 answered, partial and insufficient evidence. Missing collection/extraction coverage
 prevents a fully answered status. Even complete retrieval coverage does not make
 top-k passages exhaustive. Saved reads recheck sources before displaying answers.
+
+The v2 answer prompt checks each requested agreement/subquestion and material
+conditions, including exceptions, scope, obligations and costs. It directs partial
+answers or abstention for missing necessary evidence. This is one generation call,
+not an independent verification stage; prompt instructions cannot guarantee
+complete or correct interpretation. Historical answers retain their saved versions.
 
 Evidence is bounded to 30 passages/256 KiB, with a default 30k total input-token
 limit and 6k completion/reasoning tokens. There are at most 500 durable attempts
@@ -701,6 +711,7 @@ library remains usable and Settings requests key re-entry.
 
 Next.js, FastAPI, MongoDB and Qdrant are retained. Legacy chat embeddings remain
 text-embedding-3-large with 3,072-dimensional vectors; no legacy reindex is required.
-Library semantic search uses a separate text-embedding-3-small / 1,536 index.
+Library semantic search uses a separate source-versioned large / 3,072 index;
+earlier Library small indexes require explicit rebuilding, not legacy-chat migration.
 This version does not introduce a job queue, a Responses API migration, offline
 inference, team support or agent orchestration.

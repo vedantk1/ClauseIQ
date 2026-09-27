@@ -7,7 +7,7 @@ import styles from "./LibrarySearch.module.css";
 
 const labels: Record<SemanticDocument["status"], string> = {
   not_indexed: "Not indexed", ready: "Ready", processing: "Indexing", interrupted: "Interrupted · outcome unknown",
-  failed: "Attempt failed", stale: "Source changed · reindex needed", missing_vectors: "Index incomplete · reindex needed", unavailable: "No usable source text",
+  failed: "Attempt failed", stale: "Index outdated · rebuild needed", missing_vectors: "Index incomplete · reindex needed", unavailable: "No usable source text",
 };
 
 /** Mount/status/preview are unpaid. Only the confirmation dispatches embeddings. */

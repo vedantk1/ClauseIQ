@@ -15,8 +15,8 @@ from models.library_semantic import IndexRequest, SemanticSearchRequest
 from routers import library_semantic
 from services.library_semantic.lifecycle import active_attempts, document_lock
 from services.library_semantic.service import LibrarySemanticService
-from services.library_semantic.source import DIMENSIONS, SemanticError, digest, source_plan
-from services.library_semantic.vectors import LibraryVectors
+from services.library_semantic.source import DIMENSIONS, MODEL, VERSION, SemanticError, digest, source_plan
+from services.library_semantic.vectors import LibraryVectors, collection_names
 from tests.test_library_search import source_document
 
 
@@ -129,7 +129,8 @@ async def test_status_and_preview_are_key_free_no_index_write_or_provider(stack)
     before = deepcopy(documents.records)
     assert (await engine.status("local"))["indexed_documents"] == 0
     preview = await engine.plan("local", "agreement")
-    assert preview["input_tokens"] > 0 and preview["maximum_usd"] == "0.004"
+    assert preview["input_tokens"] > 0 and preview["maximum_usd"] == "0.026"
+    assert preview["model"] == "text-embedding-3-large" and preview["dimensions"] == 3072
     assert documents.records == before and not vectors.points
     assert documents.key_reads == 0 and provider.await_count == 0
 
@@ -347,7 +348,7 @@ def test_router_redacts_invalid_body_and_errors():
 async def test_embedding_provider_uses_exact_model_no_sdk_retry_and_validates_usage():
     from contextlib import asynccontextmanager
     from services.library_semantic.provider import embed
-    create = AsyncMock(return_value=SimpleNamespace(model="text-embedding-3-small",
+    create = AsyncMock(return_value=SimpleNamespace(model=MODEL,
         data=[SimpleNamespace(index=0, embedding=[1.0] + [0.0] * (DIMENSIONS - 1))],
         usage=SimpleNamespace(prompt_tokens=2, total_tokens=2)))
     options = []
@@ -363,5 +364,81 @@ async def test_embedding_provider_uses_exact_model_no_sdk_retry_and_validates_us
         vectors, usage = await embed(["synthetic terms"], "stub")
     assert len(vectors[0]) == DIMENSIONS and usage == 2
     assert options == [{"max_retries": 0, "timeout": 45}]
-    assert create.await_args.kwargs["model"] == "text-embedding-3-small"
+    assert create.await_args.kwargs["model"] == "text-embedding-3-large"
+    assert create.await_args.kwargs["dimensions"] == 3072
     assert create.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_small_profile_is_stale_without_reading_key_reindexing_or_touching_vectors(stack):
+    engine, documents, vectors, provider = stack
+    document = documents.records[("local", "agreement")]
+    with patch("services.library_semantic.source.MODEL", "text-embedding-3-small"), \
+         patch("services.library_semantic.source.DIMENSIONS", 1536), \
+         patch("services.library_semantic.source.VERSION", "library-semantic-v1"):
+        old_plan = source_plan(document)
+    old_generation = str(uuid4())
+    document["semantic_index"] = {"version": "library-semantic-v1", "status": "ready",
+        "generation_id": old_generation, "fingerprint": old_plan.fingerprint, "attempts": [old_generation]}
+    vectors.points[("local", "agreement", old_generation)] = ["preserved old vector"]
+    before = deepcopy(documents.records)
+    assert (await engine.status("local"))["documents"][0]["status"] == "stale"
+    preview = await engine.plan("local", "agreement")
+    assert preview["fingerprint"] != old_plan.fingerprint and preview["expected_generation"] == old_generation
+    with pytest.raises(SemanticError, match="NO_CURRENT_INDEX"):
+        await engine.search("local", query_request())
+    old_request = IndexRequest(request_id=uuid4(), fingerprint=old_plan.fingerprint,
+                               expected_generation=old_generation, confirm_paid=True)
+    with pytest.raises(SemanticError, match="SOURCE_CHANGED"):
+        await engine.index("local", "agreement", old_request)
+    assert documents.records == before and vectors.points
+    assert documents.key_reads == 0 and provider.await_count == 0
+    # Only a new, confirmed preview may replace the derived index.
+    assert (await engine.index("local", "agreement", await index_request(engine)))["status"] == "ready"
+    current = document["semantic_index"]
+    assert current["model"] == MODEL and current["dimensions"] == DIMENSIONS and current["version"] == VERSION
+    assert old_generation in current["attempts"] and provider.await_count == 1
+    assert ("local", "agreement", old_generation) not in vectors.points
+    assert document["source_extraction"] == before[("local", "agreement")]["source_extraction"]
+
+
+@pytest.mark.asyncio
+async def test_versioned_spaces_never_mix_and_explicit_cleanup_preserves_other_documents():
+    from qdrant_client import models
+    client = AsyncQdrantClient(location=":memory:")
+    current, previous = collection_names("synthetic", "database", "prefix")
+    assert current != previous[0] and "library-v2" in current and "library-v1" in previous[0]
+    assert collection_names("synthetic", "other-database", "prefix")[0] != current
+    vectors = LibraryVectors(client, current, cleanup_collections=previous)
+    try:
+        await client.create_collection(previous[0], vectors_config=models.VectorParams(size=1536, distance=models.Distance.COSINE))
+        for point_id, document in enumerate(("agreement", "other"), 1):
+            await client.upsert(previous[0], [models.PointStruct(id=point_id, vector=[1.0] * 1536,
+                payload={"workspace_id": "local", "document_id": document, "generation_id": "old"})], wait=True)
+        await vectors.ensure()
+        assert (await client.count(previous[0], exact=True)).count == 2
+        assert (await client.get_collection(current)).config.params.vectors.size == 3072
+        with pytest.raises(SemanticError, match="INVALID_EMBEDDING"):
+            await vectors.search("local", {"agreement": "old"}, [1.0] * 1536, 5)
+        assert await vectors.search("local", {"agreement": "old"}, [1.0] * 3072, 5) == []
+        await vectors.remove("local", "agreement")
+        assert (await client.count(previous[0], exact=True)).count == 1
+        assert await client.collection_exists(previous[0])
+    finally:
+        await vectors.close()
+
+
+@pytest.mark.asyncio
+async def test_incompatible_new_collection_is_refused_before_embedding(stack):
+    from qdrant_client import models
+    engine, documents, _, provider = stack
+    client = AsyncQdrantClient(location=":memory:")
+    vectors = LibraryVectors(client, "synthetic-incompatible")
+    engine.vectors = vectors
+    try:
+        await client.create_collection(vectors.collection, vectors_config=models.VectorParams(size=1536, distance=models.Distance.COSINE))
+        with pytest.raises(SemanticError, match="INDEX_INCOMPATIBLE"):
+            await engine.index("local", "agreement", await index_request(engine))
+        assert documents.key_reads == 0 and provider.await_count == 0
+    finally:
+        await vectors.close()
