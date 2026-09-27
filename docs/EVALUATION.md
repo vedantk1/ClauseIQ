@@ -15,6 +15,7 @@ different things. None establishes a complete or legally reliable review.
 | Library retrieval | 24 labelled synthetic development questions and a local lexical-ranking harness | Passage/document retrieval regression, including missed passages and irrelevant near-matches |
 | Live retrieval comparison | Fixed lexical/dense/hybrid comparison using 24 development and 20 new-family known-corpus questions | Measured retrieval gains, per-case regressions, near-matches, usage and latency; not generated-answer quality |
 | Retrieval refinement | Header-filtering and diversity ablations replayed over the same real provider embeddings | Post-change regression tradeoffs on inspected questions; no additional API calls or new holdout claim |
+| Semantic runtime smoke | Two isolated synthetic documents, four fixed development queries, real embeddings and real Mongo/GridFS/Qdrant | Actual index/search integration, source resolution and a recorded cross-agreement miss; not a new broad accuracy score |
 
 The generator cases are in
 [backend/fixtures/review_evaluations](../backend/fixtures/review_evaluations/README.md).
@@ -58,15 +59,33 @@ independent ground truth: its misses and false alarms also need assessment.
 | Product path | Current method | Evaluation status |
 | --- | --- | --- |
 | Individual review and finding-scoped Ask | Complete supported extracted source with bounded input | Source-reviewed criteria and a small recorded live baseline; known omissions remain |
-| Library agreement-text search | Local BM25 ranking over canonical page passages | Implemented; offline development-set results below and real-stack search/page-navigation coverage |
+| Library Keyword search | Local BM25 ranking over canonical page passages | Implemented; offline development-set results below and real-stack search/page-navigation coverage |
+| Library Semantic search | Explicit text-embedding-3-small indexing and exact Qdrant cosine retrieval | Implemented; live runtime smoke and separate ranking comparison, plus deterministic lifecycle tests and isolated stub-provider storage checks |
 | Retained earlier document chat | Embeddings and Qdrant retrieval followed by generation | Existing legacy RAG; not exercised by the Library retrieval benchmark |
 | Library-wide answers | Planned retrieval followed by generation over selected evidence | Not implemented or evaluated |
 
+The next slice's [Library-answer evaluation contract](evaluations/LIBRARY_ANSWERS_PROTOCOL.md)
+separates fixed-evidence answer quality from end-to-end retrieval failures. It
+specifies per-claim support, qualifications, cross-agreement attribution and
+insufficient-evidence behaviour; it is a design, not a completed generation eval.
+
 The current review workspace and finding-scoped Ask use the complete supported
 extracted source, subject to their input guards. They do not use top-k retrieval.
-Retained earlier document chat uses Qdrant retrieval. Library agreement-text
-search is a separate, key-free lexical baseline over current page-aware passages;
-it does not generate cross-contract answers or claim hybrid/vector performance.
+Retained earlier document chat uses Qdrant retrieval. Library offers a separate,
+key-free lexical baseline and optional paid semantic retrieval over explicitly
+indexed canonical passages. It does not yet generate cross-contract answers.
+Semantic search uses the measured embedding/header-eligibility candidate, not
+automatic hybrid fusion or blanket document diversity. Published comparison
+scores describe that frozen synthetic experiment, not a live product acceptance
+score or a fresh evaluation of arbitrary user libraries.
+
+The [live runtime checkpoint](evaluations/LIBRARY_SEMANTIC_RUNTIME_V1.md) subsequently
+completed six real embedding calls through the actual index/search services and
+isolated storage. Both payment-conflict passages and both Archive-exit passages
+were found; one requested agreement's correction duty was missed, and an
+unsupported question still returned candidates. All hit identities resolved
+correctly. This is integration evidence with disclosed retrieval failures,
+not a generated-answer pass or an independent benchmark.
 
 The frozen [24-question synthetic development set](../backend/fixtures/library_search_evaluations/README.md)
 contains six searchable PDFs plus one image-only exclusion, with 203 canonical
@@ -145,8 +164,8 @@ dominate individual questions or dense search. In one holdout case, all five
 dense/hybrid hits were title/disclaimer/heading blocks, displacing testing
 restrictions that lexical found. All methods returned near-matches for all eight
 no-answer cases. The linked report preserves category precision/recall, concrete
-misses, source checks, exact configuration and limits. **The app's search has not
-been switched to these experimental candidates.**
+misses, source checks, exact configuration and limits. Keyword was not replaced
+by an automatically selected winning method.
 
 The run used an approved finite budget, reserved all conservative input ceilings
 before reading the saved key, and dispatched serially without retries or model
@@ -156,24 +175,23 @@ unchanged. The [completed header/diversity refinement](evaluations/LIBRARY_RETRI
 reuses this cache: filtered hybrid recovers the testing restrictions but introduces
 one paraphrase miss; blanket document diversity loses qualifications and is not
 selected as a default. These inspected questions are regression evidence, not a
-fresh holdout. The app's ranker remains unchanged; product index lifecycle work
-is the next boundary, not another model switch.
+fresh holdout. The keyword ranker remains unchanged; optional semantic indexing
+is a separate product lifecycle, not another review-model switch.
 
 Reports separate indexing and single-query embedding usage/API latency from
 offline ranking latency. Lexical rebuilds its in-memory index per query; dense
 uses a preloaded exact matrix. These timings are not a production-scale or Qdrant
 benchmark. See [comparison commands and safeguards](DEVELOPMENT.md#retrieval-comparison-experiment).
 
-Source revision changes, partial indexing and deletion must have defined behavior
-before a persistent vector index becomes a product dependency. The proposed
-boundary is explicit indexing consent and a cost estimate, identities scoped to
-workspace/document/source revision plus extraction/passage/model versions, and
-visible pending/failed/partial coverage. Querying must check current source
-identity so deleted or superseded vectors cannot appear while cleanup is pending.
-Deletion must remove associated vectors with retryable cleanup/reconciliation;
-do not reuse or silently merge the retained legacy collection. These product
-indexing features are **not implemented** by the experiment. Generated library
-answers then need separate source-grounded assessments with fixed evidence inputs
+The subsequent [product index lifecycle](ARCHITECTURE.md#explicit-semantic-indexing-and-search)
+adds explicit consent/cost preview, versioned identity, visible
+pending/failed/interrupted/partial coverage, exact source revalidation and scoped
+deletion. Its regressions cover duplicate dispatch, lost acknowledgements, partial
+vector writes, source changes and deletion races. A separate isolated MongoDB /
+GridFS / Qdrant smoke uses deterministic stub embeddings and prohibits actual
+OpenAI clients. Thus it tests storage and safety mechanics without claiming a new
+paid semantic-quality pass. No real user library is indexed by those tests.
+Generated library answers still need separate source-grounded assessments with fixed evidence inputs
 and an end-to-end assessment that includes retrieval failures. Publish the dataset
 and implementation versions, commands, sample counts and limitations alongside
 results; keep a concise result/link in the README rather than an overall AI
@@ -184,11 +202,15 @@ accuracy badge.
 The backend has correlated HTTP request/error logs and in-memory endpoint timings,
 error counts and system metrics. Review and Ask preserve attempt outcomes and
 generation metadata. These aid debugging but do not measure answer quality.
-The current search endpoint has no persistent index and the retrieval harness
-measures local query latency. The embedding experiment additionally retains an
+Keyword has no persistent index. Semantic index metadata retains source/policy
+fingerprints, attempt identity, timestamps, outcome and known token/cost usage;
+query receipts retain request identity, a query hash, outcome and known tokens,
+not query/source text. The retrieval harness measures local query latency.
+The embedding experiment additionally retains an
 exclusive developer-only reservation/attempt ledger with batch outcome, input
 fingerprints, usage and latency. This does not provide durable retrieval-stage
-traces for the application's Library search.
+traces for the application's Library search. Runtime per-stage latency traces
+and broader operational calibration remain follow-ups, not claimed features.
 
 As retrieval stages are added, useful diagnostics include stage duration,
 outcome, source/index version, collection coverage and provider usage where

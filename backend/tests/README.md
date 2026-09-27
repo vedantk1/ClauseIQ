@@ -54,6 +54,25 @@ It does not modify the application's library, settings, credentials, or .env
 files, and makes no OpenAI calls. It is excluded from normal Pytest discovery.
 Review the final cleanup report; a failed cleanup names any remaining fixture.
 
+The Library semantic lifecycle has a separate real-storage smoke with stub
+embeddings (no provider calls):
+
+~~~bash
+cd backend
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m tests.manual_library_semantic_smoke --run-isolated-live
+~~~
+
+It covers actual Mongo conditional publication/query receipts, Qdrant source
+scope, duplicate-attempt fencing and original-PDF/derived-index deletion in
+owned disposable stores. Source/Settings data in the real workspace is untouched.
+See the tokenizer preflight and version requirements in docs/DEVELOPMENT.md.
+
+`test_library_semantic_live.py` validates the separate opt-in live harness without
+paid calls: fixed source/case plans, budget/endpoint/price-age checks, exclusive
+outputs, stop-on-failure dispatch, reservation retention and own-source scoring.
+The live command and recorded result are described in docs/DEVELOPMENT.md and
+docs/evaluations/LIBRARY_SEMANTIC_RUNTIME_V1.md; normal Pytest never enables it.
+
 ## Qdrant version compatibility
 
 `test_qdrant_configuration.py` checks optional-key handling and SDK HTTP request

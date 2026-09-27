@@ -8,7 +8,7 @@ workspace namespace (`local`), not a default user, membership model or account.
 | Next.js | Import, review workspace, document library/search, chat and Settings |
 | FastAPI | Local request boundary, document processing and AI orchestration |
 | MongoDB / GridFS | Documents, PDFs, interactions, chats, settings and encrypted credentials |
-| Qdrant | Per-document vector data for retrieval-augmented chat |
+| Qdrant | Source-versioned Library semantic indexes and separate legacy chat vectors |
 
 Shared Python and TypeScript domain types live in shared/clauseiq_types.
 
@@ -66,7 +66,7 @@ prompt or saved-review data is copied from design mockups into the app.
 ### Agreement-text search
 
 Library filename/type filtering remains a metadata-only browser interaction.
-Agreement-text search is a separate, explicit local API request over the current
+Keyword agreement-text search is a separate, explicit local API request over the current
 workspace's stored source extractions. It derives bounded page-local passages
 from the same exact source spans used by review, ranks them lexically, and returns
 verbatim excerpts with document, source-revision, passage and physical-page
@@ -80,6 +80,48 @@ answer or proof that every agreement was considered. Opening its PDF page checks
 the current source revision again; a stale or invalid target fails visibly rather
 than opening a substitute page. Search terms are sent in a POST body instead of
 being copied into URLs or browser history.
+
+### Explicit semantic indexing and search
+
+The optional Semantic mode uses services/library_semantic, separate from the
+unchanged keyword baseline. It embeds canonical page passages using
+text-embedding-3-small / 1,536 dimensions, excluding only conservative repeated
+header blocks under the versioned retrieval policy. Canonical source text is
+never rewritten. A key-free plan checks tokenizer/input limits and shows the
+source revision, partial coverage and estimated/maximum cost. Only confirmation
+dispatches one embedding request; semantic queries are separately labelled paid
+submits. There are no provider retries, automatic indexing, hybrid fusion or
+generated Library answers.
+
+Index metadata lives on the existing Mongo document. Before dispatch, a
+conditional write saves the attempt ID and fingerprints the source hash,
+revision, extraction, passage/policy versions, model and dimensions. Vectors are
+published as ready only after complete storage acknowledgement, count verification
+and another source-conditional write. Failed, interrupted, stale or missing-vector
+generations cannot be searched. Replaying an attempt never resends it, including
+after index removal. Explicit new attempts can incur another charge; an uncertain
+provider outcome remains uncertain.
+
+The new Qdrant collection name includes a digest of the bound Mongo database and
+collection prefix. It does not reuse/migrate the legacy collection. Payloads hold
+workspace/document/generation and source/passage identity, not text or filenames.
+Exact cosine search filters current document-generation tuples; every returned
+passage is resolved and hash-checked against current Mongo source. A source
+change during search withholds results. Keyword remains available independently.
+There is no calibrated relevance cutoff: closest passages may be irrelevant.
+
+The supported single-process local backend serializes index writes/removal and
+document deletion with per-document locks plus durable conditional updates.
+Deletion verifies semantic vector cleanup before deleting the original; cleanup
+failure is not success. Index-only removal preserves the PDF and saved work.
+Multi-worker/distributed indexing is not supported by this lock design.
+
+The bounded view examines the newest 100 documents; indexing rejects more than
+512 canonical passages or the embedding token limits without truncation. Coverage
+exposes excluded/unindexed documents and partial text. A durable query receipt in
+the same Mongo database prevents request-ID replay from making another paid call;
+it retains a query hash, outcome and known token usage, not query or answer text.
+It is not a saved-search history or an answer-quality trace.
 
 ## Original sources and extraction
 
@@ -593,7 +635,8 @@ library remains usable and Settings requests key re-entry.
 
 ## Scope
 
-Next.js, FastAPI, MongoDB and Qdrant are retained. Embeddings remain
-text-embedding-3-large with 3,072-dimensional vectors; no reindex is required.
+Next.js, FastAPI, MongoDB and Qdrant are retained. Legacy chat embeddings remain
+text-embedding-3-large with 3,072-dimensional vectors; no legacy reindex is required.
+Library semantic search uses a separate text-embedding-3-small / 1,536 index.
 This version does not introduce a job queue, a Responses API migration, offline
 inference, team support or agent orchestration.

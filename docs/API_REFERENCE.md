@@ -102,6 +102,38 @@ Qdrant vectors nor generates an answer. Ranking and exact source location do
 not establish legal correctness, an exhaustive comparison or absence across the
 library.
 
+## Library semantic index and search
+
+All routes retain the same local-request marker, Origin/Host checks and
+server-selected workspace. Status, preview and index removal are unpaid.
+
+| Method and /api/v1 path | Contract |
+| --- | --- |
+| GET /library/semantic/status | Bounded document statuses and indexed/library coverage; never starts indexing |
+| POST /library/semantic/documents/{id}/plan | Key-free source fingerprint, expected generation, passage/token counts and cost estimate |
+| POST /library/semantic/documents/{id}/index | Confirmed paid dispatch: request_id (UUID), fingerprint from plan, expected_generation (nullable), confirm_paid: true |
+| POST /library/semantic/documents/{id}/remove | Confirmed index-only cleanup using expected_generation; preserves original and saved work |
+| POST /library/semantic/search | Paid query embedding: query (2–200 characters), limit (1–30), request_id (UUID), confirm_paid: true |
+
+Indexing and semantic search share the existing AI rate-limit bucket. Index
+replays return current status without sending again; a repeated semantic query
+request ID returns SEARCH_ALREADY_SUBMITTED, not a replayed result or new charge.
+A deliberate new attempt uses a new ID and may incur another charge.
+
+Index states include not_indexed, processing, ready, failed, interrupted, stale,
+missing_vectors and unavailable. Only current, complete ready indexes participate.
+Status/search consider at most 100 documents; indexing accepts at most 512
+canonical passages, 8,192 tokens per input and 200,000 total tokens per request.
+Oversized inputs are refused, not truncated. The model is fixed to
+text-embedding-3-small / 1,536 dimensions for this index version, independently
+of review/Ask model Settings.
+
+Search returns the same exact source/page result shape as keyword search, plus
+semantic model/usage metadata and per-document index coverage. The UI requests
+five passages. matched_passages describes returned candidates, not all relevant
+passages; there is no abstention threshold. Source mismatch or unverifiable hits
+withhold results. Preview/refresh never retries failed or uncertain paid calls.
+
 ## Source import and extraction
 
 - POST /api/v1/documents/import accepts multipart file, persists the original and

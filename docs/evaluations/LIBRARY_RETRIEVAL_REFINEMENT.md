@@ -1,8 +1,11 @@
 # Library retrieval: header filtering and document diversity
 
 Date: 2026-09-26. Development-only follow-up to the
-[original live comparison](LIBRARY_RETRIEVAL_V1.md). The app's Library search is
-still unpaid lexical search; these candidates are not product features yet.
+[original live comparison](LIBRARY_RETRIEVAL_V1.md). At this experiment's checkpoint,
+Library search was unpaid lexical only. The subsequent
+[optional semantic index](../ARCHITECTURE.md#explicit-semantic-indexing-and-search)
+is a separate implementation; it does not turn these frozen scores into a new
+product benchmark.
 
 ## Decision
 

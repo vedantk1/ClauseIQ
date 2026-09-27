@@ -1,9 +1,10 @@
 # Library retrieval: first live comparison
 
 Recorded 2026-09-26. This measures passage retrieval on authored synthetic
-agreements, not generated-answer accuracy or legal-review quality. The application
-still uses key-free lexical Library search; the dense/hybrid candidates below
-are development-only.
+agreements, not generated-answer accuracy or legal-review quality. At this
+experiment's checkpoint the application used key-free lexical search only;
+the candidates below were development-only. Subsequent optional semantic
+integration has its own [runtime checkpoint](LIBRARY_SEMANTIC_RUNTIME_V1.md).
 
 ## Outcome
 

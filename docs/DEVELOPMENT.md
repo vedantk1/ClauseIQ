@@ -584,7 +584,7 @@ approved and cost-capped.
 
 ### Unpaid Library search and retrieval regression
 
-Library agreement-text search is a separate POST action over the current source
+Library Keyword search is a separate POST action over the current source
 extraction. It scans at most 100 agreements and 10,000 canonical page passages
 per request, returning up to 30 exact excerpts. Its coverage fields distinguish
 unsearched agreements, unavailable/partial sources and result truncation. It
@@ -605,9 +605,84 @@ near matches and latency. It is a visible 24-question development regression set
 not a held-out benchmark, legal answer evaluation or an AI-quality pass. The
 source-reviewed labels and interpretation limits are in
 [library_search_evaluations](../backend/fixtures/library_search_evaluations/README.md)
-and [Evaluation](EVALUATION.md#retrieval-boundary). Dense/hybrid indexing and
-cross-contract answers are not part of this command and would need their own
-approval, cost boundary and evaluation.
+and [Evaluation](EVALUATION.md#retrieval-boundary). Semantic indexing and
+cross-contract answers are not exercised by this lexical command.
+
+### Library semantic index lifecycle
+
+In Library, select **Semantic → Manage semantic index → Preview indexing**.
+Preview is key-free and shows eligible passages, partial-text limits and cost.
+Only **Index agreement · paid** dispatches embeddings using the Settings key.
+**Search semantic · paid** separately embeds the query. Keyword remains default
+and free. Neither mode generates a cross-contract answer; top-ranked semantic
+passages can be irrelevant, and unindexed documents are not negative matches.
+
+This version uses one local backend process. Do not enable multiple Uvicorn
+workers: index/deletion serialization uses in-process locks alongside Mongo
+conditional writes. Reloading the backend during indexing may leave an
+interrupted/unknown attempt; refresh status and explicitly preview a new attempt
+only if another possible charge is acceptable. Missing/stale indexes are excluded
+until rebuilt. Index-only removal is unpaid and keeps the original/saved work.
+An indexing failure disables that generation; older derived vectors are not
+silently used as a fallback. Removal cleans all generations for that document.
+
+No new database or legacy migration is needed. The Library Qdrant collection is
+namespaced from the existing database binding and created only on explicit
+indexing. It must be included with the existing storage in backups. Current
+bounds are 100 examined documents, 512 canonical passages per indexed document,
+8,192 tokens per embedding input and 200,000 per request; oversized sources are
+refused, never truncated. Index request IDs remain fenced for up to 100 attempts
+per document; query receipts remain private in the existing Mongo database.
+
+Focused checks from `backend` (no provider calls):
+
+~~~bash
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -c "import tiktoken; [tiktoken.get_encoding(name) for name in ('o200k_base', 'cl100k_base')]"
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m pytest tests/test_library_semantic.py tests/test_rate_limiter.py -q
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m tests.manual_library_semantic_smoke --run-isolated-live
+~~~
+
+The last command requires already-running development MongoDB/Qdrant. It creates
+verified-absent, uniquely named fixture stores, guards cleanup ownership and
+reports leftovers. Real original-PDF/GridFS storage, index publication, duplicate
+fencing, Qdrant workspace scope, query receipts and document deletion run with
+deterministic stub embeddings and real OpenAI constructors prohibited. It never
+indexes the user's library or reads its credential. This validates mechanics,
+not semantic quality; the separate live comparison supplies that bounded evidence.
+Use the repository-pinned Qdrant client/server pair described above.
+
+### Bounded live semantic runtime smoke
+
+`evaluations.library_semantic_live` exercises the actual indexing/search services
+with real embeddings and real isolated MongoDB/GridFS/Qdrant storage. It uses
+only the two-page service terms and 25-page managed-services fixtures and four
+fixed, already inspected development questions. It does not generate answers or
+measure fresh holdout performance. It calls services directly, not browser UI or
+HTTP route latency. The normal unpaid smoke above remains separate.
+
+From `backend`, after tokenizer preflight:
+
+~~~bash
+venv/bin/python -m pytest tests/test_library_semantic_live.py -q
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m evaluations.library_semantic_live
+# Only with a reviewed plan, current pricing and an approved finite total budget:
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m evaluations.library_semantic_live --run-paid --cap-usd APPROVED_CAP --approved-plan DIGEST_FROM_DRY_RUN
+~~~
+
+Default dry run checks source hashes, existing relevance anchors, extraction,
+passage eligibility and tokenizer limits without storage/key access. Paid mode
+reserves six maximum product request ceilings before reading the existing Settings
+key, then runs two index calls and four queries serially. No key is copied into
+the disposable fixture store. Stop on a failed/unknown call; never automatically
+retry, switch models or reclaim an uncertain reservation. Pricing approval expires
+after seven days and the official endpoint is enforced.
+
+An exclusive private directory under `.local-only/semantic-runtime` holds the
+code/source/input manifest, fsynced request ledger and report. Existing output for
+the same plan refuses another dispatch. Do not delete it to bypass an uncertain
+run. Only uniquely named, verified-owned fixture stores are cleaned; the cleanup
+event records leftovers requiring explicit recovery. The person's library,
+saved work, vector collection and credential state remain unchanged.
 
 ### Retrieval comparison experiment
 

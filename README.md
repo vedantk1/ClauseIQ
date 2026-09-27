@@ -31,8 +31,10 @@ requested. There is no application-funded service or supported hosted deployment
 4. **Take your work with you.** Resume your reading position and export confirmed
    questions and markers as a Markdown review brief.
 
-Library also has an explicit, key-free agreement-text search. It returns source
-passages with PDF page links; it does not generate cross-contract conclusions.
+Library search offers free, local **Keyword** search and optional **Semantic**
+search over agreements you explicitly index. Indexing and semantic queries use
+paid OpenAI embeddings through your Settings key; nothing is indexed on import.
+Both return source passages with PDF page links, not cross-contract conclusions.
 
 The reading workspace offers Black and Graphite themes. Settings exposes the
 application's GPT-6 Luna, Sol and Astra catalog with configurable reasoning effort;
@@ -77,8 +79,8 @@ explicit AI requests send document content to OpenAI.
 ## Engineering
 
 Next.js 15, React 19 and TypeScript on the frontend; FastAPI and Python on the
-backend; MongoDB/GridFS for workspace data and originals; Qdrant for retained
-document-chat retrieval. PDF reading uses locally served Mozilla PDF.js assets,
+backend; MongoDB/GridFS for workspace data and originals; Qdrant for Library
+semantic search and separate retained document-chat retrieval. PDF reading uses locally served Mozilla PDF.js assets,
 not a viewer CDN.
 
 The implementation separates immutable source/review snapshots from revisioned
@@ -91,10 +93,14 @@ method and the distinction between reference matching and supported conclusions.
 The [first 44-question retrieval comparison](docs/evaluations/LIBRARY_RETRIEVAL_V1.md)
 measures lexical, dense and hybrid search separately, including category results,
 missed passages, no-answer near-matches, latency and usage. These are synthetic
-retrieval measurements, not an overall AI-accuracy score; the app still uses
-key-free lexical search. A [cached-vector refinement](docs/evaluations/LIBRARY_RETRIEVAL_REFINEMENT.md)
+retrieval measurements, not an overall AI-accuracy score. Keyword remains the
+default; optional semantic search uses a source-versioned index, with visible
+coverage and stale-index guards. A [cached-vector refinement](docs/evaluations/LIBRARY_RETRIEVAL_REFINEMENT.md)
 records header-filtering gains, remaining misses and why blanket document
 diversity was rejected; it is regression evidence, not a fresh benchmark.
+A [live runtime checkpoint](docs/evaluations/LIBRARY_SEMANTIC_RUNTIME_V1.md)
+then exercised real indexing/search storage and embeddings, recording a missed
+cross-agreement passage and unsupported near-matches alongside successful cases.
 
 ~~~bash
 npm test           # deterministic backend and frontend tests; no paid AI

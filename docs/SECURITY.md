@@ -27,7 +27,7 @@ debug routes have been removed.
 
 The in-memory rate limiter keeps independent per-client operation buckets:
 60 default requests, 10 local PDF uploads/imports and 20 AI requests per minute.
-Review generation, finding Ask, legacy analysis/rewrite and chat messages share
+Review generation, finding Ask, semantic indexing/search, legacy analysis/rewrite and chat messages share
 the AI bucket across all documents; changing a document or request ID does not
 reset it. Reads, personal edits, fixtures and recovery/interruption use the
 default bucket and do not consume upload or AI capacity. These process-local
@@ -71,10 +71,22 @@ period on the next cleanup run. Treat MongoDB, GridFS, vectors, logs and backups
 as sensitive. AI requests send relevant document content to OpenAI; local
 storage does not imply offline processing.
 
-Library agreement-text search reads current source extractions locally. It needs
+Library Keyword search reads current source extractions locally. It needs
 no key or provider call, and its terms are sent in a POST body rather than URLs
 or browser history. The API response contains verbatim document excerpts, so it
 remains sensitive workspace data even though the search itself is unpaid.
+
+Semantic indexing separately sends eligible extracted agreement passages to
+OpenAI after an in-app preview/confirmation; each semantic submit sends its query.
+Neither import nor navigation does this. It uses the Settings key, with no SDK
+retry. An interrupted request may still incur a charge. Embeddings are sensitive
+derived data even though Qdrant payloads contain only source identity, not text.
+The collection is separate from legacy chat vectors and scoped to the bound
+database, workspace, document and index generation. Source fingerprints and
+current-generation checks prevent stale vectors from being presented as current.
+Index removal preserves originals/saved work; document deletion verifies derived
+vector cleanup. Query receipts persist a hash and safe outcome/usage metadata,
+not the query text; treat these receipts as private workspace data too.
 
 My review brief copies/downloads contain selected saved questions, personal markers
 and finding context. They do not call a provider, but the resulting clipboard/file
