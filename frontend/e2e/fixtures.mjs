@@ -8,6 +8,7 @@ export const DOCUMENT_ID = "synthetic-managed-services";
 export const IMPORT_ID = "synthetic-imported-agreement";
 export const RUN_ID = "authored-example-review";
 export const PDF_PATH = fileURLToPath(new URL("../../tests/fixtures/pdfs/managed-services-25p.pdf", import.meta.url));
+export const LIBRARY_QUESTION = "When can Archive transition assistance be extended?";
 const recordedAt = "2026-01-01T12:00:00Z";
 const origin = "http://127.0.0.1:3100";
 
@@ -93,7 +94,8 @@ function applyOperation(workspace, operation) {
 }
 
 export const test = base.extend({
-  mockWorkspace: [async ({ context }, use) => {
+  allowLibraryAnswer: [false, { option: true }],
+  mockWorkspace: [async ({ context, allowLibraryAnswer }, use) => {
     const fixture = await sourceFixture(DOCUMENT_ID);
     const imported = structuredClone(fixture);
     imported.source.id = IMPORT_ID;
@@ -107,6 +109,28 @@ export const test = base.extend({
     const providerDispatches = [];
     const operations = [];
     const errors = [];
+    const libraryRequests = { searches: [], previews: [], sends: [], reads: [], history: 0 };
+    const savedAnswers = new Map();
+    // Use distinct physical pages so the journey catches incorrectly binding a
+    // statement to the first retrieved passage instead of its own evidence ID.
+    const references = [
+      fixture.workspace.runs[0].findings.find(item => item.id === "credit-bands").evidence.find(item => item.page_number === 24),
+      fixture.workspace.runs[0].findings.find(item => item.id === "archive-exit").evidence.find(item => item.page_number === 25),
+    ];
+    assert.ok(references.every(Boolean));
+    const evidence = references.map((item, index) => ({
+      id: `S${index + 1}`, document_id: DOCUMENT_ID, filename: "managed-services-25p.pdf",
+      source_revision_id: item.source_revision_id, page_number: item.page_number,
+      passage_id: item.span_id, quote: item.quote, source_incomplete: false,
+      continuation_before: false, continuation_after: false,
+    }));
+    const coverage = { documents_in_library: 1, documents_scanned: 1, documents_not_examined: 0,
+      documents_searchable: 1, documents_unsearchable: 0, documents_partial: 0,
+      passages_examined: 25, matched_passages: 2, results_truncated: false, scan_truncated: false };
+    const answerPlan = { context_id: "synthetic-library-context", question: LIBRARY_QUESTION,
+      method: "keyword", evidence, coverage, generation: { model_id: "gpt-6-sol", reasoning_effort: "medium",
+        max_completion_tokens: 1600, estimated_input_tokens: 600, prompt_version: "browser-fixture-v1",
+        evidence_sha256: createHash("sha256").update(JSON.stringify(evidence)).digest("hex"), duration_ms: null, usage: null } };
     context.on("page", page => page.on("pageerror", error => errors.push(error.message)));
     const respond = (route, data, status = 200) => route.fulfill({ status, contentType: "application/json", body: JSON.stringify({ success: status < 400, data }) });
     await context.route("**/*", async route => {
@@ -129,6 +153,47 @@ export const test = base.extend({
         query_gate_model_id: "gpt-6-luna", available_models: [], retention_days: 0, toast_notifications_enabled: false,
       });
       if (method === "GET" && path === "/app-config") return respond(route, { toast_notifications_enabled: false });
+      if (method === "GET" && path === "/library/answers") {
+        libraryRequests.history += 1;
+        return respond(route, [...savedAnswers.values()].map(({ request_id, question, created_at, status, outcome }) =>
+          ({ request_id, question, created_at, status, outcome })));
+      }
+      // Opt in only this synthetic journey to a fulfilled (never forwarded)
+      // generation route. All other paid and unrecognised calls remain forbidden.
+      if (allowLibraryAnswer && method === "POST" && path === "/library/search") {
+        assert.equal(url.search, "", "Questions must stay out of URLs");
+        assert.deepEqual(request.postDataJSON(), { query: LIBRARY_QUESTION });
+        libraryRequests.searches.push(request.postDataJSON());
+        return respond(route, { results: evidence.map(({ id: _id, quote, ...item }) =>
+          ({ ...item, excerpt: quote.slice(0, 60), excerpt_partial: true })), coverage, answer_context_id: answerPlan.context_id });
+      }
+      if (allowLibraryAnswer && method === "POST" && path === "/library/answers/preview") {
+        assert.deepEqual(request.postDataJSON(), { context_id: answerPlan.context_id });
+        assert.equal(libraryRequests.searches.length, 1);
+        libraryRequests.previews.push(request.postDataJSON());
+        return respond(route, answerPlan);
+      }
+      if (allowLibraryAnswer && method === "POST" && path === "/library/answers") {
+        const body = request.postDataJSON();
+        assert.match(body.request_id, /^[0-9a-f-]{36}$/);
+        assert.deepEqual(body, { context_id: answerPlan.context_id, request_id: body.request_id,
+          model_id: "gpt-6-sol", reasoning_effort: "medium", confirm_paid: true });
+        assert.ok(libraryRequests.previews.length > 0, "Dispatch requires a preceding preview");
+        libraryRequests.sends.push(body);
+        assert.equal(libraryRequests.sends.length, 1, "Navigation/reload must never resend");
+        const saved = { ...answerPlan, request_id: body.request_id, created_at: recordedAt, status: "completed",
+          outcome: "partial", statements: [{ text: "Synthetic browser response: inspect the Archive exception in the cited source.", evidence_ids: ["S2"] }],
+          limitations: ["Deterministic browser fixture; not a live answer-quality assessment."], failure: null,
+          generation: { ...answerPlan.generation, duration_ms: 25, usage: { prompt_tokens: 600, completion_tokens: 80, total_tokens: 680 } } };
+        savedAnswers.set(body.request_id, saved);
+        return respond(route, saved);
+      }
+      if (allowLibraryAnswer && method === "GET" && path.startsWith("/library/answers/")) {
+        const id = path.slice("/library/answers/".length);
+        assert.ok(savedAnswers.has(id), "Only an actually saved fixture answer can be read");
+        libraryRequests.reads.push(id);
+        return respond(route, savedAnswers.get(id));
+      }
       const item = (id, state) => ({ id, filename: "managed-services-25p.pdf", upload_date: recordedAt, page_count: 25,
         source_revision_id: state.source_revision_id, source_status: "stored", extraction_status: "complete", analysis_status: "not_started",
         review_summary: { kind: state.runs.length ? "fixture" : null, status: state.runs.length ? "ready" : "not_started",
@@ -161,7 +226,7 @@ export const test = base.extend({
       unexpected.push(`${method} ${path}`);
       return route.abort();
     });
-    await use({ fixture, imported, operations });
+    await use({ fixture, imported, operations, libraryRequests, answerPlan, savedAnswers });
     expect(providerDispatches, "Unpaid journeys must never dispatch a review or Ask request").toEqual([]);
     expect(unexpected, "Unexpected requests must be intercepted, never sent to the real backend or internet").toEqual([]);
     expect(errors, "Browser journeys must not hide runtime exceptions").toEqual([]);

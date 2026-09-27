@@ -12,6 +12,7 @@ test("real import → authored finding → durable saved question → original P
   const forbidden = [];
   const errors = [];
   const searchRequests = [];
+  let answerHistoryReads = 0;
   page.on("pageerror", error => errors.push(error.message));
   await context.route("**/*", async route => {
     const request = route.request();
@@ -22,8 +23,9 @@ test("real import → authored finding → durable saved question → original P
     if (method === "POST" && path === "/api/v1/library/search") {
       searchRequests.push({ query: request.postDataJSON()?.query, urlQuery: url.search });
     }
+    if (method === "GET" && path === "/api/v1/library/answers") answerHistoryReads += 1;
     const read = (method === "POST" && path === "/api/v1/library/search") || method === "GET" && (
-      ["/api/v1/workspace", "/api/v1/app-config", "/api/v1/documents/"].includes(path)
+      ["/api/v1/workspace", "/api/v1/app-config", "/api/v1/documents/", "/api/v1/library/answers"].includes(path)
       || /^\/api\/v1\/documents\/[^/]+(?:\/source|\/pdf|\/review-workspace)?$/.test(path)
     );
     const write = (method === "POST" && (
@@ -46,6 +48,7 @@ test("real import → authored finding → durable saved question → original P
   };
   expect((await get("/workspace")).has_api_key).toBe(false);
   expect((await get("/documents/")).documents).toEqual([]);
+  expect(await get("/library/answers")).toEqual([]);
   await page.goto("/import");
   await page.locator('input[type="file"]').setInputFiles(PDF);
   await page.getByRole("button", { name: "Import agreement", exact: true }).click();
@@ -89,6 +92,9 @@ test("real import → authored finding → durable saved question → original P
   await expect(page.getByRole("heading", { name: "Clarify how service credits are earned", exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Library", exact: true }).click();
+  await page.getByText("Saved Library answers", { exact: true }).click();
+  await expect(page.getByText("No saved answer attempts yet.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Refresh saved status", exact: true }).click();
   const textSearch = page.getByRole("search");
   await textSearch.getByRole("searchbox", { name: "Search agreement text" }).fill("Staged export and verification");
   await textSearch.getByRole("button", { name: "Search text" }).click();
@@ -116,6 +122,8 @@ test("real import → authored finding → durable saved question → original P
   expect(final.runs[0].kind).toBe("fixture");
   expect(final.ask_turns).toEqual([]);
   expect((await get("/workspace")).has_api_key).toBe(false);
+  expect(await get("/library/answers")).toEqual([]);
+  expect(answerHistoryReads).toBeGreaterThanOrEqual(3);
   expect(forbidden, "Paid, unexpected and external browser requests must never dispatch").toEqual([]);
   expect(errors).toEqual([]);
 });

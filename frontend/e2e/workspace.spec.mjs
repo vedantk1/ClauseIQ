@@ -1,5 +1,5 @@
 import { mkdir } from "node:fs/promises";
-import { test, expect, DOCUMENT_ID, IMPORT_ID, RUN_ID, PDF_PATH } from "./fixtures.mjs";
+import { test, expect, DOCUMENT_ID, IMPORT_ID, RUN_ID, PDF_PATH, LIBRARY_QUESTION } from "./fixtures.mjs";
 
 async function openFindings(page) {
   await page.goto("/documents");
@@ -85,4 +85,66 @@ test("showcase: Black and Graphite keep a usable laptop and narrow layout", asyn
   await expect(page.getByRole("heading", { name: "Plan for the conditional Archive exit extension", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Switch to Black theme", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "black");
+});
+
+test.describe("Library answer journey with an explicitly enabled provider stub", () => {
+  test.use({ allowLibraryAnswer: true });
+
+  test("search → cancel preview → explicit send → own citation → saved answer after reload", async ({ page, mockWorkspace }) => {
+    const { libraryRequests, answerPlan } = mockWorkspace;
+    await page.goto("/documents");
+    await page.getByText("Saved Library answers", { exact: true }).click();
+    await expect(page.getByText("No saved answer attempts yet.", { exact: true })).toBeVisible();
+    const search = page.getByRole("search");
+    await search.getByRole("searchbox", { name: "Search agreement text" }).fill(LIBRARY_QUESTION);
+    await search.getByRole("button", { name: "Search text", exact: true }).click();
+    await expect(page.getByRole("list", { name: "Agreement text results" }).getByRole("listitem")).toHaveCount(2);
+    expect(libraryRequests.sends).toEqual([]);
+    await page.getByRole("button", { name: "Answer from these results", exact: true }).click();
+    const modal = page.getByRole("dialog", { name: "Answer from these results", exact: true });
+    await expect(modal).toBeVisible();
+    await expect(modal).toContainText("separate paid answer");
+    await modal.getByText("Inspect evidence being sent", { exact: true }).click();
+    await modal.getByText("managed-services-25p.pdf · page 25 · S2", { exact: true }).click();
+    await expect(modal.locator("blockquote").filter({ hasText: answerPlan.evidence[1].quote })).toBeVisible();
+    expect(libraryRequests.sends).toEqual([]);
+    await modal.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(modal).not.toBeVisible();
+    expect(libraryRequests.sends).toEqual([]);
+
+    await page.getByRole("button", { name: "Answer from these results", exact: true }).click();
+    await modal.getByRole("button", { name: "Generate answer · paid", exact: true }).click();
+    const answer = page.getByRole("article", { name: "Saved Library answer", exact: true });
+    await expect(answer.getByRole("heading", { name: "Partial answer", exact: true })).toBeVisible();
+    await expect(page.getByText("Saved Library answers (1)", { exact: true })).toBeVisible();
+    expect(libraryRequests.sends).toHaveLength(1);
+    expect(libraryRequests.searches).toHaveLength(1);
+    expect(libraryRequests.previews).toHaveLength(2);
+    // Only S2 is attributed to this statement. The first search hit (S1/page 24)
+    // must not be substituted, even though it is available in the answer plan.
+    await expect(answer.getByText("managed-services-25p.pdf · page 24 · S1", { exact: true })).toHaveCount(0);
+    await answer.getByText("managed-services-25p.pdf · page 25 · S2", { exact: true }).click();
+    await expect(answer.locator("blockquote")).toHaveText(answerPlan.evidence[1].quote);
+    await answer.getByRole("link", { name: "View page 25", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`documentId=${DOCUMENT_ID}&sourceRevisionId=${DOCUMENT_ID}-source-v1&page=25&from=library-search`));
+    await expect(page.getByRole("textbox", { name: "PDF page number", exact: true })).toHaveValue("25");
+    const physicalPage = page.locator('.pdfViewer .page[data-page-number="25"]');
+    await expect(physicalPage).toBeInViewport();
+    await expect(physicalPage.locator("canvas")).toBeVisible();
+    await expect(physicalPage.locator(".textLayer")).toContainText("Archive");
+
+    await page.getByRole("button", { name: /Return to Library$/ }).click();
+    await expect(page).toHaveURL(/\/documents$/);
+    await expect(page.getByText("Saved Library answers (1)", { exact: true })).toBeVisible();
+    await page.reload();
+    await page.getByText("Saved Library answers (1)", { exact: true }).click();
+    await page.getByRole("button", { name: `${LIBRARY_QUESTION} · Saved`, exact: true }).click();
+    await expect(answer.getByRole("heading", { name: "Partial answer", exact: true })).toBeVisible();
+    await answer.getByText("managed-services-25p.pdf · page 25 · S2", { exact: true }).click();
+    await expect(answer.locator("blockquote")).toHaveText(answerPlan.evidence[1].quote);
+    expect(libraryRequests.reads).toEqual([libraryRequests.sends[0].request_id]);
+    expect(libraryRequests.sends).toHaveLength(1);
+    expect(libraryRequests.searches).toHaveLength(1);
+    expect(mockWorkspace.savedAnswers.size).toBe(1);
+  });
 });
