@@ -18,6 +18,7 @@ different things. None establishes a complete or legally reliable review.
 | Semantic runtime smoke | Two isolated synthetic documents, four fixed development queries, real embeddings and real Mongo/GridFS/Qdrant | Actual index/search integration, source resolution and a recorded cross-agreement miss; not a new broad accuracy score |
 | Library answers with fixed evidence | Eleven frozen, inspected synthetic cases through the normal generation engine | Source-assessed statements, omissions and abstention/label errors when the evidence is controlled; not end-to-end RAG quality |
 | End-to-end Library RAG | Four inspected questions × actual Keyword/Semantic top-five results, real storage and eight live answers | Links observed retrieval misses to partial answers; records qualification omission, precision error and abstention separately |
+| Fresh-document quality checkpoint | Three new PDFs, twelve retrieval questions and four fixed-evidence cases at Sol medium/high/xhigh | Large-only retrieval measurements and effort tradeoffs; not a current-profile end-to-end RAG result or independent assessment |
 
 The generator cases are in
 [backend/fixtures/review_evaluations](../backend/fixtures/review_evaluations/README.md).
@@ -62,9 +63,9 @@ independent ground truth: its misses and false alarms also need assessment.
 | --- | --- | --- |
 | Individual review and finding-scoped Ask | Complete supported extracted source with bounded input | Source-reviewed criteria and a small recorded live baseline; known omissions remain |
 | Library Keyword search | Local BM25 ranking over canonical page passages | Implemented; offline development-set results below and real-stack search/page-navigation coverage |
-| Library Semantic search | Explicit text-embedding-3-small indexing and exact Qdrant cosine retrieval | Implemented; live runtime smoke and separate ranking comparison, plus deterministic lifecycle tests and isolated stub-provider storage checks |
+| Library Semantic search | Explicit text-embedding-3-large / 3072 indexing and exact Qdrant cosine retrieval | Large-only cached retrieval measured on 44 known and 12 fresh questions; deterministic migration and isolated stub-storage checks cover compatibility. Earlier small-model runtime results remain historical. |
 | Retained earlier document chat | Embeddings and Qdrant retrieval followed by generation | Existing legacy RAG; not exercised by the Library retrieval benchmark |
-| Library answers from search results | Explicit paid generation over a server-resolved snapshot of Keyword or Semantic results | Implemented; eleven fixed-evidence and eight end-to-end live cases source-assessed, plus deterministic lifecycle tests and isolated storage checks |
+| Library answers from search results | Explicit paid generation over a server-resolved snapshot of Keyword or Semantic results | Twelve new v2 fixed-evidence calls compare Sol efforts; eleven fixed-evidence and eight end-to-end calls assess the historical v1 baseline. A current-profile live end-to-end check remains separate; lifecycle/storage checks cover mechanics. |
 
 The [Library-answer evaluation contract](evaluations/LIBRARY_ANSWERS_PROTOCOL.md)
 separates fixed-evidence answer quality from end-to-end retrieval failures. It
@@ -80,10 +81,22 @@ key-free lexical baseline and optional paid semantic retrieval over explicitly
 indexed canonical passages. A separate **Answer from these results** confirmation
 generates cited statements from those selected passages; searching never starts
 generation automatically. Preview/readback/navigation remain unpaid.
-Semantic search uses the measured embedding/header-eligibility candidate, not
+Semantic search uses the existing header-eligibility policy with the user-selected
+large embedding upgrade, not
 automatic hybrid fusion or blanket document diversity. Published comparison
 scores describe that frozen synthetic experiment, not a live product acceptance
 score or a fresh evaluation of arbitrary user libraries.
+
+The [v2 quality protocol](evaluations/LIBRARY_QUALITY_V2_PROTOCOL.md) separates
+large-only retrieval assessment from Sol medium/high/xhigh fixed-evidence
+answers on new synthetic documents. Independent human assessment and user
+usefulness studies are deferred. Product configuration and prompt changes alone
+do not establish improvement. The [completed v2 result](evaluations/LIBRARY_QUALITY_V2.md)
+records 95% fresh passage recall@5 for large dense/hybrid versus 85% Keyword, the
+remaining multi-agreement miss, medium over-abstention, and omitted notice details
+at medium/high. Xhigh covered the frozen criteria in this single four-case sample,
+with higher cost/latency. No new small-model calls or current-profile end-to-end
+result are implied.
 
 The [live runtime checkpoint](evaluations/LIBRARY_SEMANTIC_RUNTIME_V1.md) subsequently
 completed six real embedding calls through the actual index/search services and

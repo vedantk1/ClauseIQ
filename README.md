@@ -34,6 +34,8 @@ requested. There is no application-funded service or supported hosted deployment
 Library search offers free, local **Keyword** search and optional **Semantic**
 search over agreements you explicitly index. Indexing and semantic queries use
 paid OpenAI embeddings through your Settings key; nothing is indexed on import.
+New semantic indexes use `text-embedding-3-large` (3,072 dimensions); older indexes
+require an explicit rebuild, with no automatic charge.
 Both return source passages with PDF page links. **Answer from these results** is
 a separate, confirmed AI call that uses those selected passages, with per-statement
 source links and explicit partial/insufficient-evidence outcomes. It is not an
@@ -93,7 +95,14 @@ matching and deterministic tests check engineering contracts, not legal quality.
 See [Evaluation](docs/EVALUATION.md) for the existing synthetic cases, assessment
 method and the distinction between reference matching and supported conclusions.
 
-The [first 44-question retrieval comparison](docs/evaluations/LIBRARY_RETRIEVAL_V1.md)
+The [latest quality checkpoint](docs/evaluations/LIBRARY_QUALITY_V2.md) tests large
+embeddings on three fresh synthetic documents and compares Sol medium/high/xhigh
+with fixed evidence. Dense retrieval reached 95% passage recall@5 versus 85% for
+Keyword on that small set, while still missing an agreement in a broad question.
+Higher reasoning effort preserved more qualifications in the four answer cases
+but cost more and took longer. These are bounded findings, not overall accuracy.
+
+The historical [44-question retrieval comparison](docs/evaluations/LIBRARY_RETRIEVAL_V1.md)
 measures lexical, dense and hybrid search separately, including category results,
 missed passages, no-answer near-matches, latency and usage. These are synthetic
 retrieval measurements, not an overall AI-accuracy score. Keyword remains the

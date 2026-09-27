@@ -1,0 +1,63 @@
+{
+  "version": "fresh-library-quality-answers-v1",
+  "purpose": "Four assistant-authored fixed-evidence answer checks on newly authored documents; not independent legal validation.",
+  "passage_hashes": {
+    "equipment_base": "f5ce4976138b523c15db40ee6a8811d88f4e6101a4f8b2362868f024bbd94c6e",
+    "equipment_amendment": "bde766deeb8016646e50beea74d041b7d8776ead1090a3c94d9587a89dd761b0",
+    "processing_breach": "f7a82bcaa64e836f6fc80e1191964225ffc3d056501a15b247dd107731f1a0a6",
+    "processing_subprocessor": "473e3d169a57840a7529994ed2e2c844e6d64f0efebdbbf2f2c14300575bd87e",
+    "processing_amendment": "061561bbeaf9a8ce5d71221750008703ae1ec430aa542611921d2d7c33c27da3",
+    "research_acceptance": "58499a02b048fc5ed2c3ed2256951130d325c901faecbddf6e6309f2aa0ebed3",
+    "research_data_use": "74e0c1ac56bacc463edd793b4001516b88e69d4309279c3849d09c390025a74a",
+    "research_amendment": "54e89933117cb7b9c3f7ee429b381f3f41dda578580ab74455e9d38e0119e87a"
+  },
+  "cases": [
+    {
+      "id": "fresh-answer-cross-schedules",
+      "question": "Across these agreements, what did the later schedules change about the pump response, Platform Data incident notice, and final regulatory report acceptance periods?",
+      "anchors": ["equipment_base", "equipment_amendment", "processing_breach", "processing_amendment", "research_acceptance", "research_amendment"],
+      "expected_outcome": "answered",
+      "criteria": [
+        "Separate the three agreements and clocks: technician response, customer incident notice, and deliverable acceptance are not interchangeable.",
+        "Equipment baseline is eight business hours; four business hours applies only to listed pumps LP-101 and LP-102 from 1 June 2026 with a complete Critical ticket during the Support Window, and is not a repair-completion promise.",
+        "Processing baseline is thirty-six hours after breach confirmation; twenty-four hours applies only to confirmed Platform Data incidents on or after 1 July 2026 and does not begin on suspicion.",
+        "Research baseline is ten business days; fifteen business days applies only to a final regulatory report with its validation appendix delivered on or after 1 August 2026. Without the appendix the acceptance clock has not started.",
+        "Cite the supporting passage from each agreement for each material period and scope; do not transfer a condition between agreements."
+      ]
+    },
+    {
+      "id": "fresh-answer-breach-qualification",
+      "question": "If the processor suspects a Platform Data breach, must it notify the customer within twenty-four hours, and are other incidents on the same clock?",
+      "anchors": ["processing_breach", "processing_amendment"],
+      "expected_outcome": "answered",
+      "criteria": [
+        "Suspicion triggers prompt investigation but not the confirmed-breach notice clock.",
+        "The ordinary customer notice period is thirty-six hours after confirmation, with facts then known and later updates.",
+        "The twenty-four-hour change is limited to Platform Data incidents confirmed on or after 1 July 2026; other incidents retain thirty-six hours.",
+        "Do not imply that the amendment establishes a regulator deadline or starts at a complaint; cite the baseline and amendment separately."
+      ]
+    },
+    {
+      "id": "fresh-answer-missing-pump-schedule",
+      "question": "Does Schedule M guarantee a four-hour repair for every pump on weekends?",
+      "anchors": ["equipment_base"],
+      "expected_outcome": "partial",
+      "criteria": [
+        "Report only the supplied clause 2 baseline: eight business hours after a complete Critical ticket during the Support Window, for technician contact and diagnosis rather than completed repair.",
+        "Explicitly state that Schedule M and its precise pump/weekend qualification are absent from the fixed evidence; do not validate or invent a four-hour promise from the question.",
+        "Avoid a categorical claim about all pumps or weekend coverage without the missing schedule passage."
+      ]
+    },
+    {
+      "id": "fresh-answer-unsupported-escrow",
+      "question": "Which supplier is required to maintain biometric escrow for research participants?",
+      "anchors": ["processing_subprocessor", "research_data_use"],
+      "expected_outcome": "insufficient_evidence",
+      "criteria": [
+        "Do not identify a supplier or invent a biometric escrow obligation; the selected passages concern subprocessors and restricted research-data use, not biometric escrow.",
+        "State that the supplied evidence is insufficient to answer, without claiming that every page or agreement in the library was exhaustively checked.",
+        "If citing near-matches, make clear why they do not support the requested obligation."
+      ]
+    }
+  ]
+}

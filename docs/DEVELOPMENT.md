@@ -139,6 +139,11 @@ responses and saved work are test-owned in-memory fixtures derived from the exac
 synthetic 25-page PDF and its authored review. The browser still runs the actual
 frontend and local PDF.js renderer. Unexpected API routes, external traffic and
 provider-dispatch routes fail the test instead of falling through to live services.
+One opt-in fixture allows the exact Library-answer dispatch route but fulfills it
+entirely in memory. That journey checks search, full-evidence preview, cancel with
+zero sends, one explicit confirmed stubbed generation, its own citation/PDF page,
+and saved-answer reload/history without another send. No request is forwarded to
+a provider. The normal fixture still rejects unexpected paid routes.
 
 This tests browser interaction with a synthetic API contract, not FastAPI extraction,
 real database durability, credential handling, model quality or a complete
@@ -202,6 +207,9 @@ against the fixture hash. A separate Ask lifecycle smoke on the same test-owned
 MongoDB uses a fresh fixture database and mocked provider boundary to check
 fresh-connection readback, inline citation mappings and historical-answer preservation.
 No embeddings, real model answers or legal quality are tested.
+The real browser also checks unpaid Library-answer history reads; full generated
+answer browser state is exercised by the separate mocked journey, not this storage
+journey. Backend answer-storage smoke remains the persistence check for that path.
 
 Cleanup validates exact container IDs, invocation labels, mounts and bindings
 before stopping only owned disposable services. Failures must remain visible;
@@ -617,6 +625,12 @@ Only **Index agreement · paid** dispatches embeddings using the Settings key.
 and free. Searching alone never generates an answer; top-ranked semantic
 passages can be irrelevant, and unindexed documents are not negative matches.
 
+New indexes use `text-embedding-3-large` at 3,072 dimensions ($0.13 per million
+input tokens, verified 2026-09-27). Small/1,536 indexes from the earlier version
+show **Index outdated · rebuild needed**; original PDFs and saved work remain
+unchanged. Rebuilding is explicit and paid, never an automatic startup migration.
+The embedding spaces use different Library vector namespaces and cannot be mixed.
+
 This version uses one local backend process. Do not enable multiple Uvicorn
 workers: index/deletion serialization uses in-process locks alongside Mongo
 conditional writes. Reloading the backend during indexing may leave an
@@ -707,8 +721,6 @@ reusing a plan directory refuses another dispatch. Only reviewed summaries belon
 in public docs. Assess every claim against its own evidence; structural completion
 is not correctness. End-to-end retrieval/answer evaluation remains separate.
 
-### Bounded live semantic runtime smoke
-
 ### End-to-end Library RAG regression
 
 `evaluations.library_rag_live` runs four inspected synthetic queries through both
@@ -732,10 +744,12 @@ providers, uses deterministic vectors/answers and proves only mechanics. Both
 storage runs use verified-owned temporary Mongo/GridFS/Qdrant namespaces and
 check cleanup; neither changes the installation's library or Settings. The paid
 run reads the saved key only after storage preflight and reserves all eight answer
-and six embedding ceilings upfront (currently $1.144, maximum cap $1.20).
+and six embedding ceilings upfront (currently $1.276, maximum cap $1.30).
 No retry, fallback, paid grader, query rewrite or evidence replacement. Stop after
 failed/unknown output or missing usage; keep reservations and already-recorded
-results. Private plans, ledgers and outputs remain under ignored `.local-only`.
+results. Current-profile plans, ledgers and outputs remain under ignored
+`.local-only/library-rag-evaluations-v2`; the published small-embedding/v1 report
+is historical, not a quality result for this changed profile or prompt.
 Recheck pricing before a later run; an old report is not fresh approval.
 
 For debugging, search local logs for `library_stage` and correlate `trace_id`
@@ -769,12 +783,41 @@ the disposable fixture store. Stop on a failed/unknown call; never automatically
 retry, switch models or reclaim an uncertain reservation. Pricing approval expires
 after seven days and the official endpoint is enforced.
 
-An exclusive private directory under `.local-only/semantic-runtime` holds the
+An exclusive private directory under `.local-only/semantic-runtime-v2` holds the
 code/source/input manifest, fsynced request ledger and report. Existing output for
 the same plan refuses another dispatch. Do not delete it to bypass an uncertain
 run. Only uniquely named, verified-owned fixture stores are cleaned; the cleanup
 event records leftovers requiring explicit recovery. The person's library,
 saved work, vector collection and credential state remain unchanged.
+
+### Fresh documents and Sol effort comparison
+
+The [v2 protocol](evaluations/LIBRARY_QUALITY_V2_PROTOCOL.md) freezes large-only
+retrieval candidates and Sol medium/high/xhigh with identical fixed evidence.
+No new small-embedding calls are made; old results remain historical evidence.
+The three new PDF documents are disjoint from the old seven-fixture corpus.
+Their questions are a first fresh-document synthetic measurement, not independent
+human validation; after inspection they are regression data. Existing 44 questions
+remain known regressions. No model/effort winner is assumed from configuration.
+
+From `backend`, after key-free tokenizer preflight:
+
+~~~bash
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m evaluations.library_quality_live embeddings
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m evaluations.library_quality_live answers
+# Separately approved finite budget and exact phase-specific dry-run fingerprint:
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m evaluations.library_quality_live embeddings --run-paid --cap-usd APPROVED_CAP --approved-plan DIGEST_FROM_DRY_RUN
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m evaluations.library_quality_live answers --run-paid --cap-usd APPROVED_CAP --approved-plan DIGEST_FROM_DRY_RUN
+# Completed, fingerprint-matching vectors only; no new requests:
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m evaluations.library_quality_live embeddings --replay
+~~~
+
+Both phases reserve all maximum costs before read-only key access and stop on a
+failed/unknown outcome or missing usage. No automatic retry, fallback, paid grader
+or product Settings/index mutation. Answers use the normal generation engine;
+criteria never enter its input. Private exclusive plans/outputs are under
+`.local-only/library-quality-v2`. Embedding batches measure throughput, not live
+interactive query latency. Do not count fixed-evidence answers as end-to-end RAG.
 
 ### Retrieval comparison experiment
 

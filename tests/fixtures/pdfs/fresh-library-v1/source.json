@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "notice": "SYNTHETIC HOLDOUT FIXTURE - fictional terms for software evaluation only; not a real agreement or legal advice.",
+  "fixtures": [
+    {
+      "filename": "equipment-maintenance-3p.pdf",
+      "title": "Equipment maintenance terms",
+      "kind": "text",
+      "pages": [
+        {
+          "heading": "Service scope and response",
+          "sections": [
+            {"heading": "1. Covered equipment", "text": "Example Operator engages Example Maintainer to service the laboratory pumps listed in Schedule M. The Support Window is 09:00 to 17:00, Monday to Friday, excluding stated public holidays. This agreement does not cover the building ventilation system or devices that are not listed by serial number. The parties will record each accepted service ticket against a listed device."},
+            {"heading": "2. Base response target", "text": "The base response target for a Critical outage is eight business hours after a complete ticket is accepted during the Support Window. Critical means that a listed device cannot perform its primary function; a degraded display or nonessential sensor alone is not Critical. A response means that a technician contacts the operator and starts diagnosis, not that the repair is complete. A ticket received outside the Support Window is accepted at the next opening of that window."},
+            {"heading": "3. Access dependency", "text": "Example Operator must provide safe access, a named site contact and the error record reasonably available for the affected device. If access is refused or the error record is not supplied, the response clock pauses after Example Maintainer asks for the missing item and resumes when it is provided. This dependency does not remove the duty to respond once the complete ticket is accepted."}
+          ]
+        },
+        {
+          "heading": "Parts, planned work and records",
+          "sections": [
+            {"heading": "4. Replacement parts", "text": "Replacement parts costing up to GBP 400 per incident are included in the monthly service charge. A part above GBP 400 requires Example Operator's written approval of a separate quote before installation. Labour for an approved replacement remains within the monthly charge unless the quote expressly identifies an additional specialist visit. Emergency status alone is not approval to exceed the parts allowance."},
+            {"heading": "5. Planned interruption", "text": "Example Maintainer may schedule preventive work during the Support Window after giving two business days' notice. A planned interruption stated in that notice is not a Critical outage unless the listed device remains unavailable after the agreed work period. The parties must agree a new period if preventive work would interrupt a previously booked experiment."},
+            {"heading": "6. Service records", "text": "A written visit record must identify the device, symptom, work performed and any part installed. Example Operator may request a copy within thirty days after the visit. The record is operational evidence; it is not an acceptance certificate or a change to the response target. Example Maintainer will retain the records for twelve months after this service term ends."}
+          ]
+        },
+        {
+          "heading": "Schedule M - listed pumps amendment",
+          "sections": [
+            {"heading": "M1. Narrow accelerated response", "text": "For the Listed Pumps only, the response target becomes four business hours from 1 June 2026, provided a complete Critical ticket is accepted during the Support Window. The Listed Pumps are serials LP-101 and LP-102; the four-hour target does not apply to other pumps, weekends, public holidays, or ticket time before the next Support Window begins. This Schedule changes clause 2's response target for those two pumps but does not promise a completed repair within four hours."},
+            {"heading": "M2. Parts and escalation unchanged", "text": "The GBP 400 included-parts allowance in clause 4 continues for the Listed Pumps. An above-allowance replacement still requires Example Operator's written approval before installation. If diagnosis cannot begin because access or the error record is missing, the pause and resume rule in clause 3 continues to apply. Escalation to a senior technician after four hours is a reporting step, not an extra response period."},
+            {"heading": "M3. Order of terms", "text": "Schedule M overrides clause 2 only to the extent of the narrower response target stated in M1. All other service terms remain in effect. No text here adds a support obligation for an unlisted device. The amendment begins on 1 June 2026 and does not apply retroactively to earlier accepted tickets."}
+          ]
+        }
+      ]
+    },
+    {
+      "filename": "data-processing-5p.pdf",
+      "title": "Data processing addendum",
+      "kind": "text",
+      "pages": [
+        {
+          "heading": "Processing instructions and incidents",
+          "sections": [
+            {"heading": "1. Roles and instructions", "text": "Example Customer determines the purposes of processing Platform Data and Example Processor handles it only to provide the inventory service. Platform Data means the fictional account records described in Schedule D. Example Processor must not sell Platform Data or use it for an unrelated analytics service. An instruction that would breach the agreed security schedule must be referred back to Example Customer before execution."},
+            {"heading": "2. General breach notice", "text": "Example Processor must notify Example Customer within thirty-six hours after confirming a Personal Data Breach, using facts then known and sending updates as information develops. The notice must identify the affected Platform Data categories, likely impact and containment steps when reasonably available. Suspicion alone triggers prompt investigation, but it does not start this confirmed-breach clock. Clause D4 later changes this period only for a defined Platform Data incident."},
+            {"heading": "3. Assistance", "text": "Example Processor will preserve relevant logs and assist Example Customer with notices and inquiries concerning the confirmed incident. Example Customer remains responsible for deciding whether a regulatory or individual notice is required. This assistance does not authorize Example Processor to make a public admission on Example Customer's behalf."}
+          ]
+        },
+        {
+          "heading": "Subprocessors and objections",
+          "sections": [
+            {"heading": "4. New subprocessor notice", "text": "Example Processor must give fourteen days' advance notice of a new subprocessor. Example Customer may object on documented data-protection grounds within that period. If the parties cannot resolve the objection, Example Processor must not place the disputed processing with that subprocessor and may offer an alternative service path. Mere silence after the notice period is not a waiver of a material security breach."},
+            {"heading": "5. Existing suppliers", "text": "The approved hosting and support suppliers named in Schedule D may continue performing their listed tasks. Example Processor remains responsible for their compliance with the same confidentiality and security duties. The notice process in clause 4 applies to a new supplier or a material expansion of an existing supplier's access, not to a clerical change in the supplier's address."},
+            {"heading": "6. Processing record", "text": "Example Processor will keep an accurate record of which subprocessor handled Platform Data and the broad task assigned. The record is available to Example Customer on reasonable request. A record entry is evidence of the task performed, not a substitute for the advance notice required by clause 4."}
+          ]
+        },
+        {
+          "heading": "Location and transfer safeguards",
+          "sections": [
+            {"heading": "7. Permitted regions", "text": "Routine Platform Data hosting is limited to the United Kingdom and the European Economic Area. Transfers outside the United Kingdom or EEA require the agreed transfer mechanism before the transfer begins. A support call with no access to Platform Data does not itself count as a transfer, but remote access to readable records does. Example Customer may ask for the destination and mechanism used for a particular transfer."},
+            {"heading": "8. Emergency access", "text": "A security emergency does not by itself dispense with clause 7's transfer mechanism. If a remote specialist outside the permitted regions needs access, Example Processor must first establish the agreed mechanism and log the scope and duration of access. The specialist receives only the records needed for containment."},
+            {"heading": "9. Return to normal operation", "text": "Following emergency access, Example Processor must revoke temporary credentials and confirm the disposition of any downloaded copy. The parties will review whether a continuing transfer arrangement is needed. An emergency incident report is not evidence that all copies were deleted."}
+          ]
+        },
+        {
+          "heading": "Audit and evidence",
+          "sections": [
+            {"heading": "10. Routine audit", "text": "Example Customer may conduct one routine audit each year, with a further focused audit after a material confirmed incident. A routine audit requires ten business days' notice and must avoid unnecessary access to another customer's data. A focused incident audit may begin sooner where delay would materially prejudice fact finding, but its scope is limited to the incident and related controls."},
+            {"heading": "11. Evidence package", "text": "Example Processor will supply current security policies, the relevant subprocessor list and a summary of remedial actions reasonably requested for an audit. Raw access logs may contain third-party information and can be inspected through a controlled review instead of copied without restriction. The audit right does not transfer ownership of the logs."},
+            {"heading": "12. Cost allocation", "text": "Each party bears its own routine audit staff costs. Example Processor bears reasonable remediation costs for a verified failure of its stated controls. A finding based only on an unconfirmed allegation does not by itself allocate remediation costs."}
+          ]
+        },
+        {
+          "heading": "Schedule D - narrow incident amendment and exit",
+          "sections": [
+            {"heading": "D4. Platform Data notice amendment", "text": "For Platform Data incidents confirmed on or after 1 July 2026, the notice period in clause 2 becomes twenty-four hours; other incidents retain thirty-six hours. The shorter period begins on confirmation, not first suspicion or the time a customer complaint arrives. Example Processor must still send follow-up facts as they become known. This amendment changes only the customer notice clock, not any separate regulator deadline."},
+            {"heading": "D5. End of service", "text": "Within sixty days after termination, Example Processor must return or delete Platform Data at Example Customer's choice, except a copy required by law may remain access-restricted for the required period. A backup copy that cannot be immediately isolated must be put beyond routine use and removed at the next scheduled cycle, no later than ninety days after termination. Example Processor will confirm the action taken without falsely certifying that a lawful hold was erased."},
+            {"heading": "D6. Schedule relationship", "text": "The notice amendment in D4 applies only within its stated incident category and start date. Clauses 4 and 7 continue to govern new subprocessors and external transfers. Nothing in this Schedule permits an unapproved new data use or waives a confirmed-breach investigation."}
+          ]
+        }
+      ]
+    },
+    {
+      "filename": "research-services-7p.pdf",
+      "title": "Research services agreement",
+      "kind": "text",
+      "pages": [
+        {
+          "heading": "Study deliverables and acceptance",
+          "sections": [
+            {"heading": "1. Study scope", "text": "Example Institute will perform the fictional materials study in the written protocol and deliver a methods memorandum, an interim dataset and a final report. Example Sponsor supplies the agreed sample inventory and access to the test site. The work is exploratory; no particular scientific result or regulatory approval is promised. Changes to the protocol require the written change process in clause 7."},
+            {"heading": "2. General acceptance", "text": "Example Sponsor has ten business days after delivery to identify a material failure against the written acceptance criteria. Example Institute must correct an identified failure and resubmit the affected deliverable. Acceptance is deemed only if Example Sponsor neither identifies a material failure nor requests a reasonable clarification within that period. The final regulatory report has a narrow later amendment in Schedule R on page 7."},
+            {"heading": "3. No invented accuracy warranty", "text": "The acceptance process tests whether the specified method and format were delivered. It does not warrant that a research hypothesis is true. A correction request must describe the failed criterion; a preference for a different conclusion is not itself a material failure."}
+          ]
+        },
+        {
+          "heading": "Ownership and permitted use",
+          "sections": [
+            {"heading": "4. Background materials", "text": "Each party retains the methods, software and know-how it owned before this agreement. Example Institute grants Example Sponsor a perpetual nonexclusive licence to use embedded background tools only as needed to read and use the delivered report. No source-code transfer or general right to resell those tools is included."},
+            {"heading": "5. Project work product", "text": "The final project report becomes Example Sponsor work product after payment of the applicable milestone. Example Institute may retain a non-public copy to meet its record-keeping duty and may use general techniques that do not disclose Example Sponsor's confidential information. Raw third-party licensed material remains subject to its separate source terms."},
+            {"heading": "6. Pre-existing data", "text": "Example Sponsor's sample inventory remains its property. Example Institute may copy it only to perform the study and must not present it as a separately marketable dataset. A compiled research dataset produced under this agreement is governed by the data-use and return rules on page 6."}
+          ]
+        },
+        {
+          "heading": "Milestones, invoices and changes",
+          "sections": [
+            {"heading": "7. Written scope changes", "text": "A change in study method, sample count, timetable or price requires a written change order approved by both parties before the extra work begins. Email approval from the named project contacts counts as writing if it identifies the changed item and price. A technician's field note alone does not authorize an extra charge."},
+            {"heading": "8. Milestone invoices", "text": "Example Institute may invoice the agreed fee when each milestone deliverable is submitted. Each accepted milestone invoice is payable within thirty days of receipt. A disputed amount must be identified with reasons within ten business days; the undisputed amount remains payable on time. The final report fee does not become payable merely because a draft was circulated."},
+            {"heading": "9. Delay caused by inputs", "text": "If Example Sponsor delivers samples or site access late, the parties will agree a reasonable timetable adjustment in writing. That adjustment does not automatically increase the price. A revised date is not evidence that a deliverable satisfied its acceptance criteria."}
+          ]
+        },
+        {
+          "heading": "Publication review",
+          "sections": [
+            {"heading": "10. Draft review", "text": "A publication draft must be provided for review fifteen business days before submission, solely to remove confidential information or identify patentable material. Example Sponsor may request a postponement of no more than forty-five days for a good-faith patent filing. The review is not a veto over the scientific conclusion or a second acceptance period for the final report."},
+            {"heading": "11. Authorship and disclosure", "text": "Each author is credited according to actual contribution. Neither party may disclose the other's confidential methods or unpublished sample inventory merely because a manuscript is being prepared. A permitted abstract can be shared after the review window and any agreed patent postponement."},
+            {"heading": "12. Regulatory communication", "text": "A required communication to a regulator may proceed without the ordinary publication waiting period if law requires earlier disclosure. The disclosing party will give advance notice where legally permitted and limit the disclosure to what is required. This exception does not change the deliverable acceptance period."}
+          ]
+        },
+        {
+          "heading": "Confidentiality and term",
+          "sections": [
+            {"heading": "13. Protected information", "text": "Non-public methods, sample identities, prices and study results marked confidential or reasonably understood to be confidential may be used only for this study. The confidentiality obligation survives three years after completion, except information that is public without breach or independently developed. A retained record copy must remain access-restricted during that period."},
+            {"heading": "14. Required disclosure", "text": "If a party is legally compelled to disclose protected information, it may disclose the required portion and, where lawful, notify the other party in advance. The notice duty does not permit withholding information required by law. A recipient remains responsible for its own representatives' compliance."},
+            {"heading": "15. End of study", "text": "The study term ends when the final report is accepted or the parties end it by written agreement. Rights accrued to payment and correction before that date continue. Completion does not change the ownership of background materials under clause 4."}
+          ]
+        },
+        {
+          "heading": "Dataset controls and return",
+          "sections": [
+            {"heading": "16. Restricted research data", "text": "Research data may be used only to perform the agreed study and must not be used to train a general-purpose model. The research dataset must be kept separate from unrelated customer work and shared only with authorized study personnel. Example Institute may create aggregate statistics that cannot identify Example Sponsor's sample inventory."},
+            {"heading": "17. Return and deletion", "text": "Within forty-five days after the study ends, Example Institute must return the research dataset to Example Sponsor and delete working copies, except a restricted archival copy may be kept for five years to satisfy an agreed audit duty. The archival copy may not be used for model training or a new commercial analysis. Example Institute will state what was returned and what lawful archival copy remains."},
+            {"heading": "18. Data incident", "text": "Example Institute must promptly investigate unauthorized access to the research dataset and notify Example Sponsor without undue delay after confirmation. No fixed twenty-four-hour or thirty-six-hour notice deadline is promised by this clause. The data-processing addendum used by another fictional supplier is not incorporated into this research agreement."}
+          ]
+        },
+        {
+          "heading": "Schedule R - final-report amendment",
+          "sections": [
+            {"heading": "R1. Conditional longer acceptance", "text": "Only the final regulatory report receives fifteen business days for acceptance where the validation appendix is delivered; all other deliverables retain ten business days. If the appendix is missing, the final report is not complete for delivery under clause 2 and the acceptance clock has not started. The longer period applies to final regulatory reports delivered on or after 1 August 2026, not earlier submissions."},
+            {"heading": "R2. Correction and payment retained", "text": "A material failure identified during the applicable acceptance period must still be corrected and resubmitted under clause 2. The thirty-day invoice term in clause 8 continues after an accepted milestone invoice is received. Schedule R does not add a fifteen-day invoice deadline or make the publication review in clause 10 a deliverable acceptance process."},
+            {"heading": "R3. Other terms", "text": "The publication draft remains subject to the separate fifteen-business-day review window in clause 10. That review may be postponed for patent filing within its own cap and does not alter R1. No other deliverable category or fee is amended by this Schedule."}
+          ]
+        }
+      ]
+    }
+  ]
+}

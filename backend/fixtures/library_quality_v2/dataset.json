@@ -1,0 +1,43 @@
+{
+  "id": "fresh-library-quality-v1",
+  "version": "1.0.0",
+  "purpose": "Document-held-out synthetic retrieval regression on three newly authored agreements; not a legal-quality benchmark.",
+  "review_basis": "Assistant-authored fictional terms, visually rendered and checked against their actual extracted pages. Labels were fixed before inspecting retrieval outcomes.",
+  "extraction_version": "pdfplumber:0.11.10:page-lines-v1",
+  "passage_version": "source-passages-v1",
+  "documents": [
+    {"id": "fresh-equipment", "filename": "equipment-maintenance-3p.pdf", "source_revision_id": "fresh-equipment-v1", "sha256": "f65bce9d29b50149d91515b996c9f37f16ace84cbe3be7ec968cbf4057d6fd5a", "pages": 3, "extractable": true},
+    {"id": "fresh-processing", "filename": "data-processing-5p.pdf", "source_revision_id": "fresh-processing-v1", "sha256": "5677ebab4069023cc256658d8130deea671d054ed666bb2b43c365570f959661", "pages": 5, "extractable": true},
+    {"id": "fresh-research", "filename": "research-services-7p.pdf", "source_revision_id": "fresh-research-v1", "sha256": "c121381d11fbcf98562d4d02a46eeb0a1e65c8dec937829fca83e1c43ddd65f9", "pages": 7, "extractable": true}
+  ],
+  "anchors": {
+    "equipment_scope": {"document_id": "fresh-equipment", "source_revision_id": "fresh-equipment-v1", "page_number": 1, "passage_id": "p1_b2_v1", "quote": "The Support Window is 09:00 to 17:00, Monday to Friday, excluding stated public holidays."},
+    "equipment_base": {"document_id": "fresh-equipment", "source_revision_id": "fresh-equipment-v1", "page_number": 1, "passage_id": "p1_b3_v1", "quote": "The base response target for a Critical outage is eight business hours after a complete ticket is accepted during the Support Window."},
+    "equipment_parts": {"document_id": "fresh-equipment", "source_revision_id": "fresh-equipment-v1", "page_number": 2, "passage_id": "p2_b2_v1", "quote": "A part above GBP 400 requires Example Operator's written approval of a separate quote before installation."},
+    "equipment_amendment": {"document_id": "fresh-equipment", "source_revision_id": "fresh-equipment-v1", "page_number": 3, "passage_id": "p3_b2_v1", "quote": "For the Listed Pumps only, the response target becomes four business hours from 1 June 2026"},
+    "processing_breach": {"document_id": "fresh-processing", "source_revision_id": "fresh-processing-v1", "page_number": 1, "passage_id": "p1_b3_v1", "quote": "notify Example Customer within thirty-six hours after confirming a Personal Data Breach"},
+    "processing_subprocessor": {"document_id": "fresh-processing", "source_revision_id": "fresh-processing-v1", "page_number": 2, "passage_id": "p2_b2_v1", "quote": "give fourteen days' advance notice of a new subprocessor"},
+    "processing_amendment": {"document_id": "fresh-processing", "source_revision_id": "fresh-processing-v1", "page_number": 5, "passage_id": "p5_b2_v1", "quote": "For Platform Data incidents confirmed on or after 1 July 2026, the notice period in clause 2 becomes twenty-four hours"},
+    "processing_exit": {"document_id": "fresh-processing", "source_revision_id": "fresh-processing-v1", "page_number": 5, "passage_id": "p5_b3_v1", "quote": "Within sixty days after termination, Example Processor must return or delete Platform Data"},
+    "research_acceptance": {"document_id": "fresh-research", "source_revision_id": "fresh-research-v1", "page_number": 1, "passage_id": "p1_b3_v1", "quote": "Example Sponsor has ten business days after delivery to identify a material failure against the written acceptance criteria."},
+    "research_changes": {"document_id": "fresh-research", "source_revision_id": "fresh-research-v1", "page_number": 3, "passage_id": "p3_b2_v1", "quote": "requires a written change order approved by both parties before the extra work begins"},
+    "research_publication": {"document_id": "fresh-research", "source_revision_id": "fresh-research-v1", "page_number": 4, "passage_id": "p4_b2_v1", "quote": "A publication draft must be provided for review fifteen business days before submission"},
+    "research_data_use": {"document_id": "fresh-research", "source_revision_id": "fresh-research-v1", "page_number": 6, "passage_id": "p6_b2_v1", "quote": "must not be used to train a general-purpose model"},
+    "research_return": {"document_id": "fresh-research", "source_revision_id": "fresh-research-v1", "page_number": 6, "passage_id": "p6_b3_v1", "quote": "Within forty-five days after the study ends, Example Institute must return the research dataset"},
+    "research_amendment": {"document_id": "fresh-research", "source_revision_id": "fresh-research-v1", "page_number": 7, "passage_id": "p7_b2_v1", "quote": "Only the final regulatory report receives fifteen business days for acceptance where the validation appendix is delivered"}
+  },
+  "cases": [
+    {"id": "fresh-exact-01", "category": "exact_term", "query": "Listed Pumps LP-101 four business hours", "anchors": ["equipment_amendment"], "rationale": "Exact serial and defined-term lookup for the narrowly accelerated pump response."},
+    {"id": "fresh-exact-02", "category": "exact_term", "query": "new subprocessor fourteen days objection", "anchors": ["processing_subprocessor"], "rationale": "Exact supplier-change and objection period on the processing addendum."},
+    {"id": "fresh-paraphrase-01", "category": "paraphrase", "query": "How fast must the processor alert its customer once it verifies a leak of personal records?", "anchors": ["processing_breach", "processing_amendment"], "rationale": "A confirmed-breach question needs the baseline and later narrower Platform Data amendment."},
+    {"id": "fresh-paraphrase-02", "category": "paraphrase", "query": "May the lab quietly teach a broadly usable AI system from the sponsor's dataset?", "anchors": ["research_data_use"], "rationale": "Training prohibition expressed without the source's general-purpose-model phrase."},
+    {"id": "fresh-multi-01", "category": "multi_document", "query": "Where is written approval needed before extra cost or work?", "anchors": ["equipment_parts", "research_changes"], "rationale": "Two different agreements require approval for above-allowance parts and study change orders."},
+    {"id": "fresh-multi-02", "category": "multi_document", "query": "Which agreements require data to be returned or deleted after work ends?", "anchors": ["processing_exit", "research_return"], "rationale": "The processing and research exit obligations have different periods and exceptions."},
+    {"id": "fresh-multi-03", "category": "multi_document", "query": "Which later schedules change an earlier response, notice or acceptance clock?", "anchors": ["equipment_base", "equipment_amendment", "processing_breach", "processing_amendment", "research_acceptance", "research_amendment"], "rationale": "A cross-document and cross-page question requires baseline plus scoped amendment for three different clocks; top-k may be insufficient."},
+    {"id": "fresh-exception-01", "category": "exception_near_match", "query": "Does the four-hour pump response cover weekends or unlisted devices?", "anchors": ["equipment_scope", "equipment_amendment"], "rationale": "Support-window and listed-device boundaries qualify a superficially simple four-hour statement."},
+    {"id": "fresh-exception-02", "category": "exception_near_match", "query": "Does every confirmed data breach have a twenty-four-hour deadline from first suspicion?", "anchors": ["processing_breach", "processing_amendment"], "rationale": "The exception starts at confirmation, after its effective date, and applies only to Platform Data."},
+    {"id": "fresh-exception-03", "category": "exception_near_match", "query": "Is fifteen business days the acceptance period for every research deliverable, or only publication review?", "anchors": ["research_acceptance", "research_publication", "research_amendment"], "rationale": "Publication's similarly worded review period is a near-match, not general deliverable acceptance."},
+    {"id": "fresh-unanswerable-01", "category": "unanswerable", "query": "What Bitcoin wallet address receives the maintenance fee?", "anchors": [], "rationale": "No invented contract supplies a wallet address; near-matches about invoices or fees are not an answer."},
+    {"id": "fresh-unanswerable-02", "category": "unanswerable", "query": "Which supplier must hold biometric escrow for study participants?", "anchors": [], "rationale": "Neither biometric escrow nor study-participant custody appears in the supported source."}
+  ]
+}

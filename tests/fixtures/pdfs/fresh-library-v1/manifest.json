@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "purpose": "Separate synthetic document-held-out evaluation corpus; no real parties or legal advice.",
+  "source_sha256": "b576f45975273315f8ba0209a051b64534a02d79e63c1ba386c810d4e83e612b",
+  "pdf_sha256": {
+    "equipment-maintenance-3p.pdf": "f65bce9d29b50149d91515b996c9f37f16ace84cbe3be7ec968cbf4057d6fd5a",
+    "data-processing-5p.pdf": "5677ebab4069023cc256658d8130deea671d054ed666bb2b43c365570f959661",
+    "research-services-7p.pdf": "c121381d11fbcf98562d4d02a46eeb0a1e65c8dec937829fca83e1c43ddd65f9"
+  }
+}
