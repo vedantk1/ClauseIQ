@@ -145,7 +145,7 @@ Embedding batches took 1.36–6.58 seconds each and measure collection throughpu
 Cached ranking timings exclude provider embedding, PDF preparation and product
 storage/UI access; they must not be presented as interactive search speed.
 
-## Reproduction and remaining gap
+## Reproduction and subsequent checkpoint
 
 Use the key-free preparation and explicitly approved live commands in
 [Development](../DEVELOPMENT.md#fresh-documents-and-sol-effort-comparison).
@@ -162,8 +162,10 @@ records were not reindexed, deleted or used as evaluation inputs.
 
 This checkpoint supports keeping large dense retrieval, not claiming exhaustive
 library coverage. Xhigh is a promising quality option, not a demonstrated universal
-winner. The next bounded quality work is multi-part evidence coverage and a repeated
-comparison on critical cases, followed by a current-profile **end-to-end** check.
-No new live large/v2 end-to-end result is claimed here; earlier small/v1 results
-remain historical. Different cases also mean this run cannot isolate the v2
-prompt's causal benefit over v1.
+winner. This study evaluated retrieval and fixed-evidence answers separately;
+the subsequent [current-profile end-to-end check](LIBRARY_RAG_RUNTIME_V2.md)
+exercises them together on two inspected documents and four existing questions.
+It does not erase the broader-corpus misses recorded here. Earlier small/v1
+results remain historical, and neither checkpoint isolates the v2 prompt's causal
+benefit over v1. Further multi-part retrieval optimization and repeated effort
+comparisons are parked; UI polish/showcase work is separately deferred.

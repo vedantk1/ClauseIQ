@@ -95,32 +95,24 @@ matching and deterministic tests check engineering contracts, not legal quality.
 See [Evaluation](docs/EVALUATION.md) for the existing synthetic cases, assessment
 method and the distinction between reference matching and supported conclusions.
 
-The [latest quality checkpoint](docs/evaluations/LIBRARY_QUALITY_V2.md) tests large
+The [fresh-document quality checkpoint](docs/evaluations/LIBRARY_QUALITY_V2.md) tests large
 embeddings on three fresh synthetic documents and compares Sol medium/high/xhigh
 with fixed evidence. Dense retrieval reached 95% passage recall@5 versus 85% for
 Keyword on that small set, while still missing an agreement in a broad question.
 Higher reasoning effort preserved more qualifications in the four answer cases
 but cost more and took longer. These are bounded findings, not overall accuracy.
 
-The historical [44-question retrieval comparison](docs/evaluations/LIBRARY_RETRIEVAL_V1.md)
-measures lexical, dense and hybrid search separately, including category results,
-missed passages, no-answer near-matches, latency and usage. These are synthetic
-retrieval measurements, not an overall AI-accuracy score. Keyword remains the
-default; optional semantic search uses a source-versioned index, with visible
-coverage and stale-index guards. A [cached-vector refinement](docs/evaluations/LIBRARY_RETRIEVAL_REFINEMENT.md)
-records header-filtering gains, remaining misses and why blanket document
-diversity was rejected; it is regression evidence, not a fresh benchmark.
-A [live runtime checkpoint](docs/evaluations/LIBRARY_SEMANTIC_RUNTIME_V1.md)
-then exercised real indexing/search storage and embeddings, recording a missed
-cross-agreement passage and unsupported near-matches alongside successful cases.
-The [first eleven Library-answer cases](docs/evaluations/LIBRARY_ANSWERS_FIXED_V1.md)
-separately test generation from fixed evidence, documenting an omitted
-qualification and imperfect completeness labels. The
-[eight-case end-to-end checkpoint](docs/evaluations/LIBRARY_RAG_RUNTIME_V1.md)
-then uses actual Keyword/Semantic results: it records a shared retrieval miss,
-an omitted qualification and a paraphrase precision issue alongside supported
-answers and appropriate abstentions. Content-free stage traces connect retrieval,
-generation, usage and saved attempts without logging agreement or answer text.
+The [current-pipeline end-to-end check](docs/evaluations/LIBRARY_RAG_RUNTIME_V2.md)
+then exercises large embeddings, actual search results, the v2 answer prompt and
+saved-answer replay together. Eight live answers completed: Semantic found both
+agreements in the correction case; Keyword missed one and explicitly answered
+only the supported part. Both modes declined an unsupported payment question.
+This small two-document regression does not erase the broader retrieval misses.
+The [evaluation record](docs/EVALUATION.md) retains historical comparisons,
+qualification errors, methods and costs. Content-free stage traces connect
+retrieval, generation, usage and saved attempts without logging agreement or
+answer text. Keyword remains the default; optional Semantic indexes retain
+source-version and stale-index guards.
 
 ~~~bash
 npm test           # deterministic backend and frontend tests; no paid AI

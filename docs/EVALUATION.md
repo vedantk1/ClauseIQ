@@ -11,14 +11,15 @@ different things. None establishes a complete or legally reliable review.
 | Application contracts | Deterministic backend/frontend tests and unpaid browser checks | Source identity, scoped persistence, explicit dispatch, failure handling and navigation under the tested conditions |
 | Generation references | Two source-reviewed synthetic cases with frozen criteria | A repeatable basis for assessing short and long reviews, not an automated semantic score |
 | Diagnostic checker calibration | Ten authored candidates: six negative mutations and four positive controls | Known errors and valid counterexamples for evaluating the development-only checker |
-| Import corpus | Seven synthetic PDFs, including scanned and adversarial inputs | Extraction and workflow edge cases; these are not seven labelled AI-quality benchmarks |
+| Import corpus | Seven original synthetic PDFs, including scanned/adversarial inputs, plus three fresh retrieval fixtures | Extraction and workflow edge cases; fixture count is not a count of labelled AI-quality benchmarks |
 | Library retrieval | 24 labelled synthetic development questions and a local lexical-ranking harness | Passage/document retrieval regression, including missed passages and irrelevant near-matches |
 | Live retrieval comparison | Fixed lexical/dense/hybrid comparison using 24 development and 20 new-family known-corpus questions | Measured retrieval gains, per-case regressions, near-matches, usage and latency; not generated-answer quality |
 | Retrieval refinement | Header-filtering and diversity ablations replayed over the same real provider embeddings | Post-change regression tradeoffs on inspected questions; no additional API calls or new holdout claim |
 | Semantic runtime smoke | Two isolated synthetic documents, four fixed development queries, real embeddings and real Mongo/GridFS/Qdrant | Actual index/search integration, source resolution and a recorded cross-agreement miss; not a new broad accuracy score |
 | Library answers with fixed evidence | Eleven frozen, inspected synthetic cases through the normal generation engine | Source-assessed statements, omissions and abstention/label errors when the evidence is controlled; not end-to-end RAG quality |
-| End-to-end Library RAG | Four inspected questions × actual Keyword/Semantic top-five results, real storage and eight live answers | Links observed retrieval misses to partial answers; records qualification omission, precision error and abstention separately |
+| Historical end-to-end Library RAG | Four inspected questions × actual Keyword/Semantic top-five results, small embeddings/v1 prompt and eight live answers | Links observed retrieval misses to partial answers; records qualification omission, precision error and abstention separately |
 | Fresh-document quality checkpoint | Three new PDFs, twelve retrieval questions and four fixed-evidence cases at Sol medium/high/xhigh | Large-only retrieval measurements and effort tradeoffs; not a current-profile end-to-end RAG result or independent assessment |
+| Current-profile end-to-end Library RAG | The four inspected questions repeated with large embeddings/v2 prompt, actual retrieval and eight live answers | Combined source/storage/generation/replay check; Semantic recovers the two-document correction target while Keyword remains partial. Broader-corpus misses remain. |
 
 The generator cases are in
 [backend/fixtures/review_evaluations](../backend/fixtures/review_evaluations/README.md).
@@ -63,9 +64,9 @@ independent ground truth: its misses and false alarms also need assessment.
 | --- | --- | --- |
 | Individual review and finding-scoped Ask | Complete supported extracted source with bounded input | Source-reviewed criteria and a small recorded live baseline; known omissions remain |
 | Library Keyword search | Local BM25 ranking over canonical page passages | Implemented; offline development-set results below and real-stack search/page-navigation coverage |
-| Library Semantic search | Explicit text-embedding-3-large / 3072 indexing and exact Qdrant cosine retrieval | Large-only cached retrieval measured on 44 known and 12 fresh questions; deterministic migration and isolated stub-storage checks cover compatibility. Earlier small-model runtime results remain historical. |
+| Library Semantic search | Explicit text-embedding-3-large / 3072 indexing and exact Qdrant cosine retrieval | Large-only cached retrieval measured on 44 known and 12 fresh questions, plus current-profile live indexing/search/answer integration on two documents. Earlier small-model results remain historical. |
 | Retained earlier document chat | Embeddings and Qdrant retrieval followed by generation | Existing legacy RAG; not exercised by the Library retrieval benchmark |
-| Library answers from search results | Explicit paid generation over a server-resolved snapshot of Keyword or Semantic results | Twelve new v2 fixed-evidence calls compare Sol efforts; eleven fixed-evidence and eight end-to-end calls assess the historical v1 baseline. A current-profile live end-to-end check remains separate; lifecycle/storage checks cover mechanics. |
+| Library answers from search results | Explicit paid generation over a server-resolved snapshot of Keyword or Semantic results | Twelve v2 fixed-evidence calls compare Sol efforts; eight current-profile end-to-end calls exercise real retrieved evidence. Eleven fixed-evidence and eight end-to-end v1 calls remain historical baselines. |
 
 The [Library-answer evaluation contract](evaluations/LIBRARY_ANSWERS_PROTOCOL.md)
 separates fixed-evidence answer quality from end-to-end retrieval failures. It
@@ -95,10 +96,19 @@ do not establish improvement. The [completed v2 result](evaluations/LIBRARY_QUAL
 records 95% fresh passage recall@5 for large dense/hybrid versus 85% Keyword, the
 remaining multi-agreement miss, medium over-abstention, and omitted notice details
 at medium/high. Xhigh covered the frozen criteria in this single four-case sample,
-with higher cost/latency. No new small-model calls or current-profile end-to-end
-result are implied.
+with higher cost/latency. It made no new small-model calls and did not combine
+retrieval with generation. The separate
+[current-profile runtime result](evaluations/LIBRARY_RAG_RUNTIME_V2.md) closes that
+integration gap on two inspected documents: eight live answers, six large
+embedding calls, source-bound persistence/replay and verified temporary cleanup.
+Keyword still misses the service-terms correction passage and returns partial;
+Semantic retrieves it in this smaller corpus. Both Archive answers preserve the
+frozen qualifications. Ten emitted statement units were supported by their own
+cited passages in assistant-led assessment; this is not general accuracy or
+independent validation. Broader retrieval failures remain, and further tuning is
+parked rather than a prerequisite for this bounded checkpoint.
 
-The [live runtime checkpoint](evaluations/LIBRARY_SEMANTIC_RUNTIME_V1.md) subsequently
+The historical [small-embedding runtime checkpoint](evaluations/LIBRARY_SEMANTIC_RUNTIME_V1.md)
 completed six real embedding calls through the actual index/search services and
 isolated storage. Both payment-conflict passages and both Archive-exit passages
 were found; one requested agreement's correction duty was missed, and an
@@ -212,7 +222,7 @@ GridFS / Qdrant smoke uses deterministic stub embeddings and prohibits actual
 OpenAI clients. Thus it tests storage and safety mechanics without claiming a new
 paid semantic-quality pass. No real user library is indexed by those tests.
 Generated Library answers now have a separate source-grounded assessment with
-fixed evidence inputs. The [eight-case end-to-end checkpoint](evaluations/LIBRARY_RAG_RUNTIME_V1.md)
+fixed evidence inputs. The historical [eight-case end-to-end checkpoint](evaluations/LIBRARY_RAG_RUNTIME_V1.md)
 then preserves actual top-five bundles from both methods. Both miss the service
 agreement's correction passage and honestly return partial answers; both decline
 the unsupported Bitcoin question. Keyword's Archive answer omits a retrieved

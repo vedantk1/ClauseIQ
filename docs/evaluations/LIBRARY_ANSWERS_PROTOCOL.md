@@ -1,10 +1,12 @@
 # Library answers: evaluation contract
 
-Status: **implemented locally with eleven frozen fixed-evidence cases and a
-[first source-assessed live result](LIBRARY_ANSWERS_FIXED_V1.md)**. A separate
-[eight-case end-to-end checkpoint](LIBRARY_RAG_RUNTIME_V1.md) now records actual
-retrieval-to-answer results. Individual agreement
-review/Ask remain unchanged.
+Status: **implemented**. The eleven-case
+[fixed-evidence result](LIBRARY_ANSWERS_FIXED_V1.md) and
+[first end-to-end checkpoint](LIBRARY_RAG_RUNTIME_V1.md) retain the historical
+v1 baseline. The [current-profile checkpoint](LIBRARY_RAG_RUNTIME_V2.md) repeats
+the runtime protocol with large embeddings and the v2 prompt; the
+[fresh-document study](LIBRARY_QUALITY_V2.md) separately compares Sol efforts.
+Individual agreement review/Ask remain unchanged.
 
 ## Product boundary
 
