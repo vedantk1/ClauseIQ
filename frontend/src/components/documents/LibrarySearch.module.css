@@ -27,6 +27,21 @@
 .excerpt blockquote { color: var(--text-secondary); font-size: 14px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
 .excerpt p { margin-top: 5px; color: var(--text-muted); font-size: 11px; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.modeChoices, .indexActions { display: flex; flex-wrap: wrap; gap: 8px; }
+.modeChoices { margin-bottom: 12px; }
+.modeChoices button, .semanticPanel button { min-height: 34px; padding: 6px 10px; border: 1px solid var(--border-muted); border-radius: 5px; font-size: 12px; }
+.modeChoices button[aria-pressed="true"] { border-color: var(--accent-subtle); background: var(--bg-elevated); }
+.semanticPanel { padding: 4px 0 14px; }
+.indexHeading { display: flex; gap: 12px; align-items: center; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
+.semanticPanel summary { cursor: pointer; font-size: 13px; width: fit-content; }
+.semanticPanel summary:focus-visible { outline: 2px solid var(--accent-subtle); outline-offset: 3px; }
+.indexList { max-height: 280px; overflow: auto; margin-top: 10px; }
+.indexList li { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; padding: 10px 0; border-bottom: 1px solid var(--border-muted); }
+.indexList strong { font-size: 13px; overflow-wrap: anywhere; }
+.indexList p { font-size: 12px; color: var(--text-muted); max-width: 620px; }
+.indexConfirmation { display: grid; gap: 14px; font-size: 14px; line-height: 1.6; }
+.indexConfirmation .indexActions { justify-content: flex-end; }
+.semanticPanel button:disabled { opacity: .6; }
 @media (max-width: 700px) {
   .search { padding: 16px; }
   .form { flex-wrap: wrap; }

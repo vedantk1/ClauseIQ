@@ -108,6 +108,8 @@ def get_rate_limit_rule(method: str, path: str) -> tuple[str, Dict[str, int]]:
             r"/documents/[^/]+/review-workspace/generate",
             r"/documents/[^/]+/review-workspace/runs/[^/]+/findings/[^/]+/ask",
             r"/chat/[^/]+/message",
+            r"/library/semantic/documents/[^/]+/index",
+            r"/library/semantic/search",
         )):
             return "ai", RateLimitConfig.AI_ANALYSIS
     return "default", RateLimitConfig.DEFAULT

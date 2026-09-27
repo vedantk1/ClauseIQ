@@ -16,6 +16,8 @@ AI_PATHS = [
     "/documents/doc-1/review-workspace/generate",
     "/documents/doc-1/review-workspace/runs/run-1/findings/finding-1/ask",
     "/chat/doc-1/message",
+    "/library/semantic/documents/doc-1/index",
+    "/library/semantic/search",
 ]
 DEFAULT_OPERATIONS = [
     ("GET", "/documents/"),
@@ -30,6 +32,9 @@ DEFAULT_OPERATIONS = [
     ("POST", "/analysis/documents/doc-1/interactions/clause-1/notes"),
     ("POST", "/chat/doc-1/session"),
     ("DELETE", "/chat/doc-1/history"),
+    ("GET", "/library/semantic/status"),
+    ("POST", "/library/semantic/documents/doc-1/plan"),
+    ("POST", "/library/semantic/documents/doc-1/remove"),
 ]
 
 
@@ -88,6 +93,7 @@ def test_reads_personal_work_fixtures_and_recovery_use_default(method, path):
     "/api/v1suffix/documents/import", "/documents/import/extra",
     "/analysis/clauses/a/rewrite/extra", "/chat/a/message/extra",
     "/documents/a/review-workspace/generate/extra",
+    "/library/semantic/search/extra", "/library/semantic/documents/a/index/extra",
 ])
 def test_classification_matches_complete_routes_not_loose_prefixes(path):
     assert module.get_rate_limit_rule("POST", path)[0] == "default"

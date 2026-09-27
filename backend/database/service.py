@@ -70,12 +70,28 @@ class DocumentService:
         return await db.list_source_snapshots_for_search(workspace_id, limit)
 
     async def delete_document_for_workspace(self, doc_id: str, workspace_id: str) -> bool:
+        # Index publication and physical cleanup share one local lifecycle lock.
+        # Keep it until Mongo deletion completes, not just until vector removal.
+        from services.library_semantic.lifecycle import document_lock
+        async with document_lock(workspace_id, doc_id):
+            return await self._delete_document_for_workspace_locked(doc_id, workspace_id)
+
+    async def _delete_document_for_workspace_locked(self, doc_id: str, workspace_id: str) -> bool:
         """Delete document for a specific workspace and clean up RAG data and PDF files."""
         try:
             # First get document to check for PDF file
             document = await self.get_document_for_workspace(doc_id, workspace_id)
             if not document:
                 return False
+
+            if document.get("semantic_index"):
+                from services.library_semantic.service import LibrarySemanticService
+                from services.library_semantic.vectors import create_vectors
+                vectors = await create_vectors(self)
+                try:
+                    await LibrarySemanticService(self, vectors).remove_locked(workspace_id, document)
+                finally:
+                    await vectors.close()
 
             # Remove every file in this document's namespace, including an old
             # replacement file no longer referenced by the current pointer.
