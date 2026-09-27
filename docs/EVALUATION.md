@@ -16,6 +16,8 @@ different things. None establishes a complete or legally reliable review.
 | Live retrieval comparison | Fixed lexical/dense/hybrid comparison using 24 development and 20 new-family known-corpus questions | Measured retrieval gains, per-case regressions, near-matches, usage and latency; not generated-answer quality |
 | Retrieval refinement | Header-filtering and diversity ablations replayed over the same real provider embeddings | Post-change regression tradeoffs on inspected questions; no additional API calls or new holdout claim |
 | Semantic runtime smoke | Two isolated synthetic documents, four fixed development queries, real embeddings and real Mongo/GridFS/Qdrant | Actual index/search integration, source resolution and a recorded cross-agreement miss; not a new broad accuracy score |
+| Library answers with fixed evidence | Eleven frozen, inspected synthetic cases through the normal generation engine | Source-assessed statements, omissions and abstention/label errors when the evidence is controlled; not end-to-end RAG quality |
+| End-to-end Library RAG | Four inspected questions × actual Keyword/Semantic top-five results, real storage and eight live answers | Links observed retrieval misses to partial answers; records qualification omission, precision error and abstention separately |
 
 The generator cases are in
 [backend/fixtures/review_evaluations](../backend/fixtures/review_evaluations/README.md).
@@ -62,18 +64,22 @@ independent ground truth: its misses and false alarms also need assessment.
 | Library Keyword search | Local BM25 ranking over canonical page passages | Implemented; offline development-set results below and real-stack search/page-navigation coverage |
 | Library Semantic search | Explicit text-embedding-3-small indexing and exact Qdrant cosine retrieval | Implemented; live runtime smoke and separate ranking comparison, plus deterministic lifecycle tests and isolated stub-provider storage checks |
 | Retained earlier document chat | Embeddings and Qdrant retrieval followed by generation | Existing legacy RAG; not exercised by the Library retrieval benchmark |
-| Library-wide answers | Planned retrieval followed by generation over selected evidence | Not implemented or evaluated |
+| Library answers from search results | Explicit paid generation over a server-resolved snapshot of Keyword or Semantic results | Implemented; eleven fixed-evidence and eight end-to-end live cases source-assessed, plus deterministic lifecycle tests and isolated storage checks |
 
-The next slice's [Library-answer evaluation contract](evaluations/LIBRARY_ANSWERS_PROTOCOL.md)
+The [Library-answer evaluation contract](evaluations/LIBRARY_ANSWERS_PROTOCOL.md)
 separates fixed-evidence answer quality from end-to-end retrieval failures. It
 specifies per-claim support, qualifications, cross-agreement attribution and
-insufficient-evidence behaviour; it is a design, not a completed generation eval.
+insufficient-evidence behaviour. The [first fixed-evidence result](evaluations/LIBRARY_ANSWERS_FIXED_V1.md)
+records eleven completed GPT-6 Sol/Medium calls, one omitted Archive dependency
+requirement and two outcome-label mismatches. It is not an overall accuracy score.
 
 The current review workspace and finding-scoped Ask use the complete supported
 extracted source, subject to their input guards. They do not use top-k retrieval.
 Retained earlier document chat uses Qdrant retrieval. Library offers a separate,
 key-free lexical baseline and optional paid semantic retrieval over explicitly
-indexed canonical passages. It does not yet generate cross-contract answers.
+indexed canonical passages. A separate **Answer from these results** confirmation
+generates cited statements from those selected passages; searching never starts
+generation automatically. Preview/readback/navigation remain unpaid.
 Semantic search uses the measured embedding/header-eligibility candidate, not
 automatic hybrid fusion or blanket document diversity. Published comparison
 scores describe that frozen synthetic experiment, not a live product acceptance
@@ -120,10 +126,11 @@ Locating relevant passages and answering from them are separate evaluation
 problems. Recall at a chosen result limit measures how many labelled relevant
 passages were returned; it does not prove that every agreement in a collection
 was inspected. Exact source identity and quote matching also do not establish
-retrieval completeness. Any future retrieval-grounded answer evaluation must
+retrieval completeness. Retrieval-grounded answer evaluation must
 hold the retrieved evidence fixed while assessing support, missed qualifications,
 cross-document confusion and abstention; all/every claims additionally require
-explicit collection coverage. No such generated-answer score is claimed here.
+explicit collection coverage. The fixed-evidence result below does not establish
+retrieval completeness or end-to-end answer quality.
 
 ### Dense/hybrid comparison
 
@@ -191,8 +198,14 @@ vector writes, source changes and deletion races. A separate isolated MongoDB /
 GridFS / Qdrant smoke uses deterministic stub embeddings and prohibits actual
 OpenAI clients. Thus it tests storage and safety mechanics without claiming a new
 paid semantic-quality pass. No real user library is indexed by those tests.
-Generated library answers still need separate source-grounded assessments with fixed evidence inputs
-and an end-to-end assessment that includes retrieval failures. Publish the dataset
+Generated Library answers now have a separate source-grounded assessment with
+fixed evidence inputs. The [eight-case end-to-end checkpoint](evaluations/LIBRARY_RAG_RUNTIME_V1.md)
+then preserves actual top-five bundles from both methods. Both miss the service
+agreement's correction passage and honestly return partial answers; both decline
+the unsupported Bitcoin question. Keyword's Archive answer omits a retrieved
+dependency duty, while Semantic includes it with a narrower trigger paraphrase.
+All eight operational completions count, including these quality failures.
+Publish the dataset
 and implementation versions, commands, sample counts and limitations alongside
 results; keep a concise result/link in the README rather than an overall AI
 accuracy badge.
@@ -201,23 +214,26 @@ accuracy badge.
 
 The backend has correlated HTTP request/error logs and in-memory endpoint timings,
 error counts and system metrics. Review and Ask preserve attempt outcomes and
-generation metadata. These aid debugging but do not measure answer quality.
+generation metadata. Library answers also retain original search coverage/method,
+exact source/evidence snapshots, prompt/schema hashes, duration and known usage.
+These aid debugging but do not measure answer quality.
 Keyword has no persistent index. Semantic index metadata retains source/policy
 fingerprints, attempt identity, timestamps, outcome and known token/cost usage;
 query receipts retain request identity, a query hash, outcome and known tokens,
 not query/source text. The retrieval harness measures local query latency.
 The embedding experiment additionally retains an
 exclusive developer-only reservation/attempt ledger with batch outcome, input
-fingerprints, usage and latency. This does not provide durable retrieval-stage
-traces for the application's Library search. Runtime per-stage latency traces
-and broader operational calibration remain follow-ups, not claimed features.
+fingerprints, usage and latency. Runtime search now emits allowlisted content-free
+stage traces; explicit answer attempts persist their retrieval and generation
+traces, linked through server-owned IDs. These include method/version/source-index
+fingerprints, coverage, duration, embedding/vector/generation timings, known usage
+and safe statuses/outcomes. Keyword search alone remains non-persisting.
 
-As retrieval stages are added, useful diagnostics include stage duration,
-outcome, source/index version, collection coverage and provider usage where
-applicable, linked to the request or paid attempt. Routine telemetry must omit
-queries, source/answer text and credentials. This instrumentation is proposed;
-there is no new external telemetry service, monitoring dashboard or operational
-reliability claim attached to the offline scores.
+Queries, filenames, source/answer text, credentials and raw failures are excluded
+from these logs. Old records may lack optional traces. A trace is a historical
+diagnostic, not the current status after source deletion or a quality verdict.
+There is no new external telemetry service, monitoring dashboard, load test or
+operational reliability claim attached to the evaluation results.
 
 ## Running checks
 

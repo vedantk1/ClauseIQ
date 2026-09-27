@@ -34,7 +34,10 @@ requested. There is no application-funded service or supported hosted deployment
 Library search offers free, local **Keyword** search and optional **Semantic**
 search over agreements you explicitly index. Indexing and semantic queries use
 paid OpenAI embeddings through your Settings key; nothing is indexed on import.
-Both return source passages with PDF page links, not cross-contract conclusions.
+Both return source passages with PDF page links. **Answer from these results** is
+a separate, confirmed AI call that uses those selected passages, with per-statement
+source links and explicit partial/insufficient-evidence outcomes. It is not an
+exhaustive library review; search can miss a relevant agreement or qualification.
 
 The reading workspace offers Black and Graphite themes. Settings exposes the
 application's GPT-6 Luna, Sol and Astra catalog with configurable reasoning effort;
@@ -101,6 +104,14 @@ diversity was rejected; it is regression evidence, not a fresh benchmark.
 A [live runtime checkpoint](docs/evaluations/LIBRARY_SEMANTIC_RUNTIME_V1.md)
 then exercised real indexing/search storage and embeddings, recording a missed
 cross-agreement passage and unsupported near-matches alongside successful cases.
+The [first eleven Library-answer cases](docs/evaluations/LIBRARY_ANSWERS_FIXED_V1.md)
+separately test generation from fixed evidence, documenting an omitted
+qualification and imperfect completeness labels. The
+[eight-case end-to-end checkpoint](docs/evaluations/LIBRARY_RAG_RUNTIME_V1.md)
+then uses actual Keyword/Semantic results: it records a shared retrieval miss,
+an omitted qualification and a paraphrase precision issue alongside supported
+answers and appropriate abstentions. Content-free stage traces connect retrieval,
+generation, usage and saved attempts without logging agreement or answer text.
 
 ~~~bash
 npm test           # deterministic backend and frontend tests; no paid AI

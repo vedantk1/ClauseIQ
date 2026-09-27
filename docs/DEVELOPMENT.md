@@ -614,7 +614,7 @@ In Library, select **Semantic → Manage semantic index → Preview indexing**.
 Preview is key-free and shows eligible passages, partial-text limits and cost.
 Only **Index agreement · paid** dispatches embeddings using the Settings key.
 **Search semantic · paid** separately embeds the query. Keyword remains default
-and free. Neither mode generates a cross-contract answer; top-ranked semantic
+and free. Searching alone never generates an answer; top-ranked semantic
 passages can be irrelevant, and unindexed documents are not negative matches.
 
 This version uses one local backend process. Do not enable multiple Uvicorn
@@ -651,7 +651,99 @@ indexes the user's library or reads its credential. This validates mechanics,
 not semantic quality; the separate live comparison supplies that bounded evidence.
 Use the repository-pinned Qdrant client/server pair described above.
 
+### Library answers and fixed-evidence checks
+
+After a search, choose **Answer from these results**, inspect the complete
+passages/model/effort preview, then deliberately confirm **Generate answer · paid**.
+The answer uses that question and evidence only; it does not silently rerun search.
+Saved Library answers are available from the history disclosure even without a
+current search. Refresh history/readback is unpaid and cannot resend. If a request
+was interrupted, its outcome/charge may be unknown. A fresh attempt is a separate
+paid action, never a background recovery step.
+
+Contexts expire after 15 minutes, cache eviction or server reload. An expired
+context requires a deliberate new search (and a new embedding charge in Semantic
+mode). Finished attempts remain in the existing Mongo database across restarts.
+Source change/deletion withholds saved content; document deletion removes associated
+answer content while retaining a no-resend receipt. One backend process is supported.
+
+Answer limits default to `AI_LIBRARY_ANSWER_MAX_INPUT_TOKENS=30000` (also bounded
+by the global input cap), `AI_LIBRARY_ANSWER_MAX_COMPLETION_TOKENS=6000` including
+reasoning, and `AI_LIBRARY_ANSWER_TIMEOUT_SECONDS=120` (maximum 180). Complete
+evidence/schema is counted; oversized inputs are rejected, not truncated. No
+model change silently expands these limits. Do not change the real environment
+or credential directory merely to run tests.
+
+From backend:
+
+~~~bash
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m pytest tests/test_library_answers.py tests/test_library_answer_live.py -q
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m evaluations.library_answer_cases
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m tests.manual_library_answers_smoke --run-isolated-live
+~~~
+
+The first two commands are key-free. The last uses uniquely owned temporary
+Mongo/GridFS storage and a deterministic provider stub, with real OpenAI client
+construction forbidden. It checks dispatch claims, restart readback, usage/source
+retention, interruption fences, normal document deletion and cleanup; it never
+changes the person's documents or Settings.
+
+The [eleven fixed evidence cases](../backend/fixtures/library_answer_evaluations/README.md)
+freeze inspected source passages and expected support/qualification/attribution
+criteria. They are not holdout questions and passing preflight is not AI quality.
+`evaluations.library_answer_live` is a separate opt-in generation harness:
+
+~~~bash
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m evaluations.library_answer_live
+# Only with current pricing, a reviewed dry-run hash and an approved finite budget:
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m evaluations.library_answer_live --run-paid --cap-usd APPROVED_CAP --approved-plan DIGEST_FROM_DRY_RUN
+~~~
+
+It fixes Sol/Medium, exact request/schema hashes and serial one-call cases, reserves
+all maximum costs before read-only key access, and stops on failed/unknown output
+or missing usage. No retries, model switching, embeddings or paid grader. Private
+exclusive manifests, outputs and fsynced ledgers live under ignored local storage;
+reusing a plan directory refuses another dispatch. Only reviewed summaries belong
+in public docs. Assess every claim against its own evidence; structural completion
+is not correctness. End-to-end retrieval/answer evaluation remains separate.
+
 ### Bounded live semantic runtime smoke
+
+### End-to-end Library RAG regression
+
+`evaluations.library_rag_live` runs four inspected synthetic queries through both
+unchanged Keyword and Semantic retrieval at k=5, then the normal saved-answer
+lifecycle using every returned complete passage. It records missed anchors before
+generation, exact request hashes before dispatch, source-resolved evidence,
+replay checks, stage traces and usage. Source-review the resulting claims and
+their own references separately; structural success is not answer accuracy.
+
+~~~bash
+cd backend
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m pytest tests/test_library_rag_live.py tests/test_library_trace.py -q
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m tests.manual_library_rag_smoke --run-isolated-live
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m evaluations.library_rag_live
+# Only with approved budget, current pricing and the exact printed plan:
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m evaluations.library_rag_live --run-paid --cap-usd APPROVED_CAP --approved-plan DIGEST_FROM_DRY_RUN
+~~~
+
+The default plan is key-free/storage-free. The separate rehearsal prohibits real
+providers, uses deterministic vectors/answers and proves only mechanics. Both
+storage runs use verified-owned temporary Mongo/GridFS/Qdrant namespaces and
+check cleanup; neither changes the installation's library or Settings. The paid
+run reads the saved key only after storage preflight and reserves all eight answer
+and six embedding ceilings upfront (currently $1.144, maximum cap $1.20).
+No retry, fallback, paid grader, query rewrite or evidence replacement. Stop after
+failed/unknown output or missing usage; keep reservations and already-recorded
+results. Private plans, ledgers and outputs remain under ignored `.local-only`.
+Recheck pricing before a later run; an old report is not fresh approval.
+
+For debugging, search local logs for `library_stage` and correlate `trace_id`
+with an answer's `parent_trace_id`/HTTP request ID. Optional stage receipts contain
+only allowlisted IDs, versions, counts, timings, usage and outcomes. They are not
+legal-quality metrics, complete distributed tracing or billing reconciliation.
+
+### Retrieval-only live runtime smoke
 
 `evaluations.library_semantic_live` exercises the actual indexing/search services
 with real embeddings and real isolated MongoDB/GridFS/Qdrant storage. It uses

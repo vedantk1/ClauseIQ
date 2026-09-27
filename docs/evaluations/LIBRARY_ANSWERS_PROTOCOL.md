@@ -1,7 +1,10 @@
-# Library answers: proposed evaluation contract
+# Library answers: evaluation contract
 
-Status: **design for the next slice; no generated Library-answer implementation
-or evaluation result yet**. Individual agreement review/Ask remain unchanged.
+Status: **implemented locally with eleven frozen fixed-evidence cases and a
+[first source-assessed live result](LIBRARY_ANSWERS_FIXED_V1.md)**. A separate
+[eight-case end-to-end checkpoint](LIBRARY_RAG_RUNTIME_V1.md) now records actual
+retrieval-to-answer results. Individual agreement
+review/Ask remain unchanged.
 
 ## Product boundary
 
@@ -18,7 +21,7 @@ generation provenance. Reject stale/deleted sources before dispatch. A source
 change after dispatch must not yield a misleading current-source success.
 Source passages are untrusted data, never instructions or executable tools.
 
-Proposed output: concise supported statements with their own evidence IDs,
+The output contract is concise supported statements with their own evidence IDs,
 explicit missing information and an outcome of **answered**, **partial** or
 **insufficient evidence**. Resolve citations server-side to each exact agreement,
 physical page and passage. Unknown/mismatched IDs withhold output; a valid ID is
@@ -49,7 +52,10 @@ aid, not the sole ground truth or an automatic runtime verification stage.
 
 Anchor names below refer to the existing
 [retrieval dataset](../../backend/fixtures/library_search_evaluations/dataset.json).
-These are proposed answer cases, not completed labelled answer results.
+The [frozen cases](../../backend/fixtures/library_answer_evaluations/README.md)
+implement this matrix as eleven generation cases. Stale/unknown references are
+covered by deterministic lifecycle tests, not extra paid quality cases. The first
+live result reports each generation case separately; these are inspected data.
 
 | Case | Evidence variants to freeze | Required distinction |
 | --- | --- | --- |
@@ -66,7 +72,34 @@ Human/source review must verify each answer expectation against complete passage
 and adjacent qualifications before a paid generation run. Do not use keywords
 alone as the correctness grader.
 
-## Reporting and release gates
+## Frozen end-to-end runtime checkpoint
+
+The bounded runtime protocol uses the same two synthetic PDFs and four inspected queries
+as the semantic runtime smoke: `exception-01`, `exception-04`, `multi-03` and
+`none-02`. For each query, unchanged Keyword and Semantic services return k=5;
+all returned passages, in order, feed the normal Library-answer lifecycle. No
+query rewriting, reranking, hand-picked replacement passages or larger k.
+The complete passage is resolved from each hit, as in the product, not from its
+clipped search-card excerpt. Both documents are imported and indexed through the
+normal services in verified-owned temporary Mongo/GridFS/Qdrant stores.
+
+Reuse the payment-both, archive-both, correction-both and unsupported-payment
+criteria above. When a labelled passage is missed, assess both the resulting
+answer's own-reference support and whether it acknowledges the missing requested
+scope; a supported partial answer does not repair a retrieval miss. Resolve and
+record missing anchors before generation. No criteria enter the model request.
+
+Use Sol/Medium with the unchanged versioned prompt, one run per query/method,
+eight generation reservations plus two index/four query embedding reservations.
+Freeze corpus, code, criteria and budget before key access; freeze each exact
+generation request after real retrieval and before its dispatch. Stop on failed or
+unknown calls or missing usage. No retry, fallback, paid grader or post-hoc pass
+threshold. Keep failed attempts and cleanup outcomes. Source-review statements,
+limitations and outcome labels, not only schema completion. Report the small
+case table without confidence/generalization claims. The harness defaults to a
+key-free plan; a separate stub-provider storage rehearsal is not a quality result.
+
+## Reporting and release gates (all tracks)
 
 Report each case, including failed/uncertain calls, with:
 

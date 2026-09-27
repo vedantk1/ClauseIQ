@@ -73,6 +73,23 @@ outputs, stop-on-failure dispatch, reservation retention and own-source scoring.
 The live command and recorded result are described in docs/DEVELOPMENT.md and
 docs/evaluations/LIBRARY_SEMANTIC_RUNTIME_V1.md; normal Pytest never enables it.
 
+Library answers have an independent persistence smoke, with real Mongo/GridFS
+and a deterministic generation stub (no provider calls):
+
+~~~bash
+cd backend
+TIKTOKEN_CACHE_DIR=.local-only/tokenizers venv/bin/python -m tests.manual_library_answers_smoke --run-isolated-live
+~~~
+
+It checks durable claims, duplicate/readback fencing, restart recovery,
+source/evidence/usage retention, interruption and normal document deletion in
+owned disposable stores. Cleanup reports leftovers; existing records and keys
+are untouched. `test_library_answers.py` covers context expiry, exact source
+resolution, strict output/budgets, scoped lifecycle and routes.
+`test_library_answer_live.py` tests the separate opt-in evaluation harness guards.
+Neither suite makes paid calls. Live answer quality is reported separately in
+docs/evaluations/LIBRARY_ANSWERS_FIXED_V1.md.
+
 ## Qdrant version compatibility
 
 `test_qdrant_configuration.py` checks optional-key handling and SDK HTTP request
@@ -196,6 +213,20 @@ loopback test service. The real-stack CI harness runs it against its own disposa
 MongoDB, then exercises import, saved questions and PDF-page navigation through
 the actual browser/API. See docs/DEVELOPMENT.md for the guarded runner and cleanup
 boundaries; the existing mocked-API browser journeys remain a separate suite.
+
+## Library RAG and diagnostic regression
+
+`test_library_rag_live.py` guards the frozen two-PDF/four-query, two-method live
+plan, conservative budget, endpoint, pricing freshness and no-key default.
+`test_library_trace.py` checks strict content-free diagnostics and concurrent
+HTTP identity isolation. Answer lifecycle tests and the isolated answer smoke
+check trace linkage/readback, old-record compatibility and no-resend behaviour.
+`manual_library_rag_smoke.py --run-isolated-live` rehearses the actual import,
+Keyword/Semantic search and durable answer path against owned temporary real
+Mongo/GridFS/Qdrant stores, with OpenAI constructors forbidden. Stub vectors and
+answers are plumbing tests, not model/retrieval quality results. The separately
+opted-in paid harness and source-reviewed results are described in
+`docs/DEVELOPMENT.md` and `docs/EVALUATION.md`.
 
 ## Development-only checker contracts
 

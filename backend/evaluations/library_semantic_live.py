@@ -146,7 +146,7 @@ def assess(prepared, case, result, runtime_documents):
             "coverage": result["coverage"], "source_validation": "passed"}
 
 
-async def run_storage(prepared, provider, key_loader, record):
+async def run_storage(prepared, provider, key_loader, record, *, query_runner=None):
     """Only temporary stores are writable; load saved key after storage preflight."""
     from qdrant_client import AsyncQdrantClient
     from services.ai.text_extractor import TextExtractor
@@ -208,6 +208,8 @@ async def run_storage(prepared, provider, key_loader, record):
                 record({"event": "index_ready", "fixture": identity, "passages": result["passages"],
                         "excluded_headers": result["excluded_headers"],
                         "index_ms": round((time.perf_counter() - started) * 1000, 2)})
+            if query_runner is not None:
+                return await query_runner(engine, documents, runtime_documents)
             results = []
             for case in prepared.cases:
                 started = time.perf_counter()
