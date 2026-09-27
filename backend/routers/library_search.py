@@ -10,6 +10,7 @@ from database.service import get_document_service
 from middleware.api_standardization import APIResponse, create_error_response
 from models.library_search import LibrarySearchRequest, LibrarySearchResponse
 from services.library_search import LibrarySearchService
+from services.library_answers.context import capture_search
 from workspace import get_workspace_id
 
 
@@ -51,6 +52,8 @@ async def search_library(
             body.query,
             body.limit,
         )
+        results.answer_context_id = await capture_search(
+            get_document_service(), workspace_id, body.query, "keyword", results.model_dump())
         return APIResponse(success=True, data=results)
     except Exception as error:
         logger.error("Library search failed: %s", type(error).__name__)

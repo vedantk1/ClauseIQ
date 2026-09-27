@@ -95,6 +95,9 @@ class DocumentService:
 
             # Remove every file in this document's namespace, including an old
             # replacement file no longer referenced by the current pointer.
+            from database.library_answers import AnswerRepository
+            await AnswerRepository(self).purge_document(workspace_id, doc_id)
+
             try:
                 from services.file_storage_service import get_file_storage_service
                 file_storage = get_file_storage_service()

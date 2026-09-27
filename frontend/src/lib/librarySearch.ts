@@ -28,6 +28,7 @@ export interface LibrarySearchCoverage {
 export interface LibrarySearchResult {
   results: LibrarySearchHit[];
   coverage: LibrarySearchCoverage;
+  answer_context_id?: string | null;
 }
 
 export interface LibrarySourceTarget {

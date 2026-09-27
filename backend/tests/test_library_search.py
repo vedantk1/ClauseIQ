@@ -263,6 +263,7 @@ def test_route_is_local_api_read_and_never_reflects_query_on_failure(
     app = FastAPI()
     app.include_router(library_search.router, prefix="/api/v1")
     fake = SimpleNamespace(
+        get_document_for_workspace=AsyncMock(return_value=source_document()),
         list_source_snapshots_for_search=AsyncMock(
             return_value=(1, [source_document()])
         )

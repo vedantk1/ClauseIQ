@@ -71,6 +71,7 @@ test("Library search keeps filename filtering separate and exposes bounded cover
   const { LibrarySearch } = loadModule("../src/components/documents/LibrarySearch.tsx", {
     "@/lib/librarySemantic": { searchSemantic: () => { throw new Error("Keyword must not call a provider"); } },
     "./LibrarySemanticPanel": { LibrarySemanticPanel: () => null },
+    "./LibraryAnswers": { LibraryAnswers: () => null },
     react, "next/link": Link, "lucide-react": { Search: props => React.createElement("svg", props) },
     "@/lib/librarySearch": { ...search, searchAgreementText: async query => {
       assert.equal(query, "Archive exit");

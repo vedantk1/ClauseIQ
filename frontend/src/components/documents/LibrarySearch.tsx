@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { librarySearchHitHref, searchAgreementText, type LibrarySearchResult } from "@/lib/librarySearch";
 import { searchSemantic } from "@/lib/librarySemantic";
 import { LibrarySemanticPanel } from "./LibrarySemanticPanel";
+import { LibraryAnswers } from "./LibraryAnswers";
 import styles from "./LibrarySearch.module.css";
 
 /** Keyword is unpaid; semantic queries require a deliberately labelled submit. */
@@ -81,6 +82,7 @@ export function LibrarySearch() {
     {searching && <p className={styles.feedback} role="status">{mode === "keyword" ? "Searching saved source text…" : "Embedding query and searching current indexes…"}</p>}
     {mode === "semantic" && <p className={styles.feedback}>text-embedding-3-small · each submit sends your query using your Settings key. Closest matches can be irrelevant; this is not an exhaustive search.</p>}
     {error && <p className={styles.error} role="alert">{error}</p>}
+    <LibraryAnswers contextId={result?.answer_context_id ?? null} />
     {result && coverage && <div className={styles.results} aria-live="polite">
       <div className={styles.resultHeading}>
         <h3>{result.results.length ? `${result.results.length} ${result.results.length === 1 ? "passage" : "passages"} for “${searchedQuery}”` : `No passages for “${searchedQuery}”`}</h3>

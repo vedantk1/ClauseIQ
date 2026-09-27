@@ -103,6 +103,7 @@ test("mode switches never dispatch; semantic search has a paid submit and ignore
     react: h.react, "next/link": props => React.createElement("a", props),
     "lucide-react": { Search: () => null }, "./LibrarySearch.module.css": {},
     "./LibrarySemanticPanel": { LibrarySemanticPanel: () => null },
+    "./LibraryAnswers": { LibraryAnswers: () => null },
     "@/lib/librarySearch": { searchAgreementText: () => { throw new Error("Not keyword"); }, librarySearchHitHref: () => null },
     "@/lib/librarySemantic": { searchSemantic: (query, id) => {
       calls.push([query, id]); return new Promise(done => { resolve = done; });

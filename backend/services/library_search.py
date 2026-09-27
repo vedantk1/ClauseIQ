@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import asyncio
 import math
 import re
+import hashlib
 from typing import Any, Iterable
 
 from pydantic import ValidationError
@@ -275,14 +276,18 @@ class LibrarySearchService:
     async def search(
         self, workspace_id: str, query: str, limit: int = 20
     ) -> LibrarySearchResponse:
-        total, source_records = await self.documents.list_source_snapshots_for_search(
-            workspace_id,
-            MAX_SCAN_DOCUMENTS,
-        )
-        return await asyncio.to_thread(
-            search_passages,
-            source_records,
-            query,
-            limit,
-            documents_in_library=total,
-        )
+        from services.library_trace import LibraryTrace
+        trace = LibraryTrace("retrieval", "keyword")
+        try:
+            total, source_records = await self.documents.list_source_snapshots_for_search(workspace_id, MAX_SCAN_DOCUMENTS)
+            result = await asyncio.to_thread(search_passages, source_records, query, limit, documents_in_library=total)
+            # Opaque provenance fingerprint, never query/filename/source text.
+            identities = sorted((str(d.get("id", "")), str(d.get("source_revision_id", "")),
+                                 str(d.get("source_sha256", ""))) for d in source_records)
+            trace.fields.update(coverage=result.coverage.model_dump(), returned_passages=len(result.results),
+                                source_index_fingerprint=hashlib.sha256(repr(identities).encode()).hexdigest())
+            result.trace = trace.finish("completed")
+            return result
+        except BaseException:
+            trace.finish("failed_or_unknown")
+            raise

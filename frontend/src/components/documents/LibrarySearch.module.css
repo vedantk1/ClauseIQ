@@ -29,7 +29,7 @@
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .modeChoices, .indexActions { display: flex; flex-wrap: wrap; gap: 8px; }
 .modeChoices { margin-bottom: 12px; }
-.modeChoices button, .semanticPanel button { min-height: 34px; padding: 6px 10px; border: 1px solid var(--border-muted); border-radius: 5px; font-size: 12px; }
+.modeChoices button, .semanticPanel button, .answers button, .indexConfirmation button { min-height: 34px; padding: 6px 10px; border: 1px solid var(--border-muted); border-radius: 5px; font-size: 12px; }
 .modeChoices button[aria-pressed="true"] { border-color: var(--accent-subtle); background: var(--bg-elevated); }
 .semanticPanel { padding: 4px 0 14px; }
 .indexHeading { display: flex; gap: 12px; align-items: center; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
@@ -49,3 +49,23 @@
   .form button { width: 100%; }
   .hit { grid-template-columns: minmax(0, 1fr); gap: 8px; }
 }
+.answers { margin-top: 1rem; }
+.answer { margin-top: 1rem; padding-block: 1.25rem; border-block: 1px solid var(--border-muted); }
+.answer h3 { font-size: 1.125rem; font-weight: 600; }
+.answerQuestion { margin-block: .75rem; color: var(--text-secondary); }
+.answerStatement { max-width: 80ch; margin-block: 1.25rem; line-height: 1.65; }
+.answerEvidence { margin-top: .5rem; font-size: .875rem; }
+.answerEvidence summary { cursor: pointer; color: var(--text-secondary); }
+.answerEvidence blockquote { white-space: pre-wrap; overflow-wrap: anywhere; margin-block: .75rem; border-left: 2px solid var(--border-muted); padding-left: 1rem; }
+.answerEvidence a { display: inline-block; margin-block: .5rem; text-decoration: underline; }
+.answerHistory { margin-left: auto; max-width: 70ch; }
+.answerHistory summary { cursor: pointer; }
+.answerHistory ul { display: grid; gap: .5rem; margin-block: .75rem; }
+.answerHistory button { text-align: left; }
+.answerHistory span { color: var(--text-secondary); }
+.answerLimitations { max-width: 80ch; margin-block: 1rem; line-height: 1.6; }
+.answerLimitations h4 { font-weight: 600; }
+.answerLimitations ul { list-style: disc; padding-left: 1.25rem; }
+.answers summary:focus-visible, .answers a:focus-visible { outline: 2px solid var(--accent-subtle); outline-offset: 3px; }
+.answers button:disabled { opacity: .6; }
+.answers .indexHeading { flex-wrap: wrap; }

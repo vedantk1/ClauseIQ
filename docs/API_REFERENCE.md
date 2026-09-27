@@ -134,6 +134,42 @@ five passages. matched_passages describes returned candidates, not all relevant
 passages; there is no abstention threshold. Source mismatch or unverifiable hits
 withhold results. Preview/refresh never retries failed or uncertain paid calls.
 
+## Library answers
+
+Search HTTP responses may include `answer_context_id`: a workspace-scoped,
+15-minute process-local reference to the exact results/query/coverage. It is null
+for empty results or an oversized answer bundle. Expired contexts require an
+explicit new search, not automatic generation or semantic re-search.
+
+| Method and /api/v1 path | Contract |
+| --- | --- |
+| POST /library/answers/preview | `context_id` (UUID); key-free complete evidence, coverage and selected model/effort/token preview |
+| POST /library/answers | `context_id`, `request_id` (UUID), previewed `model_id`, `reasoning_effort`, `confirm_paid: true`; one separately paid generation |
+| GET /library/answers | Newest 20 saved attempt summaries; no dispatch |
+| GET /library/answers/{request_id} | Saved output/status, with current source revalidation |
+| POST /library/answers/{request_id}/interrupt | Mark processing attempt interrupted; does not cancel provider work or resend |
+
+Only answer dispatch consumes the AI rate-limit bucket. Validation errors do not
+echo submitted content. Input contains no client-supplied quotes or coverage.
+Same-ID replay returns saved status; conflicting reuse is rejected. Model/effort
+changes require a fresh preview. Generation statuses are processing, completed,
+failed, failed_or_unknown, interrupted and source_unavailable; completed is a
+structural status, not a correctness verdict. Content outcomes are answered,
+partial and insufficient_evidence. Statements contain their own `evidence_ids`,
+resolved against the returned source inventory. Malformed/unknown references
+withhold output, never invent page links. Reads, previews and navigation remain
+unpaid. Supported backend process count remains one.
+
+Keyword/Semantic search responses additionally expose an optional `trace`.
+Saved answer detail/dispatch responses may include `retrieval_trace` and
+`answer_trace`, linked by `parent_trace_id`. These versioned, content-free
+diagnostics contain server-owned IDs, method/model, source/index fingerprint,
+coverage, stage timings, known token counts and status/outcome. Fields may be null
+and older saved records can omit them. They are historical events, not the
+authoritative current answer status after deletion or interruption. Diagnostic
+IDs are not credentials, source citations or proof of correct output. No extra
+generation is triggered by these fields.
+
 ## Source import and extraction
 
 - POST /api/v1/documents/import accepts multipart file, persists the original and

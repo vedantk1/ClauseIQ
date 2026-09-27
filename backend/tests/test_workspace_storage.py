@@ -32,7 +32,8 @@ def matches(record, query):
             actual = nested_value(record, key)
             match = actual is not None and actual < value["$lt"]
         else:
-            match = nested_value(record, key) == value
+            actual = nested_value(record, key)
+            match = value in actual if isinstance(actual, list) and not isinstance(value, list) else actual == value
         if not match:
             return False
     return True
@@ -101,6 +102,16 @@ class Collection:
         deleted = [record for record in self.records if matches(record, query)]
         self.records = [record for record in self.records if not matches(record, query)]
         return SimpleNamespace(deleted_count=len(deleted))
+
+    async def update_many(self, query, update):
+        self.writes.append((deepcopy(query), deepcopy(update)))
+        selected = [record for record in self.records if matches(record, query)]
+        for record in selected:
+            for key, value in update.get("$set", {}).items():
+                set_value(record, key, value)
+            for key in update.get("$unset", {}):
+                record.pop(key, None)
+        return SimpleNamespace(matched_count=len(selected), modified_count=len(selected))
 
     async def delete_one(self, query):
         return await self.delete_many(query)
@@ -374,6 +385,12 @@ def scoped_deletion_library(monkeypatch):
             {"_id": file_ids[3], "metadata": {"document_id": "a", "workspace_id": "elsewhere"}},
         ],
         "pdf_files.chunks": [{"_id": i, "files_id": file_id, "data": b"synthetic"} for i, file_id in enumerate(file_ids)],
+        "library_answers": [
+            {"_id": "answer-a", "workspace_id": "local", "document_ids": ["a", "b"], "question": "Synthetic question",
+             "context": {"hits": ["synthetic"]}, "evidence": ["synthetic"], "statements": ["synthetic"], "status": "completed"},
+            {"_id": "answer-b", "workspace_id": "local", "document_ids": ["b"], "question": "Preserve other question"},
+            {"_id": "answer-foreign", "workspace_id": "elsewhere", "document_ids": ["a"], "question": "Preserve foreign question"},
+        ],
     })
     vectors = [
         {"id": "a-0", "document_id": "a", "workspace_id": "local", "user_id": "legacy-owner"},
@@ -413,6 +430,12 @@ async def test_delete_removes_chat_notes_every_pdf_and_chunks_only_for_target(mo
     assert {record["_id"] for record in db["pdf_files.files"].records} == set(file_ids[2:])
     assert {record["files_id"] for record in db["pdf_files.chunks"].records} == set(file_ids[2:])
     assert {point["id"] for point in vectors} == {"b-0", "foreign"}
+    answers = {row["_id"]: row for row in db["library_answers"].records}
+    removed = answers["answer-a"]
+    assert removed["status"] == "source_unavailable" and not removed["evidence"] and not removed["statements"]
+    assert "question" not in removed and "context" not in removed
+    assert answers["answer-b"]["question"] == "Preserve other question"
+    assert answers["answer-foreign"]["question"] == "Preserve foreign question"
 
 
 @pytest.mark.asyncio

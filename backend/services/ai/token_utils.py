@@ -26,6 +26,7 @@ TASK_COMPLETION_BUDGETS = {
     "structured": 6000,
     "rewrite": 6000,
     "review": 16000,
+    "library_answer": 6000,
 }
 DEFAULT_MAX_INPUT_TOKENS = 100_000
 DEFAULT_SAFETY_MARGIN = 2048

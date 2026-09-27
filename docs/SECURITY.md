@@ -88,6 +88,18 @@ Index removal preserves originals/saved work; document deletion verifies derived
 vector cleanup. Query receipts persist a hash and safe outcome/usage metadata,
 not the query text; treat these receipts as private workspace data too.
 
+Library answers require a separate confirmation. They send the search question
+and resolved complete source passages through a request-scoped Settings client.
+Search context IDs are temporary, process-local and workspace-bound; supplied
+document text and filenames are untrusted data, never tool instructions. Durable
+answer attempts store sensitive question/answer/evidence text in the existing
+Mongo database, not browser storage or request logs. No autonomous tools, provider
+retries or automatic re-search occur. Same-ID replay cannot charge again.
+Source revisions are rechecked before dispatch, completion and saved display.
+Deleting any associated document clears the whole answer's content and leaves
+a minimal no-resend receipt. Include answer records in database backups and
+protect them like the underlying agreements.
+
 My review brief copies/downloads contain selected saved questions, personal markers
 and finding context. They do not call a provider, but the resulting clipboard/file
 is outside ClauseIQ's storage protections and may be handled by other local apps
@@ -101,6 +113,14 @@ contain private source documents or a real user's workspace state. Rotate a
 credential if exposed; removing a file or Git commit is not enough.
 
 ## Known limitations
+
+Library stage diagnostics use a strict content-free allowlist before local
+logging and before retention with answer attempts. Server IDs, counts, timings,
+model/version identifiers and opaque source/index fingerprints may be retained;
+questions, filenames, agreement/answer text, keys and raw exceptions are excluded.
+This is local instrumentation, not an external telemetry integration. Saved answer
+content remains sensitive independently of its safe diagnostic fields. Old or
+corrupted optional traces do not grant access or bypass source validation.
 
 - The repository has deterministic CI and a history secret scan, not a complete
   security audit or supported production environment. These checks do not establish

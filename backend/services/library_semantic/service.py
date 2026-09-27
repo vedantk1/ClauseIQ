@@ -11,6 +11,7 @@ import logging
 from database.library_semantic import SemanticRepository
 from services.library_semantic.lifecycle import RUNTIME_ID, active_attempts, document_lock
 from services.library_semantic.provider import embed
+from services.library_trace import LibraryTrace
 from services.library_semantic.source import (
     MAX_TOTAL_TOKENS, MODEL, VERSION, SemanticError, cost, digest, source_plan, token_count,
 )
@@ -185,6 +186,18 @@ class LibrarySemanticService:
             return (await self.describe(workspace, await self.document(workspace, document_id)))[0]
 
     async def search(self, workspace, request):
+        trace = LibraryTrace("retrieval", "semantic")
+        trace.fields["model_id"] = MODEL
+        try:
+            result = await self._search(workspace, request, trace)
+            trace.fields.update(coverage=result["coverage"], returned_passages=len(result["results"]))
+            result["trace"] = trace.finish("completed")
+            return result
+        except BaseException:
+            trace.finish("failed_or_unknown")
+            raise
+
+    async def _search(self, workspace, request, trace):
         total, documents = await self.repository.list(workspace)
         current = {}
         states = []
@@ -205,8 +218,13 @@ class LibrarySemanticService:
             raise SemanticError("SEARCH_ALREADY_SUBMITTED", "This semantic request was already submitted. It was not sent again; a deliberate new search incurs a separate charge.")
         usage = None
         try:
-            vectors, usage = await self.provider([request.query], api_key)
-            hits = await self.vectors.search(workspace, {key: item[2] for key, item in current.items()}, vectors[0], request.limit)
+            trace.fields.update(provider_started=True, source_index_fingerprint=digest(
+                sorted((key, item[1].fingerprint, item[2]) for key, item in current.items())))
+            with trace.stage("embedding_ms"):
+                vectors, usage = await self.provider([request.query], api_key)
+            trace.fields["embedding_tokens"] = usage
+            with trace.stage("vector_search_ms"):
+                hits = await self.vectors.search(workspace, {key: item[2] for key, item in current.items()}, vectors[0], request.limit)
             results = []
             seen = set()
             # Recheck once per contributing document AFTER provider/vector reads.

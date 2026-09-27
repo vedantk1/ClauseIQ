@@ -90,8 +90,8 @@ header blocks under the versioned retrieval policy. Canonical source text is
 never rewritten. A key-free plan checks tokenizer/input limits and shows the
 source revision, partial coverage and estimated/maximum cost. Only confirmation
 dispatches one embedding request; semantic queries are separately labelled paid
-submits. There are no provider retries, automatic indexing, hybrid fusion or
-generated Library answers.
+submits. There are no provider retries, automatic indexing or hybrid fusion.
+Generation is a separate confirmed action described below.
 
 Index metadata lives on the existing Mongo document. Before dispatch, a
 conditional write saves the attempt ID and fingerprints the source hash,
@@ -122,6 +122,70 @@ exposes excluded/unindexed documents and partial text. A durable query receipt i
 the same Mongo database prevents request-ID replay from making another paid call;
 it retains a query hash, outcome and known token usage, not query or answer text.
 It is not a saved-search history or an answer-quality trace.
+
+### Library answers from selected results
+
+The HTTP search adapters issue an opaque answer-context ID for nonempty, valid
+results. A process-local cache retains at most 64 contexts for 15 minutes, scoped
+by workspace. It stores the original query, method, coverage, source fingerprints
+and result coordinates—not a key or client-authored excerpt. Restart/expiry requires
+a deliberate new search; it never replays a paid semantic query. Search engines and
+the frozen retrieval benchmarks are unchanged. No database write or provider call
+is added to Keyword search or answer preview.
+
+`services/library_answers` separates context resolution, prompt/schema, generation
+and lifecycle. Preview resolves the **complete canonical passages** (which can be
+longer than clipped search excerpts), then checks the Settings model/effort and
+input/output limits. Confirmed dispatch revalidates those choices and sources.
+The provider gets the original question plus selected evidence, not whole PDFs,
+labels, external tools or another retrieval call. Source text remains untrusted.
+
+The existing Mongo database holds `library_answers`, with one durable record per
+workspace/request ID before dispatch. It snapshots source bindings, evidence,
+coverage, model/effort, prompt/schema hashes, usage and duration. Same-ID replays,
+history reads and interruption never send. Conditional completion and the existing
+per-document lifecycle locks fence deletion and late results. Unknown outcomes
+remain visibly uncertain; no retries or model fallback. This remains a supported
+single-process local backend, not a distributed job system.
+
+Each generated statement has explicit inventory references. Unknown/duplicate/
+empty references, malformed JSON, refusal and unfinished output withhold the
+entire answer. References resolve only to the saved exact document/revision/page/
+passage; they establish location, not semantic support. Outcomes distinguish
+answered, partial and insufficient evidence. Missing collection/extraction coverage
+prevents a fully answered status. Even complete retrieval coverage does not make
+top-k passages exhaustive. Saved reads recheck sources before displaying answers.
+
+Evidence is bounded to 30 passages/256 KiB, with a default 30k total input-token
+limit and 6k completion/reasoning tokens. There are at most 500 durable attempts
+per workspace; history shows the newest 20. Deleting an associated agreement
+removes the whole cross-document answer's question, evidence and statements,
+retaining only a no-resend receipt and safe generation/coverage metadata. A cleanup
+failure blocks successful document deletion. Backups must include this sensitive
+collection with the existing database; there is no separate database selection.
+
+### Content-free Library stage traces
+
+`services/library_trace.py` validates a strict allowlist before emitting local
+`library_stage` logs. Keyword/Semantic search returns an optional `trace` with a
+server-generated stage ID, HTTP request ID, pipeline/passage versions, source/index
+fingerprint, coverage/counts and duration. Semantic adds embedding/vector-search
+timings and known embedding tokens. It does not persist search text or add a
+database write to Keyword search.
+
+When an answer is explicitly requested, its record retains `retrieval_trace` and
+`answer_trace`; the latter links back through `parent_trace_id` and adds model,
+effort, generation timing, known tokens, operational status and answer outcome.
+Replays log a separate no-dispatch event without replacing the original traces.
+Older or malformed optional diagnostics do not block reading or generation.
+Traces are historical stage receipts: a later deletion/interruption can change
+the current answer status without rewriting the original timing event.
+
+Only validated enumerations, counts, UUIDs and opaque fingerprints enter these
+logs—never questions, filenames, source/answer text, credentials or raw errors.
+There is no external telemetry exporter, new store or monitoring dashboard.
+Provider-start flags and unknown outcomes are conservative; neither a timing
+record nor `completed` proves semantic support or a confirmed billing amount.
 
 ## Original sources and extraction
 

@@ -45,3 +45,5 @@ class LibrarySearchCoverage(BaseModel):
 class LibrarySearchResponse(BaseModel):
     results: list[LibrarySearchHit]
     coverage: LibrarySearchCoverage
+    answer_context_id: str | None = None
+    trace: dict | None = None

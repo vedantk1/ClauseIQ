@@ -18,6 +18,7 @@ AI_PATHS = [
     "/chat/doc-1/message",
     "/library/semantic/documents/doc-1/index",
     "/library/semantic/search",
+    "/library/answers",
 ]
 DEFAULT_OPERATIONS = [
     ("GET", "/documents/"),
@@ -35,6 +36,10 @@ DEFAULT_OPERATIONS = [
     ("GET", "/library/semantic/status"),
     ("POST", "/library/semantic/documents/doc-1/plan"),
     ("POST", "/library/semantic/documents/doc-1/remove"),
+    ("GET", "/library/answers"),
+    ("GET", "/library/answers/attempt-1"),
+    ("POST", "/library/answers/preview"),
+    ("POST", "/library/answers/attempt-1/interrupt"),
 ]
 
 

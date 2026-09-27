@@ -12,6 +12,7 @@ from models.library_semantic import IndexRequest, RemoveIndexRequest, SemanticSe
 from services.library_semantic.service import LibrarySemanticService
 from services.library_semantic.source import SemanticError
 from services.library_semantic.vectors import create_vectors
+from services.library_answers.context import capture_search
 from workspace import get_workspace_id
 
 router = APIRouter(tags=["library-semantic"])
@@ -72,5 +73,8 @@ async def remove(document_id: str, request: Request, workspace=Depends(get_works
 @router.post("/library/semantic/search")
 async def search(request: Request, workspace=Depends(get_workspace_id), engine=Depends(service)):
     async def operation():
-        return await engine.search(workspace, await body(request, SemanticSearchRequest))
+        submitted = await body(request, SemanticSearchRequest)
+        result = await engine.search(workspace, submitted)
+        result["answer_context_id"] = await capture_search(engine.documents, workspace, submitted.query, "semantic", result)
+        return result
     return await respond(operation())
