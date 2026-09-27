@@ -123,11 +123,22 @@ export const test = base.extend({
       fixture.workspace.runs[0].findings.find(item => item.id === "archive-exit").evidence.find(item => item.page_number === 25),
     ];
     assert.ok(references.every(Boolean));
+    // Use a contiguous, complete sentence for the Library demonstration instead
+    // of cutting it at a PDF line break. Keep the remaining clause out of scope
+    // explicitly; the review-workspace span fixtures above are unchanged.
+    const archivePage = fixture.source.source_extraction.pages[24];
+    const archiveStart = archivePage.text.indexOf(references[1].quote);
+    const archiveEnd = archivePage.text.indexOf("afterward.", archiveStart);
+    assert.ok(archiveStart >= 0 && archiveEnd > archiveStart);
+    const archiveExcerpt = archivePage.text.slice(archiveStart, archiveEnd + "afterward.".length);
+    assert.equal(archiveExcerpt.replace(/\s+/g, " "),
+      "For the Archive Service only, the maximum post termination transition assistance period is one hundred and twenty days instead of sixty days, provided Example Customer requests the extension in its exit notice or within ten business days afterward.");
     const evidence = references.map((item, index) => ({
       id: `S${index + 1}`, document_id: DOCUMENT_ID, filename: "managed-services-25p.pdf",
       source_revision_id: item.source_revision_id, page_number: item.page_number,
-      passage_id: item.span_id, quote: item.quote, source_incomplete: false,
-      continuation_before: false, continuation_after: false,
+      passage_id: index === 1 ? "fixture-p25-archive-extension-intro" : item.span_id,
+      quote: index === 1 ? archiveExcerpt : item.quote, source_incomplete: false,
+      continuation_before: false, continuation_after: index === 1,
     }));
     const coverage = { documents_in_library: 1, documents_scanned: 1, documents_not_examined: 0,
       documents_searchable: 1, documents_unsearchable: 0, documents_partial: 0,
@@ -184,8 +195,8 @@ export const test = base.extend({
         libraryRequests.sends.push(body);
         assert.equal(libraryRequests.sends.length, 1, "Navigation/reload must never resend");
         const saved = { ...answerPlan, request_id: body.request_id, created_at: recordedAt, status: "completed",
-          outcome: "partial", statements: [{ text: "Synthetic browser response: inspect the Archive exception in the cited source.", evidence_ids: ["S2"] }],
-          limitations: ["Deterministic browser fixture; not a live answer-quality assessment."], failure: null,
+          outcome: "partial", statements: [{ text: "Authored example: Archive transition assistance can last up to 120 days instead of 60 if the customer requests it in the exit notice or within ten business days afterward.", evidence_ids: ["S2"] }],
+          limitations: ["Synthetic demonstration, not AI-generated. Baseline charges and the remaining transfer conditions are outside this excerpt."], failure: null,
           generation: { ...answerPlan.generation, duration_ms: 25, usage: { prompt_tokens: 600, completion_tokens: 80, total_tokens: 680 } } };
         savedAnswers.set(body.request_id, saved);
         return respond(route, saved);

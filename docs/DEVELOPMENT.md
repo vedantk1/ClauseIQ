@@ -175,10 +175,15 @@ For a reproducible product capture only:
 npm --prefix frontend run test:e2e:screenshots
 ~~~
 
-This runs the synthetic showcase case and produces Black/Graphite captures under
+This runs the showcase-labelled synthetic journeys and produces Black/Graphite captures under
 `output/playwright/showcase/`. It does not capture the person's live installation.
 Review selected images against [repository policy](REPOSITORY_POLICY.md) before
 publishing a copy under docs/images; generated test-output folders stay untracked.
+For the README's three-screen set, including the separately stubbed Library-answer
+journey, use the exact selection and file mapping in
+[product-image provenance](images/README.md#regeneration). That answer is an
+authored partial demonstration with a contiguous source excerpt, not a live model
+result. Screenshot refreshes require visual review but no paid generation.
 
 ### Real API/storage browser smoke
 

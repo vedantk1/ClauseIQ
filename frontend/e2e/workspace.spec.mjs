@@ -414,6 +414,11 @@ test.describe("Library answer journey with an explicitly enabled provider stub",
     await answer.getByText("Preview excerpt · managed-services-25p.pdf · page 25", { exact: true }).click();
     await expect(answer.locator("blockquote")).toHaveText(answerPlan.evidence[1].quote);
     await expect(answer.getByText(`Reference S2 · passage ${answerPlan.evidence[1].passage_id}`, { exact: true })).toBeVisible();
+    // Publishable framing keeps the partial outcome, fixture label and the
+    // answer's own excerpt visible. It does not retouch or fabricate an answer.
+    await page.setViewportSize({ width: 1440, height: 1120 });
+    await page.screenshot({ path: "../output/playwright/showcase/library-answer-source-black.png" });
+    await page.setViewportSize({ width: 1280, height: 800 });
     await answer.getByRole("link", { name: "View page 25", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`documentId=${DOCUMENT_ID}&sourceRevisionId=${DOCUMENT_ID}-source-v1&page=25&from=library-search`));
     await expect(page.getByRole("textbox", { name: "PDF page number", exact: true })).toHaveValue("25");
